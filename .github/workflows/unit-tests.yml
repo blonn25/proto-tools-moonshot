@@ -32,6 +32,30 @@ jobs:
       run: uv pip install --system ".[dev]"
     - run: pytest --cpu-only -q --override-ini="log_cli=false" --durations=20 --cov --cov-report=term-missing
 
+  test-python-310:
+    if: >-
+      (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
+      !(github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'skip-tests'))
+    name: Python 3.10 Compatibility
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: astral-sh/setup-uv@v5
+      with:
+        version: "0.11.8"
+        enable-cache: true
+        cache-dependency-glob: "pyproject.toml"
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+    - name: Install dependencies
+      run: uv pip install --system ".[dev]"
+    - name: Run Python 3.10 compatibility tests
+      run: >-
+        pytest -q --override-ini="log_cli=false"
+        tests/modal_tests/test_benchmark_report_placement.py
+        tests/style_consistency_tests/test_packaging_excludes_helper_copies.py
+
   test-macos:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     name: Run Unit Tests (macOS)

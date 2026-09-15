@@ -6,6 +6,11 @@ from pathlib import Path
 
 import pytest
 
+try:  # Python 3.11+
+    import tomllib
+except ModuleNotFoundError:  # requires-python allows 3.10
+    import tomli as tomllib  # type: ignore[no-redef]
+
 from tests.conftest import (
     BenchmarkResult,
     _deployment_dir_for_tool,
@@ -136,8 +141,6 @@ def test_deployment_packages_are_excluded_from_the_wheel() -> None:
     setuptools requires literal package names in ``exclude-package-data`` — no patterns — so the
     list in pyproject cannot cover a new deployment automatically. This is what notices.
     """
-    import tomllib
-
     from proto_tools.modal.manifest import SERVICE_TO_MODULE
 
     pyproject = Path(__file__).resolve().parents[2] / "pyproject.toml"
