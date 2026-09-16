@@ -36,7 +36,7 @@ jobs:
     if: >-
       (github.event_name != 'pull_request' || github.event.pull_request.draft == false) &&
       !(github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'skip-tests'))
-    name: Python 3.10 Compatibility
+    name: Python 3.10 / Pydantic 2.12 Floor
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -49,12 +49,14 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
-      run: uv pip install --system ".[dev]"
+      run: uv pip install --system ".[dev]" "pydantic==2.12.0"
     - name: Run Python 3.10 compatibility tests
       run: >-
         pytest -q --override-ini="log_cli=false"
         tests/modal_tests/test_benchmark_report_placement.py
         tests/style_consistency_tests/test_packaging_excludes_helper_copies.py
+        tests/tool_infra_tests/test_tool_registry.py::test_exact_model_revalidation_excludes_computed_fields
+        tests/tool_infra_tests/test_tool_registry.py::test_under_floor_pydantic_names_itself_instead_of_raising_typeerror
 
   test-macos:
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

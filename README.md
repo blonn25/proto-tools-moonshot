@@ -31,6 +31,10 @@ Proto-tools requires Python 3.10+:
 pip install git+https://github.com/evo-design/proto-tools.git
 ```
 
+Proto-tools requires Pydantic 2.12 or newer. Registered calls revalidate input
+and configuration models while excluding computed fields, so environments pinned
+to an older Pydantic release must upgrade before installing this version.
+
 To also run the MCP server, which exposes these tools to coding agents, install the `mcp` extra:
 
 ```bash
