@@ -508,7 +508,15 @@ def progress_bar(  # noqa: D417
     # than a tty, so an ``isatty`` gate placed first makes this branch unreachable -- which is
     # exactly backwards, since this renderer exists because notebooks are not ttys.
     in_notebook = _in_notebook()
-    if not in_notebook and not _is_interactive():
+    stream = kwargs.get("file")
+    if stream is None:
+        interactive = _is_interactive()
+    else:
+        try:
+            interactive = bool(stream.isatty())
+        except (AttributeError, ValueError):
+            interactive = False
+    if not in_notebook and not interactive:
         kwargs["disable"] = True
         return tqdm(*args, **kwargs)
     if _is_disabled():

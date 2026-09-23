@@ -59,6 +59,20 @@ def test_a_redirected_stream_does_not_emit_progress_frames():
     assert stream.getvalue() == ""
 
 
+def test_an_explicit_captured_stream_overrides_interactive_stderr():
+    """The selected output file controls rendering when stderr itself is a tty."""
+    stream = io.StringIO()
+    with (
+        patch("proto_tools.utils.progress._in_notebook", return_value=False),
+        patch("proto_tools.utils.progress._is_interactive", return_value=True),
+    ):
+        bar = progress_bar(total=1, file=stream)
+    bar.update(1)
+    bar.close()
+    assert bar.disable is True
+    assert stream.getvalue() == ""
+
+
 def test_disabling_beats_every_other_condition():
     """``PROTO_NO_SPINNER`` has to win, including where a renderer would otherwise apply."""
     for notebook, interactive in ((True, True), (True, False), (False, True)):
