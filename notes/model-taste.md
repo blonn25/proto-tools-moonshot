@@ -41,27 +41,27 @@ Select models based on:
 4. the validation metric required,
 5. the available tools,
 6. the candidate-pool size and throughput required,
-7. and the required confidence level.
+7. and the available evidence and uncertainty.
 
 Use generators to propose candidates and validators to evaluate whether those candidates are credible.
 
 A language-model likelihood, motif check, or “designed by construction” argument is usually a prior, not a hard validity check.
 
-Prefer the highest-level workflow that directly optimizes the requested design class. Use lower-level tools only when the higher-level workflow lacks the required conditioning, output contract, or availability.
+Compare complete workflows and lower-level compositions by their conditioning, output contract, objective, availability, and measured cost. Abstraction level alone does not determine search quality.
 
-For structure, interfaces, ligand context, nucleic acid structure, regulatory genomics, circuits, pathways, and genome-scale designs, prefer multiple agreeing predictors before final selection. Agreement across model families is stronger evidence than a single convenient cutoff.
+Independent predictors can expose uncertainty, but agreement is not calibrated evidence of correctness by itself. Choose checks that measure the relevant quantity and inspect disagreement rather than averaging it away.
 
 Keep submetrics separate. A composite score can rank candidates, but splice donor usage, acceptor usage, expression, ipTM, PAE, pLDDT, novelty, sequence naturalness, developability, off-target effects, thermodynamics, folding energy, GC content, codon adaptation, histone marks, chromatin accessibility, etc. should remain inspectable as independent failure modes.
 
-Use screening predictors to triage massive candidate pools along with the strongest task-matched predictors for final selection. Default to used the strongest task-matched predictors in design campaigns; a screening pass is an efficiency step for large pools or compilation checks, not a reason to downgrade a final validator. If a screening predictor disagrees with final scoring, recalibrate or change its objective rather than scaling the same loop.
+Use screening predictors to triage massive candidate pools along with the strongest task-matched predictors for final selection. Default to the strongest task-matched predictors in design campaigns; a screening pass is an efficiency step for large pools or compilation checks, not a reason to downgrade a final validator. If a screening predictor disagrees with final scoring, recalibrate or change its objective rather than scaling the same loop.
 
 Do not present a candidate as validated unless the validation method measured the actual biological quantity requested by the task.
 
 ---
 
-## 3. Required Response Contract
+## 3. Recording decisions
 
-For every biological design task, report the following:
+Record the following when they are relevant to a biological design decision:
 
 1. **Design objective**: what is being optimized?
 2. **Biological object**: protein sequence, protein backbone, enzyme, binder, antibody, peptide, promoter, enhancer, intron, exon, silencer, UTR, mRNA, guide RNA, primer, probe, aptamer, ribozyme, riboswitch, pathway, circuit, genome, etc.
@@ -71,7 +71,7 @@ For every biological design task, report the following:
 6. **Ranking metrics**: keep individual metrics visible rather than hiding everything inside one composite score.
 7. **Failure modes**: what could make a top candidate invalid?
 8. **Fallbacks**: what to do if the preferred model or validator is unavailable?
-9. **Confidence level**: low, medium, or high computational confidence, with a reason.
+9. **Evidence limits**: state uncertainty, calibration limits, and which claims remain untested.
 10. **Missing assumptions or tools**: state what was unavailable, approximated, or not validated.
 
 ---
@@ -100,9 +100,9 @@ For every biological design task, report the following:
 | mRNA design                                                       | UTR design models like miRanda, codon optimization, RNA-structure-aware sequence design, stability/translation predictors, immunogenicity motif filters                                                                                                                      | Translation efficiency, RNA stability, secondary structure, UTR constraints, codon usage, GC, repeats, cryptic splice/polyA motifs, innate immune motif filters                         | Codon optimization alone                                                                                           |
 | Structured RNA design                                             | RNA inverse folding using NAMPNN, Protein Hunter adapted for nucleic acids, secondary-structure design, tertiary-structure-aware design, sequence priors                                                                                                                                                               | AlphaFold 3/ESMFold 2/Protenix; Target structure recovery, ensemble defect, MFE and partition-function metrics, alternative-structure penalties, sequence constraints                                                   | MFE alone without ensemble checks                                                                                  |
 | Aptamer design                                                    | AANG, Protein Hunter adapted for nucleic acids, RNA/DNA binder selection models, structure-guided aptamer design, SELEX-informed priors, docking when appropriate                                                                                                                                               | AlphaFold 3/ESMFold 2/Protenix for target binding predictions, structure ensemble, specificity/off-target checks, motif/structure preservation, synthesis constraints                                                      | Sequence novelty or motif presence alone                                                                           ||
-| Operon and genetic circuit design                                 | Intialize each component as it's own construct or segment. Depending on each component, choose an appropriate generator (e.g., Evo2/Uniform Mutation for regulatory element design, RFDiffusion3 for protein design, etc.)    Each component should get it's own set of constraints in addition to constraints applied across the circuit                                                                                                                                 | AlphaGenome/Borzoi/Enformer for DNA deseign tasks, AlphaFold/ESMFold 2/Boltz/Protenix for protein binding; Part compatibility, expression balance, burden, crosstalk, dynamic behavior, insulation, host context, assembly constraints                                                             | Optimizing isolated parts without constraints/evaluation of combined components, using uniform mutation generators for each part, not applying constraints to each component                                                               |
-| Synthetic genome design                                           | Treat each component of the genome as a separate segment to be optimized, then apply appropriate generative tools for each component (e.g., Evo2 for DNA-design/diversification), genome-scale recoding/design tools                                                                                                                                                      | Fold similarity of coding region proteins to native proteins by FoldSeek with structure prediciton model, sequence similarity checks using alignment toold, essentiality, codon usage, regulatory architecture, repeats, mobile elements, restriction sites, synthesis constraints, safety review                                                   | Local sequence metrics alone, uniform mutation generator from no prior starting sequence                                                                                       |
-| Sequence novelty and database distance                            | MMseqs2/BLAST for sequence novelty; Foldseek for structural novelty; TM-align/US-align for pairwise structural comparison                                                                                                                                       | Unless specified by the task, use the most general databases available and a cutoff of > 0.4 TM-score for significance on FoldSeek hits and > 0.3 for significance on BLAST or similar seuqence similarity hits.                                                                                               | Claims of novelty from sampling seed, generator name, or low language-model likelihood                             |
+| Operon and genetic circuit design                                 | Initialize each component as its own construct or segment. Depending on each component, choose an appropriate generator (e.g., Evo2/uniform mutation for regulatory element design, RFDiffusion3 for protein design). Each component should get its own constraints in addition to constraints applied across the circuit. | AlphaGenome/Borzoi/Enformer for DNA design tasks, AlphaFold/ESMFold 2/Boltz/Protenix for protein binding; part compatibility, expression balance, burden, crosstalk, dynamic behavior, insulation, host context, assembly constraints | Optimizing isolated parts without constraints/evaluation of combined components, using uniform mutation generators for each part, not applying constraints to each component |
+| Synthetic genome design                                           | Treat each component of the genome as a separate segment to be optimized, then apply appropriate generative tools for each component (e.g., Evo2 for DNA design/diversification), genome-scale recoding/design tools | Fold similarity of coding-region proteins to native proteins using Foldseek and a structure-prediction model; sequence similarity using alignment tools; essentiality, codon usage, regulatory architecture, repeats, mobile elements, restriction sites, synthesis constraints, safety review | Local sequence metrics alone, uniform mutation generator from no prior starting sequence |
+| Sequence novelty and database distance | MMseqs2/BLAST for sequence novelty; Foldseek for structural novelty; TM-align/US-align for pairwise structural comparison | Use databases appropriate to the biological claim and calibrate significance thresholds against matched positive and negative controls, database composition, alignment coverage, and the intended novelty claim. Do not treat a single identity, E-value, or TM-score cutoff as universally meaningful. | Claims of novelty from sampling seed, generator name, or low language-model likelihood |
 
 
 ---
@@ -616,15 +616,15 @@ If disagreement remains unresolved, mark the candidate as uncertain rather than 
 If the preferred generator is unavailable:
 
 1. Use the closest generator that matches the same output object and conditioning.
-2. Always prefer using a model-based generator over uniform mutation unless starting from a biologically-grounded starting point
-2. State that the preferred generator was unavailable.
-3. Do not imply the fallback has equivalent confidence unless validated.
+2. Assess whether a model-based generator or a local mutation strategy better fits the available starting point and objective.
+3. State that the preferred generator was unavailable.
+4. Do not imply the fallback has equivalent evidence without validating it.
 
 If the preferred validator is unavailable:
 
 1. Use the closest task-matched validator.
 2. State the missing validator explicitly.
-3. Lower the confidence level.
+3. Narrow the supported claim and name the unmeasured quantity.
 4. Do not present candidates as validated unless the validator measured the target biological quantity.
 
 If only weak proxies are available:
@@ -754,23 +754,13 @@ A final small-molecule candidate requires molecule-native generation or retrieva
 
 ---
 
-## 33. Confidence Labels
+## 33. Evidence And Uncertainty
 
-### Low confidence
+Describe the evidence for each candidate in terms of the quantity actually measured. Record the proposal method, validators, deterministic checks, model versions, data context, independent measurements, and missing checks. Distinguish computational predictions from experimental measurements.
 
-Use when only weak proxies were used, required validators were unavailable, deterministic checks were incomplete, predictors disagreed, the design objective was only indirectly measured, or the candidate was generated and validated by essentially the same model loop.
+When predictors disagree, inspect their inputs, target quantities, calibration, and failure modes. Agreement among related models may reflect shared training data or bias; it is not a calibrated probability of success. Do not assign low, medium, or high confidence labels without a defined calibration scheme for the stated outcome and setting.
 
-### Medium confidence
-
-Use when the proposal method matched the task, at least one strong validator measured the central quantity, and deterministic checks passed, but independent validator agreement or experimental evidence is missing.
-
-### High computational confidence
-
-Use when the proposal method matched the task, deterministic checks passed, multiple validators agreed on the central quantity, novelty/similarity checks passed, key submetrics were inspected, and major failure modes were excluded computationally.
-
-Do not use “high confidence” to imply wet-lab validation.
-
-Use “high computational confidence” instead.
+A candidate can pass every available computational check and still fail in an assay. State the unmeasured properties and the experiment that would resolve the key uncertainty.
 
 ---
 
