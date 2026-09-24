@@ -2057,13 +2057,30 @@ def _coerce_model(instance: BaseModel, expected_class: type[BaseModel], tool_key
 
     Raises:
         TypeError: If the instance is not the expected class or a parent of it.
+        RuntimeError: If the installed Pydantic version lacks required model-dump support.
     """
     if isinstance(instance, expected_class):
         # Preserve a more-specific accepted subclass while still re-running its own schema;
         # otherwise an unchecked ``model_copy`` on that subclass would reopen the same
         # pre-routing validation bypass. ``round_trip`` keeps non-idempotent field encodings
         # suitable for validation, while computed fields are outputs rather than inputs.
-        dumped = instance.model_dump(round_trip=True, exclude_computed_fields=True)
+        try:
+            dumped = instance.model_dump(round_trip=True, exclude_computed_fields=True)
+        except TypeError as exc:  # pragma: no cover - depends on the resolved pydantic
+            # `exclude_computed_fields` landed in pydantic 2.12, which pyproject
+            # declares as the floor. Under an older interpreter this raises from
+            # inside the wrapper on every tool call. Translate that bare TypeError
+            # into the actual dependency mismatch.
+            if "exclude_computed_fields" not in str(exc):
+                raise
+            import pydantic
+
+            raise RuntimeError(
+                f"Tool {tool_key}: proto-tools requires pydantic>=2.12 and this interpreter has "
+                f"{pydantic.VERSION}. Every tool call revalidates its input through "
+                f"model_dump(exclude_computed_fields=...), so no tool can run here. Use an "
+                f"environment satisfying the declared floor."
+            ) from exc
         validated = type(instance).model_validate(dumped)
         if validated.model_dump(round_trip=True, exclude_computed_fields=True) == dumped:
             # The overwhelmingly common path: validation succeeded without normalization.
