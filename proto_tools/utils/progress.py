@@ -474,7 +474,8 @@ def progress_bar(  # noqa: D417
     spinner prefix (e.g. ``⠙``) in the description.  Infrastructure code
     can call ``set_substatus()`` to update the description as phases change.
 
-    If spinners are disabled (``PROTO_NO_SPINNER=1``), returns a plain
+    Captured/non-TTY streams are silent. If spinners are disabled
+    (``PROTO_NO_SPINNER=1``) in an interactive terminal, returns a plain
     ``tqdm`` bar.
 
     All positional and keyword args are forwarded to tqdm.
@@ -501,17 +502,27 @@ def progress_bar(  # noqa: D417
             pbar.update(1)
         pbar.close()
     """
-    if _is_disabled() or kwargs.get("disable"):
+    if kwargs.get("disable"):
         return tqdm(*args, **kwargs)
     # Tested before interactivity, not after. A Jupyter kernel's stderr is a ZMQ stream rather
     # than a tty, so an ``isatty`` gate placed first makes this branch unreachable -- which is
     # exactly backwards, since this renderer exists because notebooks are not ttys.
-    if _in_notebook():
-        return _NotebookProgressBar(*args, spinner_style=spinner_style, show_bar=show_bar, prefix=prefix, **kwargs)
-    # A non-interactive stderr cannot redraw: `\r` stops overwriting, so every animation
-    # frame becomes its own line and a long call fills a log file with spinner states.
-    if not _is_interactive():
+    in_notebook = _in_notebook()
+    stream = kwargs.get("file")
+    if stream is None:
+        interactive = _is_interactive()
+    else:
+        try:
+            interactive = bool(stream.isatty())
+        except (AttributeError, ValueError):
+            interactive = False
+    if not in_notebook and not interactive:
+        kwargs["disable"] = True
         return tqdm(*args, **kwargs)
+    if _is_disabled():
+        return tqdm(*args, **kwargs)
+    if in_notebook:
+        return _NotebookProgressBar(*args, spinner_style=spinner_style, show_bar=show_bar, prefix=prefix, **kwargs)
     return _AnimatedProgressBar(*args, spinner_style=spinner_style, show_bar=show_bar, prefix=prefix, **kwargs)
 
 
