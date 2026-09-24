@@ -49,7 +49,7 @@ A language-model likelihood, motif check, or “designed by construction” argu
 
 Compare complete workflows and lower-level compositions by their conditioning, output contract, objective, availability, and measured cost. Abstraction level alone does not determine search quality.
 
-Independent predictors can expose uncertainty, but agreement is not calibrated evidence of correctness by itself. Choose checks that measure the relevant quantity and inspect disagreement rather than averaging it away.
+Independent predictors can expose uncertainty, but agreement is not calibrated evidence of correctness by itself. Choose checks that measure the relevant quantity and inspect disagreement rather than averaging it away. Agreement between multiple predictive models is stronger evidence of success than one alone, when multiple models can measure a important biological quantity, try and incorporate evidence from them all.
 
 Keep submetrics separate. A composite score can rank candidates, but splice donor usage, acceptor usage, expression, ipTM, PAE, pLDDT, novelty, sequence naturalness, developability, off-target effects, thermodynamics, folding energy, GC content, codon adaptation, histone marks, chromatin accessibility, etc. should remain inspectable as independent failure modes.
 
@@ -758,7 +758,7 @@ A final small-molecule candidate requires molecule-native generation or retrieva
 
 Describe the evidence for each candidate in terms of the quantity actually measured. Record the proposal method, validators, deterministic checks, model versions, data context, independent measurements, and missing checks. Distinguish computational predictions from experimental measurements.
 
-When predictors disagree, inspect their inputs, target quantities, calibration, and failure modes. Agreement among related models may reflect shared training data or bias; it is not a calibrated probability of success. Do not assign low, medium, or high confidence labels without a defined calibration scheme for the stated outcome and setting.
+When predictors disagree, inspect their inputs, target quantities, calibration, and failure modes. Look for literature and documentation-based evidence to determine reasons behind any uncertainty and calibrate based on stronger performing or newer versions of models. Do not assign low, medium, or high confidence labels without a defined calibration scheme for the stated outcome and setting.
 
 A candidate can pass every available computational check and still fail in an assay. State the unmeasured properties and the experiment that would resolve the key uncertainty.
 
