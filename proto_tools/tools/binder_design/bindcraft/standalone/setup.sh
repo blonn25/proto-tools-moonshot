@@ -8,9 +8,6 @@ echo "  BindCraft — MIT (https://github.com/martinpacesa/BindCraft)"
 echo "  PyRosetta — non-commercial / academic only (https://www.rosettacommons.org/software/license-and-download)"
 echo "  AlphaFold2 weights — CC BY 4.0 (https://github.com/google-deepmind/alphafold)"
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit "${BINDCRAFT_CUDA_TOOLKIT_CONSTRAINT:-}"
 
 export BINDCRAFT_JAX_SPEC="${BINDCRAFT_JAX_SPEC:-jax[cuda12]==0.5.3}"

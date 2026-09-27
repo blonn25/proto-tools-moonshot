@@ -97,13 +97,12 @@ if __name__ == "__main__":
         json.dump(output_data, f)
 ```
 
-**standalone/setup.sh** (Subagent 1) — sources `standalone_helpers.sh` (resolved off `PATH`) for shared functions:
+**standalone/setup.sh** (Subagent 1) — sources `standalone_helpers.sh` (resolved off `PATH`) for shared functions. The tool env already has `uv` (pinned by `UV_VERSION` in `tool_instance.py`), so use `uv pip install` directly and never install uv:
 ```bash
 #!/bin/bash
 set -euo pipefail
 source standalone_helpers.sh
 
-pip install uv
 uv pip install -r requirements.txt
 
 echo "Setup complete!"
@@ -115,7 +114,6 @@ echo "Setup complete!"
 set -euo pipefail
 source standalone_helpers.sh
 
-pip install uv
 uv pip install -r requirements.txt
 
 # Resolve weight directory based on PROTO_MODEL_CACHE
@@ -160,8 +158,6 @@ proto_resolve_asset_availability {toolkit} "*.bin*" \
 HINT
 )"
 
-echo "Installing uv package manager..."
-pip install uv
 # ... rest of setup ...
 ```
 
@@ -312,9 +308,6 @@ if __name__ == "__main__":
 set -euo pipefail
 source standalone_helpers.sh
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 # If torchvision/torchaudio needed: proto_install_pytorch "" torchvision
 
@@ -363,9 +356,6 @@ fi
 #!/bin/bash
 set -euo pipefail
 source standalone_helpers.sh
-
-echo "Installing uv package manager..."
-pip install uv
 
 proto_install_jax MYTOOL
 
@@ -549,8 +539,6 @@ if ! command -v g++ &>/dev/null; then
     echo "ERROR: g++ not found. Install a C++ compiler (e.g., apt install g++)." >&2
     exit 1
 fi
-
-pip install uv
 
 # Compile from source
 BUILD_DIR=$(mktemp -d)

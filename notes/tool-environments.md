@@ -29,6 +29,8 @@ Tools with PyTorch/JAX dependencies use **centralized hardware detection** (`uti
 | `RECOMMENDED_JAX_SPEC` | `"jax[cuda12]>=0.5,<1"` | JAX version constraint with CUDA plugin |
 | `RECOMMENDED_JAX_VARIANT` | `"cuda12"` | JAX CUDA variant (cuda12, cuda13) |
 
+Every tool env is created with `pip` and `uv` (pinned by `UV_VERSION` in `proto_tools/utils/tool_instance.py`, or by the tool's optional `uv_version.txt`; see [uv Version Override](#uv-version-override)), so `setup.sh` calls `uv pip install` directly and never installs uv itself.
+
 ### Standard PyTorch Setup Pattern
 
 See `esm2`, `esmfold`, `boltz2` for reference implementations:
@@ -36,9 +38,6 @@ See `esm2`, `esmfold`, `boltz2` for reference implementations:
 ```bash
 #!/bin/bash
 set -euo pipefail
-
-echo "Installing uv package manager..."
-pip install uv
 
 # Install hardware-aware PyTorch version (from centralized detection)
 echo "Installing PyTorch: ${RECOMMENDED_TORCH_SPEC:-torch} (platform: ${DETECTED_COMPUTE_PLATFORM:-unknown})"
@@ -217,8 +216,6 @@ Tools that install C++ extensions with ABI dependencies (torch, flash-attn, tran
 **Standard pattern for ABI-sensitive tools** (evo1, evo2, borzoi):
 
 ```bash
-echo "Installing uv package manager..."
-pip install uv
 
 # Clear caches BEFORE installing any ABI-sensitive packages
 echo "Clearing package caches for ABI-sensitive dependencies..."
@@ -289,6 +286,16 @@ The lookup key is built as `f"{platform.system().lower()}-{platform.machine()}"`
 **Rebuilds:** the file content **and the resolved version** are both included in the environment setup hash, so any edit triggers a rebuild and two platforms with different resolved versions get distinct hashes (matters when `PROTO_HOME` is on shared storage).
 
 **Consistency tests:** every shipped `python_version.txt` is validated by `tests/style_consistency_tests/test_python_version_consistency.py` (one parametrized result per tool). Parser unit tests live in `tests/tool_infra_tests/test_python_version_files.py`.
+
+## uv Version Override
+
+Every tool env is created with `uv` pinned to `UV_VERSION` in `proto_tools/utils/tool_instance.py`. A tool whose build breaks on that release can ship an optional `standalone/uv_version.txt` to pin a different one:
+
+```text
+default: 0.11.33
+```
+
+It uses the same keyed format and platform lookup as `python_version.txt`; values must be `major.minor.patch`. The file's content and resolved version are part of the setup hash, so adding or editing it rebuilds that tool's env. Bumping `UV_VERSION` itself rebuilds nothing: uv runs only while an env is built, so a finished env does not depend on it. Parser unit tests live in `tests/tool_infra_tests/test_uv_version_files.py`.
 
 ## Shared Environments
 

@@ -4,9 +4,6 @@ set -euo pipefail
 
 echo "Setting up Borzoi standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Installing PyTorch and borzoi-pytorch..."
 uv pip install torch==2.7.1 borzoi-pytorch==0.5.1 --extra-index-url "${RECOMMENDED_TORCH_INDEX}"
 

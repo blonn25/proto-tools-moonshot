@@ -59,6 +59,7 @@ Both modes edit the same files — the ejected copy (local) or the repo copy (co
 - `standalone/env_vars.txt`
 - `standalone/binary_config.py`
 - `standalone/python_version.txt`
+- `standalone/uv_version.txt` (optional; only when the build breaks on the pinned uv)
 
 **Never** modify `standalone/run.py`, `standalone/inference.py`, or `{toolkit}.py` (core implementation).
 
@@ -161,6 +162,7 @@ Add comments explaining what, why, and why it's safe for other platforms.
 - **GCC/nvcc compat**: See "GCC/nvcc Compatibility for CUDA JIT Tools" in `notes/tool-environments.md` for version mapping
 - **Compile-from-source**: See "Compile-from-Source Tools" in `notes/tool-environments.md` for TMalign/USalign pattern
 - **Python versions**: See "Python Version Specification" in `notes/tool-environments.md` for python_version.txt
+- **uv version**: See "uv Version Override" in `notes/tool-environments.md` for uv_version.txt
 - **Binary installation**: See "Binary Installation" in `notes/tool-environments.md` for install_binary.py usage
 - **env_vars.txt format**: See "env_vars.txt sections" under "Compute Dependency Management" in `notes/tool-environments.md`
 - **Device management**: GPU allocation, LRU eviction, and persistence are documented in `proto_tools/utils/device_manager.py` and `proto_tools/utils/tool_instance.py` docstrings (auto-generated reference pages); see `notes/tool-environments.md` for `to_device()` protocol

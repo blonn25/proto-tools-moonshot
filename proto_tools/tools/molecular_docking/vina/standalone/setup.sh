@@ -7,9 +7,6 @@ echo "Setting up AutoDock Vina standalone environment..."
 echo "Installing AutoDock Vina from conda-forge..."
 "$MAMBA_BIN" install -y -p "$VENV_PATH" -c conda-forge "vina=1.2.7"
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Installing Meeko and chemistry dependencies..."
 uv pip install -r requirements.txt
 

@@ -426,12 +426,12 @@ def get_memory_stats() -> dict:
 
 All setup.sh scripts source `standalone_helpers.sh`, resolved off `PATH` inside the build subprocess, for shared infrastructure functions. Reference: `tools/inverse_folding/fampnn/standalone/setup.sh`.
 
+**`uv` is already installed.** `ToolInstance` creates every tool env with `pip` and `uv` pinned to `UV_VERSION` (`proto_tools/utils/tool_instance.py`) before setup.sh runs. Call `uv pip install` directly; never `pip install uv` or guard on `command -v uv`. Only if the tool's build breaks on that uv, pin another with an optional `standalone/uv_version.txt` (`default: <version>`; see "uv Version Override" in `notes/tool-environments.md`).
+
 ```bash
 #!/bin/bash
 set -euo pipefail
 source standalone_helpers.sh
-
-pip install uv
 
 # PyTorch tools (add extras like torchvision if needed):
 proto_install_pytorch

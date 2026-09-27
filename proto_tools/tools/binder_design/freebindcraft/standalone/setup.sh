@@ -17,9 +17,6 @@ echo "  BindCraft — MIT (https://github.com/martinpacesa/BindCraft)"
 echo "  FreeBindCraft — MIT (https://github.com/cytokineking/FreeBindCraft)"
 echo "  AlphaFold2 weights — CC BY 4.0 (https://github.com/google-deepmind/alphafold)"
 
-echo "Installing uv package manager..."
-pip install uv
-
 # Skip proto_install_cuda_toolkit: jax[cuda12] brings its own nvidia-cu12 wheel
 # libs, and the GPU image base already provides system CUDA + cuDNN. A third
 # (micromamba) toolkit only adds version conflicts — FreeBindCraft's own install

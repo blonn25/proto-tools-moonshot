@@ -114,7 +114,6 @@ def extract(archive_path: Path, bin_dir: Path) -> None:
 ```bash
 #!/bin/bash
 set -euo pipefail
-pip install uv
 uv pip install -r requirements.txt
 # Walk up to find utils/install_binary.py
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

@@ -14,9 +14,6 @@ if [ "$(uname -s)" != "Linux" ] || [ "$(uname -m)" != "x86_64" ]; then
     exit 1
 fi
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 
 # RF3 runs triton-compiled kernels that JIT a small CUDA launcher stub at first use

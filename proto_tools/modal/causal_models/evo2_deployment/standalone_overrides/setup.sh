@@ -18,9 +18,6 @@ MAMBA_PLATFORM="linux-64"
 
 echo "Setting up Evo2 standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Clearing package caches for ABI-sensitive dependencies..."
 uv cache clean torch 2>/dev/null || true
 uv cache clean flash-attn 2>/dev/null || true

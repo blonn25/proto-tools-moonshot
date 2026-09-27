@@ -34,9 +34,6 @@ if [ "$ARCH" = "aarch64" ]; then
     echo ""
 fi
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Installing PyRosetta via conda channel..."
 "$MAMBA_BIN" install -y -p "$VENV_PATH" \
     -c https://conda.rosettacommons.org \

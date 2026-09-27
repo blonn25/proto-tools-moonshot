@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up BioEmu standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit "${BIOEMU_CUDA_TOOLKIT_CONSTRAINT:-}"
 proto_install_pytorch
 

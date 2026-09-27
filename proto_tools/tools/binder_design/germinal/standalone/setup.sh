@@ -7,9 +7,6 @@ echo "Germinal license notices:"
 echo "  PyRosetta — non-commercial / academic only (https://www.rosettacommons.org/software/license-and-download)"
 echo "  IgLM — non-commercial academic only (https://github.com/Graylab/IgLM)"
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit "${GERMINAL_CUDA_TOOLKIT_CONSTRAINT:-12.4.*}"
 
 export GERMINAL_TORCH_SPEC="${GERMINAL_TORCH_SPEC:-torch==2.6.*}"

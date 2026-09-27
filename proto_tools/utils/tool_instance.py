@@ -59,7 +59,7 @@ import subprocess
 import sys
 import tempfile
 import threading
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager, suppress
 from pathlib import Path
 from typing import Any, ClassVar
@@ -90,6 +90,9 @@ MAX_TOOL_ENVS_ROOT_LEN = 200
 # 255-byte limit. The root cap above leaves headroom for typical leaves; this
 # guards the actual prefix length, which longer env names (e.g. overrides) grow.
 MAX_ENV_PREFIX_LEN = 255
+
+# uv installed into every tool env at creation.
+UV_VERSION = "0.12.19"
 
 # ============================================================================
 # Singleton registry
@@ -1751,13 +1754,43 @@ class ToolInstance:
         return version_str
 
     @staticmethod
-    def _parse_python_version(content: str, platform_key: str, source: str) -> str:
-        """Parse python_version.txt content and resolve for the given platform.
+    def _validate_uv_version(version_str: str, source: str) -> str:
+        """Validate a ``major.minor.patch`` uv release version.
 
-        Format: keyed lines `key: value` with a required `default` key and
-        optional platform overrides. Comments (`#` to end of line) and blank
-        lines are ignored. Whitespace around `:` is stripped; keys are
-        lowercased.
+        Args:
+            version_str (str): The version string to validate.
+            source (str): Context for error messages (file path, key, etc.).
+
+        Returns:
+            str: The version string unchanged on success.
+
+        Raises:
+            ValueError: If the version is not three integer components.
+        """
+        parts = version_str.split(".")
+        if len(parts) != 3 or not all(part.isdigit() for part in parts):
+            raise ValueError(
+                f"Invalid uv version format in {source}: '{version_str}'. "
+                f"Expected format: '{UV_VERSION}' (major.minor.patch)"
+            )
+        return version_str
+
+    @staticmethod
+    def _parse_keyed_versions(
+        content: str,
+        platform_key: str,
+        source: str,
+        *,
+        file_name: str,
+        example: str,
+        validate: Callable[[str, str], str],
+    ) -> str:
+        """Parse a keyed version file and resolve it for the given platform.
+
+        Shared by ``python_version.txt`` and ``uv_version.txt``. Format: keyed
+        lines `key: value` with a required `default` key and optional platform
+        overrides. Comments (`#` to end of line) and blank lines are ignored.
+        Whitespace around `:` is stripped; keys are lowercased.
 
         Three-tier lookup, most specific wins:
             1. Exact platform key (e.g. ``linux-aarch64``)
@@ -1770,14 +1803,18 @@ class ToolInstance:
                 ``f"{platform.system().lower()}-{platform.machine()}"`` (e.g.
                 ``"linux-aarch64"``).
             source (str): File path or other identifier used in error messages.
+            file_name (str): Name of the version file, used in error messages.
+            example (str): Example version value, used in error messages.
+            validate (Callable[[str, str], str]): Validates one value, given the value
+                and an error-message context; returns it unchanged or raises ``ValueError``.
 
         Returns:
-            str: The resolved Python version string (e.g. ``"3.11"``).
+            str: The resolved version string.
 
         Raises:
             ValueError: If the file is empty after stripping comments, contains a
                 line without ``:``, has duplicate keys, is missing the required
-                ``default`` key, or any value fails version validation.
+                ``default`` key, or any value fails validation.
         """
         versions: dict[str, str] = {}
         for raw_line in content.splitlines():
@@ -1787,7 +1824,7 @@ class ToolInstance:
             if ":" not in line:
                 raise ValueError(
                     f"Invalid line in {source}: '{line}'. "
-                    f"Expected 'key: value' format (e.g., 'default: 3.11', 'linux-aarch64: 3.10')."
+                    f"Expected 'key: value' format (e.g., 'default: {example}', 'linux-aarch64: {example}')."
                 )
             key, _, value = line.partition(":")
             key = key.strip().lower()
@@ -1796,18 +1833,18 @@ class ToolInstance:
                 raise ValueError(f"Invalid line in {source}: '{line}'. Empty key before ':'.")
             if key in versions:
                 raise ValueError(f"Duplicate key '{key}' in {source}.")
-            versions[key] = ToolInstance._validate_python_version(value, f"{source} (key '{key}')")
+            versions[key] = validate(value, f"{source} (key '{key}')")
 
         if not versions:
             raise ValueError(
-                f"python_version.txt at {source} has no entries after stripping comments and "
+                f"{file_name} at {source} has no entries after stripping comments and "
                 f"blank lines. Expected at least 'default: <version>'."
             )
 
         if "default" not in versions:
             raise ValueError(
-                f"python_version.txt at {source} is missing required 'default' key. "
-                f"Every python_version.txt must declare a default version like 'default: 3.11'."
+                f"{file_name} at {source} is missing required 'default' key. "
+                f"Every {file_name} must declare a default version like 'default: {example}'."
             )
 
         # Three-tier lookup: most specific wins.
@@ -1817,6 +1854,32 @@ class ToolInstance:
         if os_key and os_key in versions:
             return versions[os_key]
         return versions["default"]
+
+    @staticmethod
+    def _parse_python_version(content: str, platform_key: str, source: str) -> str:
+        """Parse python_version.txt content and resolve for the given platform.
+
+        See :meth:`_parse_keyed_versions` for the format.
+
+        Args:
+            content (str): Raw file contents.
+            platform_key (str): Lookup key for the current platform (e.g. ``"linux-aarch64"``).
+            source (str): File path or other identifier used in error messages.
+
+        Returns:
+            str: The resolved Python version string (e.g. ``"3.11"``).
+
+        Raises:
+            ValueError: If the content is malformed or a version fails validation.
+        """
+        return ToolInstance._parse_keyed_versions(
+            content,
+            platform_key,
+            source,
+            file_name="python_version.txt",
+            example="3.11",
+            validate=ToolInstance._validate_python_version,
+        )
 
     def _get_python_version(self) -> str:
         """Get Python version for this tool from python_version.txt.
@@ -1848,6 +1911,37 @@ class ToolInstance:
             raise RuntimeError(f"Failed to read {version_file} for tool '{self.toolkit}': {e}") from e
         platform_key = f"{platform.system().lower()}-{platform.machine()}"
         return self._parse_python_version(content, platform_key, str(version_file))
+
+    def _get_uv_version(self) -> str:
+        """Get the uv version this tool's env is created with.
+
+        ``standalone/uv_version.txt`` is optional: a tool ships one only when its
+        build needs a different uv than :data:`UV_VERSION`. Same keyed format as
+        ``python_version.txt`` (see :meth:`_parse_keyed_versions`).
+
+        Returns:
+            str: The resolved uv version string (e.g. ``"0.12.19"``).
+
+        Raises:
+            RuntimeError: If the file exists but cannot be read.
+            ValueError: If the file content is malformed.
+        """
+        version_file = self.setup_script.parent / "uv_version.txt"
+        if not version_file.exists():
+            return UV_VERSION
+        try:
+            content = version_file.read_text()
+        except Exception as e:
+            raise RuntimeError(f"Failed to read {version_file} for tool '{self.toolkit}': {e}") from e
+        platform_key = f"{platform.system().lower()}-{platform.machine()}"
+        return self._parse_keyed_versions(
+            content,
+            platform_key,
+            str(version_file),
+            file_name="uv_version.txt",
+            example=UV_VERSION,
+            validate=self._validate_uv_version,
+        )
 
     _HELPER_ARTIFACTS = frozenset({"standalone_helpers", "standalone_helpers.sh", "standalone_helpers.py"})
 
@@ -2182,7 +2276,7 @@ class ToolInstance:
             # falling back to the shared dir would mask migration mistakes.
             stray_env_def_files = [
                 name
-                for name in ("setup.sh", "requirements.txt", "python_version.txt", "env_vars.txt")
+                for name in ("setup.sh", "requirements.txt", "python_version.txt", "uv_version.txt", "env_vars.txt")
                 if (standalone_dir / name).is_file()
             ]
             if stray_env_def_files:
@@ -2224,7 +2318,7 @@ class ToolInstance:
         raise ValueError(f"No standalone script found for tool {toolkit!r}")
 
     def _setup_hash(self) -> str:
-        """Short SHA-256 of setup.sh + requirements.txt + env_vars.txt + python_version.txt for change detection."""
+        """Short SHA-256 of setup.sh, requirements.txt, env_vars.txt, and the version files for change detection."""
         h = hashlib.sha256()
         h.update(self.setup_script.read_bytes())
         req = self.setup_script.parent / "requirements.txt"
@@ -2240,6 +2334,12 @@ class ToolInstance:
             # platforms when keyed-form overrides are in use, even if the file
             # content is identical (matters when PROTO_HOME is on shared storage).
             h.update(self._get_python_version().encode())
+        # Only a tool-specific override rebuilds its env; bumping UV_VERSION does not, since uv
+        # runs only while an env is built and a finished env does not depend on it.
+        uv_version_file = self.setup_script.parent / "uv_version.txt"
+        if uv_version_file.exists():
+            h.update(uv_version_file.read_bytes())
+            h.update(self._get_uv_version().encode())
         return h.hexdigest()[:16]
 
     @staticmethod
@@ -2457,7 +2557,7 @@ class ToolInstance:
                     str(self.env_path),
                     f"python={python_version}",
                     "pip",
-                    "uv",
+                    f"uv={self._get_uv_version()}",
                     "-c",
                     "conda-forge",
                 ],

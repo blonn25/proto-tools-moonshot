@@ -82,6 +82,7 @@ proto_tools/tools/{category}/{toolkit}/
     setup.sh
     requirements.txt
     python_version.txt
+    uv_version.txt         # optional uv pin override (default: UV_VERSION)
     env_vars.txt           # optional environment passthrough/blocklist
 ```
 

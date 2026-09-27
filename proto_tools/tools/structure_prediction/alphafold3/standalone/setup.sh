@@ -63,9 +63,6 @@ See notes/storage.md for PROTO_MODEL_CACHE / PROTO_HOME rules.
 HINT
 )"
 
-echo "Installing uv package manager..."
-pip install uv
-
 AF3_VERSION="${ALPHAFOLD3_VERSION:-v3.0.2}"
 SIF_PATH="${VENV_PATH}/alphafold3.sif"
 

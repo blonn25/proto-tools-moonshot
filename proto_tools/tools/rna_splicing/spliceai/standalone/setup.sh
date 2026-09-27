@@ -4,9 +4,6 @@ source standalone_helpers.sh
 
 echo "Setting up SpliceAI standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 # TensorFlow 2.15 bundles Keras 2.15, which is required to load SpliceAI's bundled
 # .h5 models (Keras 3 in TF>=2.16 cannot). TF 2.15 wheels support Python 3.9-3.11
 # only (see python_version.txt). DETECTED_COMPUTE_PLATFORM is injected by

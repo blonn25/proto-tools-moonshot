@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up CodonFM standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 # CodonFM was published against torch 2.5.1; pin it so the vendored model matches upstream.
 # torch 2.5.1 has no cu126 wheel, so when the auto-detected torch index is cu126 (or newer) uv's
 # default first-index strategy can't find it. unsafe-best-match lets uv source torch 2.5.1 from

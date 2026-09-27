@@ -55,9 +55,6 @@ else
     exit 64
 fi
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Installing dependencies from requirements.txt..."
 uv pip install -r requirements.txt
 

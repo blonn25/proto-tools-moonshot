@@ -21,6 +21,7 @@ import pytest
 
 from proto_tools.utils.base_config import DEFAULT_TIMEOUT
 from proto_tools.utils.tool_instance import (
+    UV_VERSION,
     ToolInstance,
     _active_cache,
     _instances,
@@ -1344,9 +1345,11 @@ def test_failure_writes_status_and_raises(tmp_path: Path):
     inst.setup_script.write_text("#!/bin/bash\nexit 1\n")
     (tmp_path / "python_version.txt").write_text("default: 3.12\n")
     inst._tool_env_vars = {"passthrough": [], "set": [], "no_passthrough": []}
+    commands = []
 
     def _create_env_dir(*args, **kwargs):
         """Simulate 'python -m venv' creating the directory."""
+        commands.append(args[0])
         inst.env_path.mkdir(parents=True, exist_ok=True)
 
     with (
@@ -1376,6 +1379,7 @@ def test_failure_writes_status_and_raises(tmp_path: Path):
     assert status.startswith("FAILED")
     assert "42" in status
     assert "Setup hash:" in status
+    assert f"uv={UV_VERSION}" in commands[0], "every setup.sh relies on the env being created with pinned uv"
 
 
 def test_called_process_detail_decodes_stderr_then_stdout():
