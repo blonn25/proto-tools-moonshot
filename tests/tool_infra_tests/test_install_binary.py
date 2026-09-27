@@ -1,8 +1,7 @@
 """Tests for `proto_tools.utils.install_binary` retry and integrity logic."""
 
-import threading
+import io
 import urllib.error
-from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
@@ -10,23 +9,13 @@ import pytest
 from proto_tools.utils import install_binary
 
 
-def _serve(payload: bytes, advertised: int | None = None) -> tuple[HTTPServer, str]:
-    """Start a localhost server that advertises ``advertised`` bytes but writes ``payload``."""
-    length = advertised if advertised is not None else len(payload)
+class _Response(io.BytesIO):
+    """Minimal context-managed urllib response for socket-free stream tests."""
 
-    class _Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.send_response(200)
-            self.send_header("Content-Length", str(length))
-            self.end_headers()
-            self.wfile.write(payload)
-
-        def log_message(self, *_args, **_kwargs):
-            pass
-
-    server = HTTPServer(("127.0.0.1", 0), _Handler)
-    threading.Thread(target=server.serve_forever, daemon=True).start()
-    return server, f"http://127.0.0.1:{server.server_port}/file"
+    def __init__(self, payload: bytes, advertised: int | None = None) -> None:
+        super().__init__(payload)
+        length = advertised if advertised is not None else len(payload)
+        self.headers = {"Content-Length": str(length)}
 
 
 @pytest.fixture
@@ -43,26 +32,28 @@ def stub_platform(tmp_path, monkeypatch):
     return monkeypatch
 
 
-def test_download_raises_on_truncation(tmp_path):
-    """The CI failure shape: server advertises Content-Length=N but writes M<N → OSError so retry loop kicks in."""
-    server, url = _serve(b"x" * 100, advertised=10_000)
-    try:
-        with pytest.raises(OSError, match="truncated"):
-            install_binary._download_with_progress(url, tmp_path / "out.bin")
-    finally:
-        server.shutdown()
+def test_download_raises_on_truncation(tmp_path, monkeypatch):
+    """A response advertising N bytes but yielding M<N triggers the retryable integrity error."""
+    monkeypatch.setattr(
+        install_binary.urllib.request,
+        "urlopen",
+        lambda *_args, **_kwargs: _Response(b"x" * 100, advertised=10_000),
+    )
+    with pytest.raises(OSError, match="truncated"):
+        install_binary._download_with_progress("https://example.test/file", tmp_path / "out.bin")
 
 
-def test_download_writes_full_payload(tmp_path):
+def test_download_writes_full_payload(tmp_path, monkeypatch):
     """Happy path: full payload streams to disk and integrity check passes."""
     payload = b"x" * 4096
-    server, url = _serve(payload)
-    try:
-        dest = tmp_path / "out.bin"
-        install_binary._download_with_progress(url, dest)
-        assert dest.read_bytes() == payload
-    finally:
-        server.shutdown()
+    monkeypatch.setattr(
+        install_binary.urllib.request,
+        "urlopen",
+        lambda *_args, **_kwargs: _Response(payload),
+    )
+    dest = tmp_path / "out.bin"
+    install_binary._download_with_progress("https://example.test/file", dest)
+    assert dest.read_bytes() == payload
 
 
 def test_install_binary_retries_until_success(stub_platform):

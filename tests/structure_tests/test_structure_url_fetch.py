@@ -35,6 +35,14 @@ def no_requests(monkeypatch):
     monkeypatch.setattr(requests, "get", _forbidden)
 
 
+@pytest.fixture
+def public_dns(monkeypatch):
+    """Resolve mocked public URLs without depending on host DNS."""
+    import socket
+
+    monkeypatch.setattr(socket, "getaddrinfo", lambda host, port: [(2, 1, 6, "", ("93.184.216.34", 0))])
+
+
 @pytest.mark.parametrize("url", PRIVATE_URLS)
 def test_a_private_address_is_refused(url, no_requests):
     """Refused before the request, so nothing reaches the address even once."""
@@ -63,7 +71,7 @@ def test_an_unresolvable_host_is_refused(monkeypatch, no_requests):
         _fetch_structure_url("https://nonexistent.invalid/1abc.cif")
 
 
-def test_a_redirect_is_not_followed(monkeypatch):
+def test_a_redirect_is_not_followed(monkeypatch, public_dns):
     """The address check runs before the request, so a redirect would escape it.
 
     ``raise_for_status`` does not catch this on its own: a 3xx is not an error status.
@@ -94,7 +102,7 @@ def test_a_redirect_is_not_followed(monkeypatch):
     assert captured["allow_redirects"] is False, "requests follows redirects unless told not to"
 
 
-def test_a_public_url_still_fetches(monkeypatch):
+def test_a_public_url_still_fetches(monkeypatch, public_dns):
     """The guard must not break the ordinary case it exists to protect."""
     import requests
 

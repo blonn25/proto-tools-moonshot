@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 import pytest
 
+from proto_tools.entities.msa import MSA
 from proto_tools.entities.structures import Structure
 from proto_tools.tools.structure_dynamics.bioemu import (
     BioEmuConfig,
@@ -204,7 +205,11 @@ def test_config_cache_key_invariants():
 def test_all_frames_filtered_out_raises():
     """If every sampled frame is filtered out, run_bioemu fails loudly instead of returning an empty ensemble."""
     complex_ = Complex(chains=[{"sequence": _SAMPLE_SEQUENCE, "entity_type": "protein"}])
-    bioemu_input = BioEmuInput(complexes=[complex_])
+    msa = MSA(
+        aligned_sequences=[_SAMPLE_SEQUENCE, f"{_SAMPLE_SEQUENCE[:-1]}A"],
+        sequence_ids=["query", "hit"],
+    )
+    bioemu_input = BioEmuInput(complexes=[complex_], msas=[{0: msa}])
 
     with patch(
         "proto_tools.tools.structure_dynamics.bioemu.bioemu_sample.ToolInstance",
