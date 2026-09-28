@@ -117,8 +117,7 @@ class AlphaGenomePredictVariantsConfig(AlphaGenomePredictConfig):
         ontology_terms (list[str] | None): Optional ontology term filters.
         organism (Literal['human', 'mouse']): Organism for predictions.
         device (str): Device to run inference on.
-        timeout (int | None): Maximum execution time in seconds. AlphaGenome JAX
-            compilation is slow on first run. ``None`` waits indefinitely.
+        timeout (int | None): Maximum execution time in seconds. ``None`` waits indefinitely.
     """
 
 

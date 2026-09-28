@@ -52,7 +52,6 @@ from .oom import GpuOutOfMemoryError, is_cuda_oom, oom_guard, raise_oom, release
 # ``iterative_sampling`` is not re-exported: it imports torch at module level, so keeping it off the package init lets torch-less envs (CI) import this package. Standalones import the submodule directly.
 from .scoring import log_likelihood_metrics
 from .seeding import (
-    enable_jax_compilation_cache,
     get_random_int,
     set_jax_seed,
     set_torch_seed,
@@ -92,7 +91,6 @@ __all__ = [
     # scoring
     "log_likelihood_metrics",
     # seeding
-    "enable_jax_compilation_cache",
     "get_random_int",
     "set_jax_seed",
     "set_torch_seed",

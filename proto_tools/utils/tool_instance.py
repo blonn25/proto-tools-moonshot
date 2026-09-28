@@ -1316,6 +1316,7 @@ class ToolInstance:
                 device,
                 tool_env_path=self.env_path,
                 tool_env_vars=self._tool_env_vars,
+                toolkit=self.toolkit,
             )
             env["TOOL_VENV_PATH"] = str(self.env_path)
             python_exe = str(self.env_path / "bin" / "python")
@@ -2600,6 +2601,7 @@ class ToolInstance:
             self.device,
             tool_env_path=self.env_path,
             tool_env_vars=self._tool_env_vars,
+            toolkit=self.toolkit,
         )
 
         # Prepend foundation env bin/ so setup scripts always have access to

@@ -182,6 +182,7 @@ Each tool's `standalone/env_vars.txt` supports three sections:
 - `CONDA_PREFIX`: set to the **tool env path** (not the parent conda env) so uv/pip install into the correct environment
 - `VIRTUAL_ENV`: set to the **tool env path** for uv >=0.10 compatibility
 - `PATH`: `tool_env/bin` > `cuda/bin` (GPU) > parent PATH entries > system dirs
+- `JAX_COMPILATION_CACHE_DIR`: a per-toolkit directory beside the model weights, so JAX tools reuse compiled programs across processes (see [storage.md](storage.md#jax-compilation-cache)). A tool opts out with an empty `JAX_COMPILATION_CACHE_DIR=` under `[set]`
 - `LD_LIBRARY_PATH`: tool-specific `[set]` paths > parent `LD_LIBRARY_PATH` entries > `$CONDA_PREFIX/lib` (the latter two are skipped when `LD_LIBRARY_PATH` is in `[no_passthrough]`, in which case just the host's `libcuda.so.1` dir is appended)
 
 ## Foundation Environment (git, curl, make, cmake, pkg-config, gcc, g++)

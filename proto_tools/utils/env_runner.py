@@ -97,6 +97,7 @@ def run_in_env(
             run_device,
             tool_env_path=instance.env_path,
             tool_env_vars=instance._tool_env_vars,
+            toolkit=toolkit,
         )
         env["TOOL_VENV_PATH"] = str(instance.env_path)
         env["RUN_IN_ENV_DEVICE"] = run_device  # resolved device for the in-env program to use

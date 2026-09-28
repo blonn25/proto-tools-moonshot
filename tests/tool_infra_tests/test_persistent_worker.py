@@ -865,6 +865,72 @@ def test_uv_pip_cache_user_override_preserved(monkeypatch, tmp_path: Path):
     assert env["PIP_CACHE_DIR"] == "/custom/pip"
 
 
+@pytest.mark.parametrize(
+    "model_cache, expected",
+    [
+        (None, "{home}/proto_model_cache/jax_cache/mocktool"),
+        ("{tmp}/shared", "{tmp}/shared/jax_cache/mocktool"),
+        ("IN_ENV", "{tmp}/venv/jax_cache"),
+        ("NONE", None),
+    ],
+)
+def test_jax_compilation_cache_follows_model_cache(monkeypatch, tmp_path: Path, model_cache, expected):
+    """JAX_COMPILATION_CACHE_DIR sits beside the weights in every PROTO_MODEL_CACHE mode, and is off in NONE."""
+    home = tmp_path / "home"
+    monkeypatch.setenv("PROTO_HOME", str(home))
+    monkeypatch.delenv("JAX_COMPILATION_CACHE_DIR", raising=False)
+    monkeypatch.delenv("PROTO_JAX_COMPILATION_CACHE", raising=False)
+    if model_cache is None:
+        monkeypatch.delenv("PROTO_MODEL_CACHE", raising=False)
+    else:
+        monkeypatch.setenv("PROTO_MODEL_CACHE", model_cache.format(tmp=tmp_path))
+
+    env = _build_subprocess_env(device="cpu", tool_env_path=tmp_path / "venv", toolkit="mocktool")
+
+    if expected is None:
+        assert "JAX_COMPILATION_CACHE_DIR" not in env
+    else:
+        assert env["JAX_COMPILATION_CACHE_DIR"] == expected.format(home=home.resolve(), tmp=tmp_path)
+
+
+def test_jax_compilation_cache_user_override_preserved(monkeypatch, tmp_path: Path):
+    """A user-set JAX_COMPILATION_CACHE_DIR wins over the model-cache default."""
+    monkeypatch.setenv("PROTO_MODEL_CACHE", str(tmp_path))
+    monkeypatch.setenv("JAX_COMPILATION_CACHE_DIR", "/custom/jax")
+
+    env = _build_subprocess_env(device="cpu", toolkit="mocktool")
+
+    assert env["JAX_COMPILATION_CACHE_DIR"] == "/custom/jax"
+
+
+@pytest.mark.parametrize("opt_out, toolkit", [(True, "mocktool"), (False, None)])
+def test_jax_compilation_cache_off(monkeypatch, tmp_path: Path, opt_out, toolkit):
+    """PROTO_JAX_COMPILATION_CACHE=0, or no toolkit to name the directory, leaves the cache unset."""
+    monkeypatch.setenv("PROTO_MODEL_CACHE", str(tmp_path))
+    monkeypatch.delenv("JAX_COMPILATION_CACHE_DIR", raising=False)
+    if opt_out:
+        monkeypatch.setenv("PROTO_JAX_COMPILATION_CACHE", "0")
+    else:
+        monkeypatch.delenv("PROTO_JAX_COMPILATION_CACHE", raising=False)
+
+    env = _build_subprocess_env(device="cpu", toolkit=toolkit)
+
+    assert "JAX_COMPILATION_CACHE_DIR" not in env
+
+
+def test_jax_compilation_cache_tool_opt_out(monkeypatch, tmp_path: Path):
+    """An empty [set] JAX_COMPILATION_CACHE_DIR in env_vars.txt overrides the default; JAX reads empty as off."""
+    monkeypatch.setenv("PROTO_MODEL_CACHE", str(tmp_path))
+    monkeypatch.delenv("JAX_COMPILATION_CACHE_DIR", raising=False)
+    monkeypatch.delenv("PROTO_JAX_COMPILATION_CACHE", raising=False)
+    env_vars_file = tmp_path / "env_vars.txt"
+    env_vars_file.write_text("[set]\nJAX_COMPILATION_CACHE_DIR=\n")
+
+    env = _build_subprocess_env(device="cpu", tool_env_vars=_parse_env_vars_file(env_vars_file), toolkit="mocktool")
+
+    assert env["JAX_COMPILATION_CACHE_DIR"] == ""
+
+
 @pytest.mark.parametrize("device, expect_cuda", [("cpu", False), ("cuda", True)])
 def test_path_ordering(monkeypatch, tmp_path: Path, device, expect_cuda):
     """PATH: venv/bin > (cuda if GPU) > parent PATH > system dirs."""

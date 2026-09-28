@@ -55,9 +55,7 @@ def _ensure_jax_memory_compat() -> None:
 _ensure_jax_memory_compat()
 
 
-from standalone_helpers import _COMPRESS_MIN_SIZE, enable_jax_compilation_cache
-
-enable_jax_compilation_cache("alphagenome")
+from standalone_helpers import _COMPRESS_MIN_SIZE
 
 # Minimum center-mask widths required by the recommended scorers.
 # Interval scorers: RNA_SEQ GeneMaskScorer has width=200,001.
@@ -333,11 +331,11 @@ class AlphaGenomeModel:
     def to_device(self, device: str) -> None:
         """Move model to a different device.
 
-        AlphaGenome is GPU-only. CPU loading is not supported because the
-        model requires XLA compilation (10+ minutes) that would be wasted
-        on a device where inference is impractical. When asked to move to
-        CPU (e.g., LRU eviction), we unload the model to free GPU memory
-        but preserve the XLA compilation cache so reloading on GPU is fast.
+        AlphaGenome is GPU-only; CPU inference is impractical. When asked to
+        move to CPU (e.g., LRU eviction), the model is unloaded to free GPU
+        memory while its compiled programs stay in memory, so reloading on a
+        GPU skips compilation. A new worker process reads them from the
+        persistent JAX compilation cache instead.
 
         When called on an unloaded model (after CPU eviction), reloads on
         the target GPU device.

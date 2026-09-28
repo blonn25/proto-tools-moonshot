@@ -17,7 +17,7 @@ published name, `from standalone_helpers import ...`.
 - **`standalone_helpers/`** — Python package of helpers, split by concern:
   - `device.py` — subprocess device env, JAX device resolution, model/params device movement
   - `memory.py` — `get_pytorch_memory_stats`, `get_jax_memory_stats`
-  - `seeding.py` — `get_random_int`, `set_torch_seed`, `set_jax_seed`, `enable_jax_compilation_cache`
+  - `seeding.py` — `get_random_int`, `set_torch_seed`, `set_jax_seed`
   - `weights.py` — `resolve_weights_dir`
   - `compression.py` — `compress_array`, `is_compressed_array` (large-array IPC wire format)
   - `__init__.py` — re-exports every public name for backward compat

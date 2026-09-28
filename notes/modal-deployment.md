@@ -414,6 +414,24 @@ local-machine branch is guarded by `modal.is_local()`.
 Missing this is not loud. A build with no token still succeeds for ungated weights and fails
 only where a licence is required, which is how 34 of 35 warmups once ran without one.
 
+## JAX compilation cache
+
+A JAX tool compiles its model with XLA on first call, which for AlphaFold3 or AlphaGenome
+costs minutes, and a cold container starts with nothing compiled. `env_for()` sets
+`PROTO_MODEL_CACHE=/weights`, so the subprocess env places the persistent JAX cache at
+`/weights/jax_cache/{toolkit}/` on the shared volume (see
+[storage.md](storage.md#jax-compilation-cache)). Two consequences:
+
+- The deploy-time warmup's compile lands on the volume, and serving containers load it
+  instead of compiling.
+- A shape any container compiles at runtime is written back, so later containers skip it.
+  For a 300-residue AlphaFold3 input in a bucket nothing had compiled, the first cold
+  container took 165 s and the next cold container 76 s.
+
+The cache key includes the GPU type, and `GPU_DEFAULT` lets a container land on any of
+several, so each type compiles once on first use. Inspect or clear it with
+`modal volume ls proto-cache jax_cache/` and `modal volume rm -r proto-cache jax_cache/<toolkit>`.
+
 ## Spending
 
 Every deploy costs money before you run anything, because each build ends in a real

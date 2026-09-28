@@ -231,6 +231,8 @@ _BASE_PASSTHROUGH = {
     # uv/pip package caches: let user-set values override our defaults
     "UV_CACHE_DIR",
     "PIP_CACHE_DIR",
+    # JAX compilation cache: a user-set value overrides the model-cache default
+    "JAX_COMPILATION_CACHE_DIR",
     # Network proxy: tools download model weights and need proxy config
     "HTTP_PROXY",
     "HTTPS_PROXY",
@@ -387,12 +389,38 @@ def standalone_helpers_dir() -> Path:
     return _STANDALONE_HELPERS_DIR
 
 
+def _jax_compilation_cache_dir(toolkit: str, cache_mode: str, tool_env_path: Path | str | None) -> str | None:
+    """Return the directory for ``toolkit``'s persistent JAX compilation cache, or ``None`` to leave it off.
+
+    JAX reads ``JAX_COMPILATION_CACHE_DIR`` at import, so setting it on the subprocess env caches
+    compiled XLA executables for the worker and for any process it launches, such as AlphaFold3's
+    per-call ``run_alphafold.py``. Entries are keyed on the program, device kind, and JAX/XLA
+    versions, so a stale entry is a cache miss, never a wrong result. The cache follows
+    ``PROTO_MODEL_CACHE`` so it outlives env rebuilds and, on Modal, sits on the shared volume.
+
+    Args:
+        toolkit (str): Toolkit name, used as the cache subdirectory.
+        cache_mode (str): Resolved ``PROTO_MODEL_CACHE`` value: a directory, ``"IN_ENV"``, or ``"NONE"``.
+        tool_env_path (Path | str | None): The tool's venv, used by ``IN_ENV`` mode.
+
+    Returns:
+        str | None: The cache directory, or ``None`` when ``PROTO_JAX_COMPILATION_CACHE=0``,
+            ``PROTO_MODEL_CACHE=NONE``, or ``IN_ENV`` mode has no venv.
+    """
+    if os.environ.get("PROTO_JAX_COMPILATION_CACHE") == "0" or cache_mode == "NONE":
+        return None
+    if cache_mode == "IN_ENV":
+        return str(Path(tool_env_path) / "jax_cache") if tool_env_path else None
+    return str(Path(cache_mode) / "jax_cache" / toolkit)
+
+
 def _build_subprocess_env(
     device: str = "cpu",
     tool_env_path: Path | str | None = None,
     tool_env_vars: dict[str, list[str]] | None = None,
     env_overrides: dict[str, str] | None = None,
     pin_visible_devices: bool = False,
+    toolkit: str | None = None,
 ) -> dict[str, str]:
     """Build a clean env dict for subprocess execution.
 
@@ -413,6 +441,7 @@ def _build_subprocess_env(
             any caller that needs to override a specific variable for one
             worker subprocess.
         pin_visible_devices (bool): Restrict ``CUDA_VISIBLE_DEVICES`` to ``device``'s physical GPU(s) (local cuda:0..N-1) instead of the parent's value. For JAX tools.
+        toolkit (str | None): Toolkit the subprocess runs, which names its JAX compilation cache directory. ``None`` leaves the cache off.
     """
     from proto_tools.utils.system_info import capture_subprocess_env
 
@@ -516,6 +545,11 @@ def _build_subprocess_env(
         env["HF_HOME"] = str(cache_path / "huggingface")
         if tool_env_path:
             env["TORCH_HOME"] = str(cache_path / "torch")
+
+    if toolkit and "JAX_COMPILATION_CACHE_DIR" not in env:
+        jax_cache = _jax_compilation_cache_dir(toolkit, cache_mode, tool_env_path)
+        if jax_cache:
+            env["JAX_COMPILATION_CACHE_DIR"] = jax_cache
 
     # Inject compute environment detection (hardware-aware PyTorch/JAX specs)
     from proto_tools.utils.compute_deps import detect_compute_environment
@@ -721,6 +755,7 @@ class PersistentWorker:
             tool_env_vars=self.tool_env_vars,
             env_overrides=self._env_overrides,
             pin_visible_devices=self._pin_visible_devices,
+            toolkit=self.toolkit,
         )
         env["TOOL_VENV_PATH"] = str(self.env_path)
 
