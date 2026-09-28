@@ -12,6 +12,7 @@ APP_BUCKETS: dict[str, list[str]] = {
     # GPU services.
     "proto-tools-ablang": ["AbLangService"],
     "proto-tools-alphafold2": ["AlphaFold2Service"],
+    "proto-tools-alphafold3": ["AlphaFold3Service"],
     "proto-tools-alphagenome": ["AlphaGenomeService"],
     "proto-tools-bioemu": ["BioEmuService"],
     "proto-tools-boltz2": ["Boltz2Service"],
@@ -112,6 +113,7 @@ BATCH_TIER = "batch"
 SERVICE_TIERS: dict[str, str] = {
     "AbLangService": "long",
     "AlphaFold2Service": "long",
+    "AlphaFold3Service": "long",
     "AlphaGenomeService": "long",
     "BioEmuService": "extended",
     "Boltz2Service": "long",
@@ -227,6 +229,7 @@ GPU_SERVICES: frozenset[str] = frozenset(
     {
         "AbLangService",
         "AlphaFold2Service",
+        "AlphaFold3Service",
         "AlphaGenomeService",
         "BioEmuService",
         "Boltz2Service",
@@ -283,6 +286,7 @@ def runs_for_hours(service_class_name: str) -> bool:
 SERVICE_TO_MODULE: dict[str, str] = {
     "AbLangService": "proto_tools.modal.masked_models.ablang_deployment.ablang_service",
     "AlphaFold2Service": "proto_tools.modal.structure_prediction.alphafold2_deployment.alphafold2_service",
+    "AlphaFold3Service": "proto_tools.modal.structure_prediction.alphafold3_deployment.alphafold3_service",
     "AlphaGenomeService": "proto_tools.modal.sequence_scoring.alphagenome_deployment.alphagenome_service",
     "BioEmuService": "proto_tools.modal.structure_dynamics.bioemu_deployment.bioemu_service",
     "Boltz2Service": "proto_tools.modal.structure_prediction.boltz2_deployment.boltz2_service",

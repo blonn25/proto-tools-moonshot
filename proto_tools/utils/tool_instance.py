@@ -2370,9 +2370,9 @@ class ToolInstance:
 
     @staticmethod
     def _parse_asset_sentinel(output: str | None) -> tuple[str, str] | None:
-        """Detect the ``proto_resolve_asset_availability`` sentinel in output.
+        """Detect the asset-not-provisioned sentinel in output.
 
-        The shell helper prints
+        A tool's ``setup.sh`` prints
         ``[proto-tools] ASSET_NOT_AVAILABLE: <toolkit>:<asset_kind>`` to
         stderr and exits 64. Returns ``(toolkit, asset_kind)`` when
         present (any line — checks the whole output, not just the tail, so it
@@ -2656,7 +2656,7 @@ class ToolInstance:
             )
             self._build_failures[self.toolkit] = tail
 
-            # Asset-not-provisioned signalled by proto_resolve_asset_availability:
+            # Asset-not-provisioned signalled by the setup.sh sentinel:
             # raise the typed exception so the test layer converts it to a skip
             # instead of a hard failure.
             sentinel = self._parse_asset_sentinel(combined_output)

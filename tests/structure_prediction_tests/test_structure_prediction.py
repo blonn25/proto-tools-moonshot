@@ -6,8 +6,6 @@ Per-tool benchmarks (``benchmark_twice``-based cold/warm timings) live in the
 respective ``test_{toolkit}.py`` files alongside any tool-specific tests.
 """
 
-from pathlib import Path
-
 import pytest
 from pydantic import ValidationError
 
@@ -65,7 +63,6 @@ from proto_tools.tools.structure_prediction import (
     run_protenix,
     run_rf3_prediction,
 )
-from proto_tools.utils.standalone_helpers_source.standalone_helpers import resolve_weights_dir
 from proto_tools.utils.tool_cache import (
     ToolCache,
     _program_tool_cache,
@@ -92,29 +89,6 @@ _STRUCTURE_PREDICTORS = {
 }
 
 _FAST_PREDICTORS = ["esmfold"]
-
-
-def _missing_weights_skip_reason(predictor_name: str) -> str | None:
-    """Return a precise pytest skip reason if the predictor's weights are missing.
-
-    None means no skip needed. Currently only AlphaFold3 has gated weights
-    (DeepMind ToU, see proto_tools/tools/structure_prediction/alphafold3/README.md).
-    All other predictors pull public weights during setup.sh.
-    """
-    if predictor_name != "alphafold3":
-        return None
-    weights_dir = resolve_weights_dir("alphafold3")
-    if weights_dir is None:
-        return (
-            "AlphaFold3 weights dir could not be resolved "
-            "(set PROTO_ALPHAFOLD3_WEIGHTS_DIR or PROTO_MODEL_CACHE/PROTO_HOME)"
-        )
-    if not any(Path(weights_dir).glob("*.bin*")):
-        return (
-            f"AlphaFold3 weights (*.bin / *.bin.zst) not found in {weights_dir}. "
-            "Request access from DeepMind and set PROTO_ALPHAFOLD3_WEIGHTS_DIR."
-        )
-    return None
 
 
 # Short sequences used by batched-inference tests, kept at module level so they
@@ -223,7 +197,6 @@ def _generate_test_params() -> list:
             if not _is_compatible_input_for_test(complexes, input_class):
                 continue
 
-            skip_reason = _missing_weights_skip_reason(predictor_name)
             supports_msa = _supports_msa(config_class)
 
             # Generate MSA variants if supported
@@ -232,8 +205,6 @@ def _generate_test_params() -> list:
                     marks = []
                     if predictor_name not in _FAST_PREDICTORS:
                         marks.append(pytest.mark.slow)
-                    if skip_reason:
-                        marks.append(pytest.mark.skip(reason=skip_reason))
                     if msa_search_mode == "local":
                         marks.append(pytest.mark.extensive)
                         if uniref30_skip:
@@ -256,8 +227,6 @@ def _generate_test_params() -> list:
             marks = []
             if predictor_name not in _FAST_PREDICTORS:
                 marks.append(pytest.mark.slow)
-            if skip_reason:
-                marks.append(pytest.mark.skip(reason=skip_reason))
 
             params.append(
                 pytest.param(
@@ -778,23 +747,12 @@ def _build_test_complex(predictor_name: str) -> Complex:
 
 
 def _generate_supplied_msa_params() -> list:
-    """Cross-product (predictor x pairing-mode); skip AF3 variants when weights missing."""
-    params: list = []
-    for predictor_name in _SUPPLIED_MSA_PREDICTORS:
-        weights_skip = _missing_weights_skip_reason(predictor_name)
-        for paired in (False, True):
-            marks: list = []
-            if weights_skip:
-                marks.append(pytest.mark.skip(reason=weights_skip))
-            params.append(
-                pytest.param(
-                    predictor_name,
-                    paired,
-                    id=f"{predictor_name}-{'paired' if paired else 'unpaired'}",
-                    marks=tuple(marks) if marks else (),
-                )
-            )
-    return params
+    """Cross-product (predictor x pairing-mode)."""
+    return [
+        pytest.param(predictor_name, paired, id=f"{predictor_name}-{'paired' if paired else 'unpaired'}")
+        for predictor_name in _SUPPLIED_MSA_PREDICTORS
+        for paired in (False, True)
+    ]
 
 
 @pytest.mark.integration
@@ -823,7 +781,7 @@ def test_locally_searched_msa_drives_end_to_end_prediction(
     3. Asserts the prediction succeeds and produces a valid structure.
 
     Skips: missing mini DB (no MMseqs DB to search), missing GPU (each predictor
-    needs one), missing AlphaFold3 weights (DeepMind ToU-gated).
+    needs one).
     """
     run_func, input_class, config_class = _SUPPLIED_MSA_PREDICTORS[predictor_name]
 

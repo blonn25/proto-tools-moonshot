@@ -4,7 +4,6 @@ Tests for AlphaFold3.
 """
 
 import json
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -20,31 +19,9 @@ from proto_tools.tools.structure_prediction import (
     run_alphafold3,
 )
 from proto_tools.tools.structure_prediction.shared_data_models import ComplexMSAs
-from proto_tools.utils.standalone_helpers_source.standalone_helpers import resolve_weights_dir
 from tests.conftest import benchmark_twice
 from tests.structure_prediction_tests._fasta_helpers import load_benchmark_complex
 from tests.tool_infra_tests._metric_helpers import assert_metrics_in_spec
-
-
-def _alphafold3_weights_skip_reason() -> str | None:
-    """Return a skip reason if AlphaFold3 weights are missing, else None.
-
-    AlphaFold3 weights are gated under DeepMind's ToU and must be obtained
-    separately. See ``proto_tools/tools/structure_prediction/alphafold3/README.md``.
-    """
-    weights_dir = resolve_weights_dir("alphafold3")
-    if weights_dir is None:
-        return (
-            "AlphaFold3 weights dir could not be resolved "
-            "(set PROTO_ALPHAFOLD3_WEIGHTS_DIR or PROTO_MODEL_CACHE/PROTO_HOME)"
-        )
-    if not any(Path(weights_dir).glob("*.bin*")):
-        return (
-            f"AlphaFold3 weights (*.bin / *.bin.zst) not found in {weights_dir}. "
-            "Request access from DeepMind and set PROTO_ALPHAFOLD3_WEIGHTS_DIR."
-        )
-    return None
-
 
 # ── Module-level constants ────────────────────────────────────────────────────
 
@@ -320,7 +297,6 @@ def test_af3_accepts_ligands_collection_expanded(mock_af3_inference):
 @pytest.mark.benchmark("alphafold3-prediction")
 @pytest.mark.slow
 @pytest.mark.uses_gpu
-@pytest.mark.skipif(_alphafold3_weights_skip_reason() is not None, reason=_alphafold3_weights_skip_reason() or "")
 def test_alphafold3_benchmark(request):
     """Benchmark alphafold3-prediction on the MfnG protein + L-tyrosine ligand (cold + warm).
 

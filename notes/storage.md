@@ -123,6 +123,5 @@ wget -q -O "$WEIGHTS_DIR/model.pt" "https://example.com/model.pt"
 ## Exceptions
 
 - **ProteinMPNN**: Weights (~150 MB) live inside pip-installed ColabDesign. Inherently venv-local.
-- **AlphaFold3**: User-provided paths (`model_dir`, `db_dir`, `sif_path`). Not managed by `PROTO_MODEL_CACHE`.
 <!-- docs:ignore end -->
 

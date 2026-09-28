@@ -109,8 +109,7 @@ class ToolExecutionError(Exception):
 class MissingAssetError(ToolExecutionError):
     """Raised when a tool's required external asset isn't provisioned on disk.
 
-    Signalled by a tool's setup script via the ``proto_resolve_asset_availability``
-    helper (``standalone_helpers.sh``), which emits a
+    Signalled by a tool's setup script, which emits a
     ``[proto-tools] ASSET_NOT_AVAILABLE: <toolkit>:<asset_kind>`` sentinel and
     exits 64. ``ToolInstance`` recognises that sentinel and raises this
     exception in place of a generic ``RuntimeError`` so the test layer can

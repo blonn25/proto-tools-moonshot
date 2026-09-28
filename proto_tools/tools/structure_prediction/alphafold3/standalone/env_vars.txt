@@ -7,17 +7,27 @@
 # Compute detection (RECOMMENDED_JAX_SPEC, etc.) is injected automatically.
 # Weights are resolved at runtime via PROTO_ALPHAFOLD3_WEIGHTS_DIR /
 # PROTO_MODEL_CACHE / PROTO_HOME; PROTO_HOME and PROTO_MODEL_CACHE are
-# forwarded automatically by persistent_worker.py.
+# forwarded automatically by persistent_worker.py. setup.sh downloads
+# af3.bin.zst into that same resolved directory at env-build time.
 
 [passthrough]
-# Per-tool weights override (lets users point at an external DeepMind-licensed weights dir)
+# Per-tool weights override (lets users point at an existing weights dir, e.g. a
+# shared copy on lab storage; setup.sh then skips the download)
 PROTO_ALPHAFOLD3_WEIGHTS_DIR
 # Per-tool sif override (lets users point at a pre-built sif, e.g. on shared lab storage —
 # setup.sh symlinks it into the venv and skips the full env build).
 PROTO_ALPHAFOLD3_SIF_PATH
+# Forces (1) or disables (0) the sif install path instead of autodetecting it. The Modal
+# deployment sets 0, since a container cannot run apptainer.
+ALPHAFOLD3_BUILD_SIF
 
 [set]
-# CUDA libs for JAX (installed via proto_install_cuda_toolkit in setup.sh)
-LD_LIBRARY_PATH=${VENV_PATH}/cuda_env/lib
 # CUDA_ROOT points JAX at ptxas/nvcc from the toolkit
 CUDA_ROOT=${VENV_PATH}/cuda_env
+
+[no_passthrough]
+# JAX's pip CUDA wheels find each other through RUNPATH, which any LD_LIBRARY_PATH entry
+# overrides. cuda_env's libraries match the host driver's CUDA version, not the wheels, so
+# on a CUDA 13 host (Modal) its 12.8 libnvJitLink shadowed the 12.9 one libcusparse needs
+# and JAX fell back to CPU. Same as AlphaFold2 and ProteinMPNN.
+LD_LIBRARY_PATH

@@ -104,6 +104,13 @@ ToolRegistry.get_example_notebook_path("esm2-embedding")
 
 Check access before dispatching tools that load model weights.
 
+`"open"` describes how the weights are *obtained*, not how they may be *used*.
+A tool can download its weights with no gate and still carry restrictive terms —
+`alphafold3` fetches its parameters from a public Google URL but its weights
+license bars commercial use and redistribution. For usage rights read
+`get_license()` (`commercial_use`, `redistribution`, `weights.text`), not
+`get_weights_access()`.
+
 ## Calling a Tool
 
 Every registered tool follows the same shape, where the `Input` and `Config` together feed the `run_*()` call that produces an `Output`:

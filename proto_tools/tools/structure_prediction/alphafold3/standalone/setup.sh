@@ -16,9 +16,12 @@
 # ALPHAFOLD3_BUILD_SIF={1,0,auto} forces / disables / autodetects respectively.
 #
 # At runtime, inference.py prefers whichever path is present: if
-# $VENV_PATH/alphafold3.sif exists (or the tool config sets sif_path), it uses
-# `apptainer run` (dispatching through the sif's %runscript); otherwise it uses
-# the in-env Python install.
+# $VENV_PATH/alphafold3.sif exists (or the tool config sets sif_path), it runs
+# run_alphafold.py inside the image via `apptainer exec`; otherwise it uses the
+# in-env Python install.
+#
+# Both paths share the same model parameters, downloaded up front from the URL
+# DeepMind publishes them at.
 #
 # MSAs are supplied by the caller via the input JSON (proto_tools delegates
 # MSA generation to mmseqs2-homology-search), so at runtime we pass
@@ -29,41 +32,37 @@ source standalone_helpers.sh
 
 echo "Setting up AlphaFold3 standalone environment..."
 
-# ─── Fail-fast weights precheck ─────────────────────────────────────────────
-# Both install paths need DeepMind-licensed weights, so validate up front
-# (subseconds) before any heavy work (~30 min env build, ~1 min sif build).
-# AF3 weights are gated under DeepMind's Terms of Use — request access via
-# the linked form, wait for approval, and place ``af3.bin`` (or
-# ``af3.bin.zst``) into the resolved directory (or set
-# PROTO_ALPHAFOLD3_WEIGHTS_DIR).
-#
-# Setup-time resolution sees only env-var / default-cache paths; at runtime
-# inference.py honours a config-supplied model_dir on top of this (config
-# wins). Users supplying weights via config should also point
-# PROTO_ALPHAFOLD3_WEIGHTS_DIR at that directory so this check sees them.
-#
-# On failure the helper emits the ``[proto-tools] ASSET_NOT_AVAILABLE``
-# sentinel that the test layer converts into a skip rather than a failure.
-# The hint inlines DeepMind's specific request-and-wait flow so users see
-# the full provisioning steps in either failure banner.
-proto_resolve_asset_availability alphafold3 "*.bin*" \
-    "https://github.com/google-deepmind/alphafold3#obtaining-model-parameters" \
-    weights \
-    "$(cat <<'HINT'
-AlphaFold3 weights are gated by DeepMind's Terms of Use and are NOT
-automatically downloaded. To obtain access:
+# Download the model parameters (~1 GB) before either install path, so a
+# network or disk failure surfaces in seconds rather than after a ~30 min build.
+# Kept zstd-compressed because AF3's params loader reads *.bin.zst directly, so
+# decompressing would only cost ~3 GB of disk. The weights license permits
+# neither commercial use nor redistribution, hence the terms notice below.
+proto_resolve_weights_dir alphafold3
+AF3_WEIGHTS_URL="https://storage.googleapis.com/alphafold3/af3.bin.zst"
+if compgen -G "$WEIGHTS_DIR/*.bin*" >/dev/null; then
+  echo "[af3] Model parameters already present in $WEIGHTS_DIR — skipping download"
+else
+  echo "[af3] Downloading AlphaFold3 model parameters (~1 GB) to $WEIGHTS_DIR ..."
+  echo "[af3] Subject to DeepMind's AlphaFold 3 Model Parameters Terms of Use"
+  echo "[af3] (non-commercial organizations only; redistribution prohibited):"
+  echo "[af3]   https://github.com/google-deepmind/alphafold3/blob/main/WEIGHTS_TERMS_OF_USE.md"
+  # Stage under a dot-prefixed name so an interrupted transfer cannot leave a
+  # truncated af3.bin.zst that the *.bin* checks here and in inference.py would
+  # both read as provisioned.
+  AF3_WEIGHTS_TMP="${WEIGHTS_DIR}/.af3.bin.zst.partial"
+  rm -f "$AF3_WEIGHTS_TMP"
+  if ! curl -fsSL --retry 3 --retry-delay 5 -o "$AF3_WEIGHTS_TMP" "$AF3_WEIGHTS_URL"; then
+    rm -f "$AF3_WEIGHTS_TMP"
+    echo "[af3] ERROR: failed to download AlphaFold3 parameters from $AF3_WEIGHTS_URL" >&2
+    echo "[af3] Place af3.bin / af3.bin.zst in $WEIGHTS_DIR yourself, or point" >&2
+    echo "[af3] PROTO_ALPHAFOLD3_WEIGHTS_DIR at an existing copy." >&2
+    exit 1
+  fi
+  mv "$AF3_WEIGHTS_TMP" "${WEIGHTS_DIR}/af3.bin.zst"
+  echo "[af3] Model parameters downloaded to ${WEIGHTS_DIR}/af3.bin.zst"
+fi
 
-  1. Request access via DeepMind's form (link above).
-  2. After approval (2-3 business days), download the weights archive
-     from the link DeepMind emails you.
-  3. Place af3.bin (or af3.bin.zst) in the resolved directory above,
-     OR point PROTO_ALPHAFOLD3_WEIGHTS_DIR at the directory containing it.
-
-See notes/storage.md for PROTO_MODEL_CACHE / PROTO_HOME rules.
-HINT
-)"
-
-AF3_VERSION="${ALPHAFOLD3_VERSION:-v3.0.2}"
+AF3_VERSION="v3.0.2"
 SIF_PATH="${VENV_PATH}/alphafold3.sif"
 
 # ─── BYO sif via PROTO_ALPHAFOLD3_SIF_PATH ──────────────────────────────────

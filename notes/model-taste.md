@@ -129,7 +129,7 @@ Always use multiple structural validators when final ranking depends on complex 
 
 Use AlphaFold2 when the problem is protein-only and the target validator, reference workflow, or local tooling is AF2-like. Use AF2-multimer for protein-protein complexes and inspect interface metrics rather than monomer confidence. Use `alphafold2-gradient` as a differentiable loss or scoring component for a custom optimization loop; it is not by itself a complete candidate-generation campaign.
 
-Use AlphaFold3 when broad biomolecular cofolding is available and accessible, especially for complexes with DNA, RNA, ligands, modified residues, or multiple entity types. Treat gated weights, runtime, and input-format support as practical constraints that must be checked before planning around it.
+Use AlphaFold3 for broad biomolecular cofolding, especially for complexes with DNA, RNA, ligands, modified residues, or multiple entity types.
 
 Use Boltz-2 when an open AlphaFold3-style predictor is needed for protein, DNA, RNA, or ligand complexes. Prefer it for final validation over monomer-only tools when interface placement or ligand pose matters. Boltz-2 exposes structure prediction and confidence metrics as well as `boltz2-affinity` for protein-small-molecule ligand affinity. Use affinity metrics only for ligand binders, not protein-protein binders; lower `affinity_pred_value` means stronger predicted binding, while `affinity_probability_binary` is a separate binder-probability signal. Increase diffusion samples, sampling steps, or recycling for final validation when compute allows.
 
