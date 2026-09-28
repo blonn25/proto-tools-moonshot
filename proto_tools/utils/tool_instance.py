@@ -94,6 +94,9 @@ MAX_ENV_PREFIX_LEN = 255
 # uv installed into every tool env at creation.
 UV_VERSION = "0.12.19"
 
+# Seconds to wait for another process to finish building the same env.
+ENV_BUILD_LOCK_TIMEOUT = 60 * 60
+
 # ============================================================================
 # Singleton registry
 # ============================================================================
@@ -779,11 +782,11 @@ class ToolInstance:
 
         show_first_run_notice()
 
-        # Serialize builds per env_name so concurrent calls for the same env (incl. shared envs) don't race micromamba create.
+        # Serialize builds for a physical environment across threads and processes.
         with _lock:
             if self.env_name not in self._env_build_locks:
                 self._env_build_locks[self.env_name] = threading.Lock()
-        with self._env_build_locks[self.env_name]:
+        with self._env_build_locks[self.env_name], self._env_build_process_lock():
             # Re-check under the build lock in case the race winner already recorded a failure.
             if self.toolkit in self._build_failures:
                 tail = self._build_failures[self.toolkit]
@@ -838,6 +841,30 @@ class ToolInstance:
                         self._build_failures[self.toolkit] = str(exc)
                     raise
         self._env_ready = True
+
+    @contextmanager
+    def _env_build_process_lock(self) -> Generator[None, None, None]:
+        """Hold the lock that serializes building this env across processes sharing ``PROTO_HOME``.
+
+        The lock file sits beside the env rather than inside it, because a rebuild deletes the env
+        directory. Logs when another process holds the lock, so a long wait does not look like a hang.
+
+        Raises:
+            filelock.Timeout: If the other process holds the lock past :data:`ENV_BUILD_LOCK_TIMEOUT`.
+        """
+        from filelock import FileLock, Timeout
+
+        self.env_path.parent.mkdir(parents=True, exist_ok=True)
+        lock = FileLock(self.env_path.parent / f".{self.env_path.name}.build.lock")
+        try:
+            lock.acquire(timeout=0)
+        except Timeout:
+            logger.info("Another process is building the %s environment; waiting for it to finish.", self.env_name)
+            lock.acquire(timeout=ENV_BUILD_LOCK_TIMEOUT)
+        try:
+            yield
+        finally:
+            lock.release()
 
     # ------------------------------------------------------------------
     # Public API

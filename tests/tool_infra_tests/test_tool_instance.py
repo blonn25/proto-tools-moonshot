@@ -2583,3 +2583,50 @@ def test_concurrent_builds_for_same_env_are_serialized():
                 future.result()
 
     assert max_active == 1, f"_create_env ran concurrently (max_active={max_active})"
+
+
+def test_env_build_waits_for_another_process_and_reuses_its_env(tmp_path: Path, caplog):
+    """A process that finds another mid-build waits for it, then reuses the env instead of rebuilding.
+
+    The other process holds the real lock file while it "builds" (writes STATUS.txt). Without the
+    cross-process lock, _ensure_env would see no env yet and call _create_env.
+    """
+    inst = _make_fake_instance(_tmp_dir=tmp_path / "shared_env")
+    inst._env_ready = False
+    holder = subprocess.Popen(
+        [
+            sys.executable,
+            "-c",
+            textwrap.dedent(
+                f"""
+                import time
+                from pathlib import Path
+                from filelock import FileLock
+
+                with FileLock({str(tmp_path / ".shared_env.build.lock")!r}):
+                    print("locked", flush=True)
+                    time.sleep(0.5)
+                    env = Path({str(inst.env_path)!r})
+                    env.mkdir()
+                    (env / "STATUS.txt").write_text("SUCCESS")
+                """
+            ),
+        ],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    assert holder.stdout is not None
+    assert holder.stdout.readline().strip() == "locked"
+
+    with (
+        patch.object(inst, "_is_env_ok", side_effect=(inst.env_path / "STATUS.txt").exists),
+        patch.object(inst, "_create_env") as mock_create,
+        patch("proto_tools.utils.proto_home.show_first_run_notice"),
+        caplog.at_level(logging.INFO, logger="proto_tools.utils.tool_instance"),
+    ):
+        inst._ensure_env()
+
+    assert holder.wait(timeout=10) == 0
+    mock_create.assert_not_called()
+    assert inst._env_ready is True
+    assert "Another process is building the esm2 environment" in caplog.text

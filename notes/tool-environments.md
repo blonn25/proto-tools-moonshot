@@ -333,7 +333,11 @@ proto_tools/
 - A `shared_env.txt` pointing to a non-existent shared env raises with a clear error at dispatch time.
 - An empty `shared_env.txt` raises.
 
-**Concurrency:** Existing setup-lock at `<env_path>/.setup.lock` serializes concurrent setup attempts from different tools.
+**Concurrency:** Before checking or rebuilding an environment, `ToolInstance`
+takes a lock file beside it (`.<env dir name>.build.lock`), shared by every tool
+that uses the environment and every process using the same `PROTO_HOME`. A
+process that finds the lock held logs that it is waiting, then rechecks the
+environment once it gets the lock and reuses the finished build.
 
 **When to use a shared env:**
 
