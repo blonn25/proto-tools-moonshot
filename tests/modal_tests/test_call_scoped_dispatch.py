@@ -204,9 +204,9 @@ def test_batch_dispatch_matches_the_single_path(probe):
 
 
 def test_ambient_environment_is_still_honoured(probe, monkeypatch):
-    """proto-tools-api pins itself by publishing MODAL_ENVIRONMENT; that must keep working.
+    """A host process pins itself by publishing MODAL_ENVIRONMENT; that must keep working.
 
-    It sets the variable at startup and relies on proto-tools reading it. Deleting the write was
+    The host sets the variable at startup and relies on proto-tools reading it. Deleting the write was
     safe; deleting the read would silently send its traffic to proto-tools' own default.
     """
     monkeypatch.setenv("MODAL_ENVIRONMENT", "staging")

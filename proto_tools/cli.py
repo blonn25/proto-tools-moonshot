@@ -1,14 +1,15 @@
-"""Command-line entry point for proto-tools discovery + structured docs.
+"""Command-line entry point for proto-tools discovery, docs, and runs.
 
 Reachable as the ``proto-tools`` shell command after ``pip install``, or as
-``python -m proto_tools`` without one. Every verb maps one-to-one to a
-``ToolRegistry`` classmethod so the CLI surface stays in sync with the
-in-process API.
+``python -m proto_tools`` without one.
 
-Defaults to human-readable text output (so a developer can pipe a tool's
-docs into ``less`` without parsing JSON). Every verb that returns structured
-data accepts ``--json`` for machine-readable output suitable for agents or
-MCP servers calling the CLI via subprocess.
+The verbs ``list``, ``search``, ``schema``, ``example``, ``info``, ``run`` and
+``workspace`` mirror the MCP server's tools and call the same functions in
+:mod:`proto_tools.mcp.tools`, so an agent gets identical answers whichever
+surface it uses. Their JSON output is the MCP payload, and a payload with
+``ok: false`` exits 1. The remaining verbs are developer docs views over
+``ToolRegistry``; they default to human-readable text and accept ``--json``
+where they return structured data.
 """
 
 from __future__ import annotations
@@ -23,6 +24,8 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from proto_tools.mcp import tools as impl
+from proto_tools.mcp.device import DeviceUnavailableError, resolve_device
 from proto_tools.tools.tool_registry import ToolRegistry, ToolSpec
 from proto_tools.utils.tool_instance import ToolInstance
 
@@ -52,34 +55,112 @@ def _dump_json(value: Any) -> str:
     return json.dumps(value, indent=2, default=str)
 
 
+def _summary_line(key: str, category: str, uses_gpu: bool, description: str) -> str:
+    """One-line text summary of a tool for list-style output."""
+    gpu = " (GPU)" if uses_gpu else ""
+    return f"{key:40s}  [{category}]{gpu}  {description}"
+
+
 def _spec_summary(spec: ToolSpec) -> str:
     """One-line text summary of a ToolSpec for list-style output."""
-    gpu = " (GPU)" if spec.uses_gpu else ""
-    return f"{spec.key:40s}  [{spec.category}]{gpu}  {spec.description}"
+    return _summary_line(spec.key, spec.category, spec.uses_gpu, spec.description)
+
+
+def _emit(payload: dict[str, Any] | None) -> int:
+    """Print an MCP payload as JSON, exiting 1 when it reports a failure."""
+    print(_dump_json(payload))
+    return 1 if payload and payload.get("ok") is False else 0
+
+
+def _json_arg(value: str | None) -> dict[str, Any] | None:
+    """Parse a ``--inputs``/``--config`` value: inline JSON, or ``@path`` to a JSON file."""
+    if value is None:
+        return None
+    text = Path(value[1:]).read_text() if value.startswith("@") else value
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"not valid JSON: {exc}") from exc
+    if not isinstance(parsed, dict):
+        raise ValueError(f"expected a JSON object, got {type(parsed).__name__}")
+    return parsed
 
 
 # =============================================================================
-# Verb handlers
+# Verbs mirroring the MCP tools
 # =============================================================================
 
 
 def _cmd_list(args: argparse.Namespace) -> int:
-    """``proto-tools list [--category C] [--gpu] [--cpu]``."""
-    if args.category:
-        specs = ToolRegistry.list_by_category(args.category)
-    elif args.gpu:
-        specs = sorted(ToolRegistry.list_gpu_tools(), key=lambda s: s.key)
-    elif args.cpu:
-        specs = sorted(ToolRegistry.list_cpu_tools(), key=lambda s: s.key)
-    else:
-        specs = sorted(ToolRegistry.list_all(), key=lambda s: s.key)
-
-    if args.json:
-        print(_dump_json(specs))
-    else:
-        for spec in specs:
-            print(_spec_summary(spec))
+    """``proto-tools list [--category C] [--device D] [--all]``: MCP ``list_tools``."""
+    payload = impl.catalogue(deployed_only=not args.all, category=args.category, device=resolve_device(args.device))
+    if args.json or payload.get("ok") is False:
+        return _emit(payload)
+    for entry in payload["tools"]:
+        print(_summary_line(entry["tool_key"], entry["category"], entry["uses_gpu"], entry["summary"]))
     return 0
+
+
+def _cmd_search(args: argparse.Namespace) -> int:
+    """``proto-tools search <query> [--limit N] [--device D] [--all]``: MCP ``search_tools``."""
+    payload = impl.search_tools(
+        args.query, deployed_only=not args.all, limit=args.limit, device=resolve_device(args.device)
+    )
+    if args.json:
+        return _emit(payload)
+    for entry in payload["tools"]:
+        line = _summary_line(entry["tool_key"], entry["category"], entry["uses_gpu"], entry["summary"])
+        print(f"{entry['score']:3d}  {line}")
+    if "hint" in payload:
+        print(payload["hint"], file=sys.stderr)
+    return 0
+
+
+def _cmd_schema(args: argparse.Namespace) -> int:
+    """``proto-tools schema <tool>``: MCP ``get_tool_schema``."""
+    return _emit(impl.get_tool_schema(args.tool))
+
+
+def _cmd_example(args: argparse.Namespace) -> int:
+    """``proto-tools example <tool> [--as-python]``: MCP ``get_tool_example``."""
+    payload = impl.get_tool_example(args.tool)
+    if payload is None:
+        print(f"No example input defined for '{args.tool}'.", file=sys.stderr)
+        return 1
+    example = ToolRegistry.get_example_input(args.tool) if args.as_python and payload.get("ok") is not False else None
+    if example is None:
+        return _emit(payload)
+    print(_render_example_as_python(ToolRegistry.get(args.tool), example), end="")
+    return 0
+
+
+def _cmd_info(args: argparse.Namespace) -> int:
+    """``proto-tools info <tool>``: MCP ``get_tool_info``."""
+    return _emit(impl.get_tool_info(args.tool))
+
+
+def _cmd_run(args: argparse.Namespace) -> int:
+    """``proto-tools run <tool> [--inputs ...] [--config ...] [--example]``: MCP ``run_tool``."""
+    return _emit(
+        impl.run_tool(
+            args.tool,
+            inputs=_json_arg(args.inputs),
+            config=_json_arg(args.config),
+            output_dir=args.output_dir,
+            use_example=args.example,
+            device=resolve_device(args.device),
+        )
+    )
+
+
+def _cmd_workspace(args: argparse.Namespace) -> int:
+    """``proto-tools workspace [--device D]``: MCP ``workspace_info``."""
+    return _emit(impl.workspace_info(resolve_device(args.device)))
+
+
+# =============================================================================
+# Developer docs verbs
+# =============================================================================
 
 
 def _cmd_categories(args: argparse.Namespace) -> int:
@@ -216,20 +297,6 @@ def _cmd_model_doc(args: argparse.Namespace, kind: str) -> int:
     return 0
 
 
-def _cmd_schema(args: argparse.Namespace) -> int:
-    """``proto-tools schema <tool> [--input|--config|--output]``."""
-    if args.input:
-        payload = ToolRegistry.get_input_schema(args.tool)
-    elif args.config:
-        payload = ToolRegistry.get_config_schema(args.tool)
-    elif args.output:
-        payload = ToolRegistry.get_output_schema(args.tool)
-    else:
-        payload = ToolRegistry.get_schemas(args.tool)
-    print(json.dumps(payload, indent=2, default=str))
-    return 0
-
-
 def _signature_payload(spec: ToolSpec) -> dict[str, Any]:
     """Collect the symbol names and import modules that make up a tool's call surface."""
     return {
@@ -252,7 +319,7 @@ def _render_signature(spec: ToolSpec) -> str:
     """Render a tool's call surface: imports, symbol names, and required input fields.
 
     Everything here is fixed-size, so surveying tools costs the same whether the tool
-    takes a peptide or a 524,288 bp window. ``example-input`` carries real values and
+    takes a peptide or a 524,288 bp window. ``example --as-python`` carries real values and
     scales with them; this does not, which is what makes it the cheap discovery path.
 
     ``Output`` is named but not imported: callers never construct one, so importing it
@@ -340,89 +407,13 @@ def _render_example_as_python(spec: ToolSpec, example: BaseModel) -> str:
     return f"{imports}\n\n{call}{hint}\n"
 
 
-def _cmd_example_input(args: argparse.Namespace) -> int:
-    """``proto-tools example-input <tool> [--as-python]``."""
-    example = ToolRegistry.get_example_input(args.tool)
-    if example is None:
-        print(f"No example input defined for '{args.tool}'.", file=sys.stderr)
-        return 1
-    if args.as_python:
-        print(_render_example_as_python(ToolRegistry.get(args.tool), example), end="")
-        return 0
-    print(_dump_json(example))
-    return 0
-
-
-def _cmd_example(args: argparse.Namespace) -> int:
-    """``proto-tools example <tool>``."""
+def _cmd_notebook(args: argparse.Namespace) -> int:
+    """``proto-tools notebook <tool>``."""
     rendered = ToolRegistry.get_example_notebook(args.tool)
     if rendered is None:
         print(f"No example notebook found for '{args.tool}'.", file=sys.stderr)
         return 1
     print(rendered, end="")
-    return 0
-
-
-def _cmd_citation(args: argparse.Namespace) -> int:
-    """``proto-tools citation <tool>``."""
-    cite = ToolRegistry.get_citation(args.tool)
-    if cite is None:
-        print(f"No citation registered for '{args.tool}'.", file=sys.stderr)
-        return 1
-    print(cite)
-    return 0
-
-
-def _cmd_links(args: argparse.Namespace) -> int:
-    """``proto-tools links <tool>``."""
-    links = ToolRegistry.get_links(args.tool)
-    if links is None:
-        print(f"No links registered for '{args.tool}'.", file=sys.stderr)
-        return 1
-    if args.json:
-        print(_dump_json(links))
-    else:
-        for k, value in links.items():
-            # links.yaml values may be str or list at runtime; widen for the list branch.
-            v: object = value
-            display = ", ".join(v) if isinstance(v, list) else str(v)
-            print(f"{k:16s}  {display}")
-    return 0
-
-
-def _cmd_license(args: argparse.Namespace) -> int:
-    """``proto-tools license <tool>``."""
-    lic = ToolRegistry.get_license(args.tool)
-    if lic is None:
-        print(f"No license registered for '{args.tool}'.", file=sys.stderr)
-        return 1
-    print(_dump_json(lic))
-    return 0
-
-
-def _cmd_access(args: argparse.Namespace) -> int:
-    """``proto-tools access <tool>`` — open | hf-gated | request."""
-    print(ToolRegistry.get_weights_access(args.tool))
-    return 0
-
-
-def _cmd_doi(args: argparse.Namespace) -> int:
-    """``proto-tools doi <tool>``."""
-    doi = ToolRegistry.get_doi(args.tool)
-    if doi is None:
-        print(f"No DOI registered for '{args.tool}'.", file=sys.stderr)
-        return 1
-    print(doi)
-    return 0
-
-
-def _cmd_url(args: argparse.Namespace) -> int:
-    """``proto-tools url <tool>``."""
-    url = ToolRegistry.get_docs_url(args.tool)
-    if url is None:
-        print(f"No docs URL resolvable for '{args.tool}'.", file=sys.stderr)
-        return 1
-    print(url)
     return 0
 
 
@@ -624,13 +615,21 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="proto-tools",
-        description="Discover and inspect proto-tools registered tools. "
-        "Every verb maps to a `ToolRegistry` classmethod; pass --json on "
-        "verbs that return structured data for machine-readable output.",
+        description="Discover, inspect and run proto-tools registered tools. "
+        "list, search, schema, example, info, run and workspace mirror the MCP "
+        "server's tools and print the same payloads.",
         epilog="Coding agents: run `proto-tools agent-context` first for a usage primer.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     sub = parser.add_subparsers(dest="verb", required=True)
+
+    def add_device(p: argparse.ArgumentParser) -> None:
+        p.add_argument(
+            "--device",
+            choices=("local", "modal", "proto"),
+            default="local",
+            help="Backend to answer for: this machine (default), your Modal workspace, or Proto.",
+        )
 
     p_agent = sub.add_parser(
         "agent-context",
@@ -638,13 +637,52 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     p_agent.set_defaults(func=_cmd_agent_context)
 
-    p_list = sub.add_parser("list", help="List registered tools.")
-    filt = p_list.add_mutually_exclusive_group()
-    filt.add_argument("--category", help="Filter to a category, e.g. 'masked_models'.")
-    filt.add_argument("--gpu", action="store_true", help="Only tools that require a GPU.")
-    filt.add_argument("--cpu", action="store_true", help="Only tools that do not require a GPU.")
-    p_list.add_argument("--json", action="store_true", help="Emit JSON instead of text.")
+    p_list = sub.add_parser("list", help="List tools that can run on the device (MCP list_tools).")
+    p_list.add_argument("--category", help="Filter to a category, e.g. 'masked_models'.")
+    p_list.add_argument("--all", action="store_true", help="Include tools the device cannot run yet.")
+    add_device(p_list)
+    p_list.add_argument("--json", action="store_true", help="Emit the MCP payload instead of text.")
     p_list.set_defaults(func=_cmd_list)
+
+    p_search = sub.add_parser("search", help="Find tools by keyword, best match first (MCP search_tools).")
+    p_search.add_argument("query", help='Natural-language query, e.g. "fold a protein".')
+    p_search.add_argument("--limit", type=int, default=10, help="Maximum results (default: 10).")
+    p_search.add_argument("--all", action="store_true", help="Include tools the device cannot run yet.")
+    add_device(p_search)
+    p_search.add_argument("--json", action="store_true", help="Emit the MCP payload instead of text.")
+    p_search.set_defaults(func=_cmd_search)
+
+    p_schema = sub.add_parser("schema", help="Input, config and output JSON Schemas (MCP get_tool_schema).")
+    p_schema.add_argument("tool")
+    p_schema.set_defaults(func=_cmd_schema)
+
+    p_example = sub.add_parser("example", help="The tool's example input (MCP get_tool_example).")
+    p_example.add_argument("tool")
+    p_example.add_argument(
+        "--as-python",
+        action="store_true",
+        help="Emit a runnable snippet with the correct import and symbol names instead of JSON.",
+    )
+    p_example.set_defaults(func=_cmd_example)
+
+    p_info = sub.add_parser(
+        "info", help="Provenance: links, citation, DOI, license, weights access (MCP get_tool_info)."
+    )
+    p_info.add_argument("tool")
+    p_info.set_defaults(func=_cmd_info)
+
+    p_run = sub.add_parser("run", help="Run a tool and print its result (MCP run_tool).")
+    p_run.add_argument("tool")
+    p_run.add_argument("--inputs", help="Input fields as a JSON object, or @path to a JSON file.")
+    p_run.add_argument("--config", help="Config fields as a JSON object, or @path to a JSON file.")
+    p_run.add_argument("--example", action="store_true", help="Run the tool's example input.")
+    p_run.add_argument("--output-dir", help="Where oversized result fields are written.")
+    add_device(p_run)
+    p_run.set_defaults(func=_cmd_run)
+
+    p_workspace = sub.add_parser("workspace", help="Where calls land on the device (MCP workspace_info).")
+    add_device(p_workspace)
+    p_workspace.set_defaults(func=_cmd_workspace)
 
     p_cat_list = sub.add_parser("categories", help="List all categories.")
     p_cat_list.add_argument("--json", action="store_true")
@@ -704,14 +742,6 @@ def _build_parser() -> argparse.ArgumentParser:
         p.add_argument("--json", action="store_true")
         p.set_defaults(func=lambda a, k=kind: _cmd_model_doc(a, k))
 
-    p_schema = sub.add_parser("schema", help="JSON Schema(s) for the tool.")
-    p_schema.add_argument("tool")
-    p_schema_g = p_schema.add_mutually_exclusive_group()
-    p_schema_g.add_argument("--input", action="store_true")
-    p_schema_g.add_argument("--config", action="store_true")
-    p_schema_g.add_argument("--output", action="store_true")
-    p_schema.set_defaults(func=_cmd_schema)
-
     p_signature = sub.add_parser(
         "signature",
         help="Imports, symbol names, and required input fields for the tool's call. No example payload.",
@@ -720,49 +750,12 @@ def _build_parser() -> argparse.ArgumentParser:
     p_signature.add_argument("--json", action="store_true", help="Emit the symbol names as JSON.")
     p_signature.set_defaults(func=_cmd_signature)
 
-    p_example_input = sub.add_parser("example-input", help="A minimal valid Input for the tool.")
-    p_example_input.add_argument("tool")
-    p_example_input.add_argument(
-        "--as-python",
-        action="store_true",
-        help="Emit a runnable snippet with the correct import and symbol names instead of JSON.",
-    )
-    p_example_input.set_defaults(func=_cmd_example_input)
-
-    p_example = sub.add_parser(
-        "example",
+    p_notebook = sub.add_parser(
+        "notebook",
         help="Toolkit example notebook rendered as markdown + fenced code (outputs stripped).",
     )
-    p_example.add_argument("tool")
-    p_example.set_defaults(func=_cmd_example)
-
-    p_cite = sub.add_parser("citation", help="BibTeX citation, if registered.")
-    p_cite.add_argument("tool")
-    p_cite.set_defaults(func=_cmd_citation)
-
-    p_links = sub.add_parser("links", help="GitHub / HuggingFace / etc. links from links.yaml.")
-    p_links.add_argument("tool")
-    p_links.add_argument("--json", action="store_true")
-    p_links.set_defaults(func=_cmd_links)
-
-    p_license = sub.add_parser("license", help="Parsed license.yaml.")
-    p_license.add_argument("tool")
-    p_license.set_defaults(func=_cmd_license)
-
-    p_access = sub.add_parser(
-        "access",
-        help="Model-weights access: open | hf-gated | request.",
-    )
-    p_access.add_argument("tool")
-    p_access.set_defaults(func=_cmd_access)
-
-    p_doi = sub.add_parser("doi", help="DOI for the tool's primary citation, if any.")
-    p_doi.add_argument("tool")
-    p_doi.set_defaults(func=_cmd_doi)
-
-    p_url = sub.add_parser("url", help="Public docs URL for the tool's page.")
-    p_url.add_argument("tool")
-    p_url.set_defaults(func=_cmd_url)
+    p_notebook.add_argument("tool")
+    p_notebook.set_defaults(func=_cmd_notebook)
 
     p_deploy = sub.add_parser(
         "deploy",
@@ -797,14 +790,12 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         return int(args.func(args))
-    except ValueError as exc:
-        # Identifier-resolution failures, ambiguous toolkit names, etc.
-        print(f"error: {exc}", file=sys.stderr)
-        return 2
     except KeyError as exc:
         print(f"error: tool not registered: {exc}", file=sys.stderr)
         return 2
-    except FileExistsError as exc:
+    except (ValueError, OSError, DeviceUnavailableError) as exc:
+        # Identifier-resolution failures, malformed --inputs, unreadable @files, a device
+        # without its credentials, an existing eject destination.
         print(f"error: {exc}", file=sys.stderr)
         return 2
 

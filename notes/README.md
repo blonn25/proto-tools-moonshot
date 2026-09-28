@@ -22,7 +22,7 @@ signatures and behavior.
 
 ## Runtime and behavior
 
-- `finding-tools.md`: discovering, inspecting, and calling tools through the `ToolRegistry` and `proto-tools` CLI surface, covering identifier resolution, schemas, docs extraction, JSON surfaces, gated weights, and run functions.
+- `finding-tools.md`: discovering, inspecting, and calling tools through the `ToolRegistry`, and the shared CLI/MCP surface, covering identifier resolution, schemas, docs extraction, JSON surfaces, gated weights, and run functions.
 - `error-handling.md`: the `@tool` raise-by-default policy, opt-in capture mode (`PROTO_CAPTURE_ERRORS`), and the `MissingAssetError` carve-out.
 - `logging.md`: the worker logging architecture, status updates, verbosity control, and third-party progress-bar handling.
 - `seeding.md`: seed management for stochastic tools, how seeds interact with caching and dedup, and per-item RNG advancement.

@@ -219,7 +219,7 @@ defining a differently named hook.
 
 **The guard is client-side.** It runs in the caller's process, so a modified client or a
 request crafted directly against the API bypasses it entirely. Server-side enforcement
-belongs at Proto's submission path and is tracked in proto-tools-api#567.
+belongs at Proto's submission path.
 
 ## Worker extension points
 

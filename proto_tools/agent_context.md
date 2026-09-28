@@ -31,41 +31,43 @@ result = run_esm2_embeddings(
 `errors`) plus tool-specific payload fields. Biological coordinates are
 1-indexed and inclusive.
 
-## Discover tools offline with the CLI
+## Find, inspect and run tools: CLI or MCP
 
-The `proto-tools` command works on a clean `pip install` with no repo checkout.
-Add `--json` to any verb that returns structured data for machine-readable
-output. Resolve a tool by registry key (`esm2-embedding`), run-function name
-(`run_esm2_embeddings`), or module path.
+The `proto-tools` command works on a clean `pip install` with no repo checkout,
+and the MCP server (`proto-tools mcp`) exposes the same operations to agents
+that are not writing Python.
+
+| MCP tool | CLI verb | Use it for |
+|---|---|---|
+| `workspace_info` | `proto-tools workspace` | Where calls land, and whether credentials are configured. Start here if anything looks misconfigured. |
+| `list_tools` | `proto-tools list [--category C]` | What is available, with each tool's category, one-line summary, and whether it needs a GPU. |
+| `search_tools` | `proto-tools search "<query>"` | Finding a tool by description. Returns the best matches with the score each ranked on. |
+| `get_tool_schema` | `proto-tools schema <tool>` | The input, config, and output schemas, before a first call. |
+| `get_tool_example` | `proto-tools example <tool> [--as-python]` | A known-good example input, showing shape rather than payload. `--as-python` renders the full example as a runnable snippet. |
+| `get_tool_info` | `proto-tools info <tool>` | Where a tool comes from: citation, DOI, license, weights access, the model's own links, and the implementation. |
+| `run_tool` | `proto-tools run <tool> --inputs '{...}'` or `--example` | Running one. `--inputs`/`--config` take a JSON object or `@file.json`. |
+| `deploy_tool` | `proto-tools deploy` | Deploying an app to Modal, after the user approves the spend. |
+
+The CLI answers for this machine by default; pass `--device modal` or
+`--device proto` to ask about, or run on, a remote backend. `list` and `search`
+print text unless given `--json`; the other verbs print JSON and exit 1 when the
+payload reports `"ok": false`.
+
+The CLI also has developer docs views with no MCP counterpart, resolving a tool
+by registry key (`esm2-embedding`), run-function name (`run_esm2_embeddings`),
+or module path:
 
 | Verb | What it gives you |
 |---|---|
-| `proto-tools list [--category C] [--gpu/--cpu]` | Registered tools, one per line |
 | `proto-tools catalog` | Tools grouped by category |
 | `proto-tools docs <tool>` | Intro, applications, usage tips, license |
-| `proto-tools schema <tool> [--input/--config/--output]` | JSON Schema(s) |
 | `proto-tools input/config/output <tool>` | Field-level model docs |
 | `proto-tools signature <tool>` | Imports, symbol names, and required input fields for the call |
-| `proto-tools example-input <tool> [--as-python]` | A minimal valid `Input`, as JSON or as a runnable snippet |
-| `proto-tools example <tool>` | The toolkit example notebook as markdown |
+| `proto-tools notebook <tool>` | The toolkit example notebook as markdown |
 
-## If you are connected over MCP, not writing Python
-
-The MCP server exposes a fixed set of tools and no Python API: the imports,
-`persist()` / `get()`, and `ToolPool` below do not apply, though the
-`Input -> Config -> run -> Output` shape does. Everything is reached through
-these:
-
-| Tool | Use it for |
-|---|---|
-| `workspace_info` | Where calls land, and whether credentials are configured. Start here if anything looks misconfigured. |
-| `list_tools` | What is available, with each tool's category, one-line summary, and whether it needs a GPU. Pass `category` to narrow. |
-| `search_tools` | Finding a tool by description. Returns the best matches with the score each ranked on. |
-| `get_tool_schema` | The input, config, and output schemas, before a first call. |
-| `get_tool_example` | A known-good example input, showing shape rather than payload. |
-| `get_tool_info` | Where a tool comes from: citation, DOI, the model's own links, and the implementation. |
-| `run_tool` | Running one. |
-| `deploy_tool` | Deploying an app to Modal, after the user approves the spend. |
+Over MCP there is no Python API: the imports, `persist()` / `get()`, and
+`ToolPool` below do not apply, though the `Input -> Config -> run -> Output`
+shape does.
 
 Three things worth knowing before the first call:
 
@@ -107,7 +109,7 @@ result = run_create_blast_db(
 ```
 
 `signature` is the cheap call: it renders symbol names and required field names
-only, so it costs the same few hundred bytes for every tool. `example-input`
+only, so it costs the same few hundred bytes for every tool. `example --as-python`
 carries real values and scales with them, which for a structure or a
 model-context-length window means hundreds of KB; reach for it when you want a
 payload to actually run, not when you want the names.

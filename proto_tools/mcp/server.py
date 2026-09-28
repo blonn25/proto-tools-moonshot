@@ -11,6 +11,7 @@ from typing import Any
 
 from fastmcp import Context, FastMCP
 from fastmcp.server.elicitation import AcceptedElicitation
+from mcp.types import ToolAnnotations
 
 from proto_tools.mcp import tools as impl
 from proto_tools.mcp.device import Device, DeviceUnavailableError, resolve_device
@@ -36,11 +37,10 @@ subsequent calls fast.
 - If a user needs a tool that is deployable but that they have not yet deployed,
   use `deploy_tool`. It prompts the user to confirm before proceeding.
 
-- `deploy_tool` requires the name of the Modal environment to deploy into. Users
-  create one while setting up their account, and the documented name is
-  `proto-env`. `workspace_info` reports the one in use, which is where a deploy
-  should go; ask the user before deploying anywhere else, since a workspace can
-  hold several.
+- `deploy_tool` deploys into the Modal environment `workspace_info` reports, which
+  users create while setting up their account (the documented name is
+  `proto-env`). Pass `environment` only to deploy somewhere else, and ask the user
+  first, since a workspace can hold several.
 
 - Any deployed tool can then be run using `run_tool`.
 
@@ -88,11 +88,28 @@ _KEY_CONVENTION = """Tool keys are `<model>-<action>`, such as `esmfold-predicti
 one model. Use `search_tools` or `list_tools` to resolve a name into a key.
 """
 
+_WORKFLOW = """Before calling `run_tool`, first call `get_tool_schema` for the selected tool. Then call
+`get_tool_example`; if an example exists, use its structure as the template for the request. Do
+not infer input field names or nesting from the biological task or tool name. Make only one
+`run_tool` execution attempt after inspecting this metadata. `get_tool_schema` reports
+`has_example`, so you know whether there is one to fetch, and `run_tool(use_example=true)` runs
+the canonical example unchanged.
+
+Use `get_tool_info` when reporting a result: the citation and DOI for the method, the model
+authors' own repository, paper and weights, and the code that ran it. Attribute the work you used.
+"""
+
 INSTRUCTIONS = {
-    "modal": _MODAL_INSTRUCTIONS + "\n" + _KEY_CONVENTION,
-    "proto": _PROTO_INSTRUCTIONS + "\n" + _KEY_CONVENTION,
-    "local": _LOCAL_INSTRUCTIONS + "\n" + _KEY_CONVENTION,
+    device: text + "\n" + _WORKFLOW + "\n" + _KEY_CONVENTION
+    for device, text in (("modal", _MODAL_INSTRUCTIONS), ("proto", _PROTO_INSTRUCTIONS), ("local", _LOCAL_INSTRUCTIONS))
 }
+
+
+def _read_only(title: str) -> ToolAnnotations:
+    """Annotations for a tool that only reads, matching the hosted server's."""
+    return ToolAnnotations(
+        title=title, readOnlyHint=True, destructiveHint=False, idempotentHint=True, openWorldHint=False
+    )
 
 
 def instructions_for(device: Device) -> str:
@@ -120,112 +137,103 @@ def build_server(device: Device = "modal") -> FastMCP:
     """
     mcp: FastMCP = FastMCP(name=f"proto-tools ({device})", instructions=instructions_for(device))
 
-    @mcp.tool
+    @mcp.tool(title="Workspace and credentials", annotations=_read_only("Workspace and credentials"))
     def workspace_info() -> dict[str, Any]:
-        """Show which Modal workspace and environment calls go to, and how many apps are deployed.
+        """Show where calls go and what is attached: the Modal workspace and environment, or this machine.
 
-        Call this first if anything seems misconfigured — it reports whether
-        Modal credentials are present at all.
+        Call this first if anything seems misconfigured, or to answer where tools will run. It
+        reports whether credentials are present at all and how many apps are deployed.
         """
         return impl.workspace_info(device)
 
-    @mcp.tool
+    @mcp.tool(title="List tools", annotations=_read_only("List tools"))
     def list_tools(deployed_only: bool = True, category: str | None = None) -> dict[str, Any]:
-        """List available bioinformatics tools, with what each one is for.
+        """List bioinformatics tools, flagged by whether they can run for you.
 
-        Each entry carries its category, a one-line summary, and whether it
-        needs a GPU, which is usually enough to choose without fetching a
-        schema for every candidate. Pass a category to narrow the list.
+        Defaults to what your workspace actually serves. Pass deployed_only=False for the full
+        catalogue, which also shows what you could deploy.
 
-        Defaults to only those actually deployed in this workspace. Pass
-        deployed_only=False to see the full catalogue, including tools the
-        user would have to deploy first.
-
-        Entries arrive under `tools`, the same as search_tools, each with the
-        key to run under `tool_key`.
+        Entries arrive under `tools`, the same as search_tools, each carrying the key to run under
+        `tool_key`.
         """
-        found = impl.list_tools(deployed_only=deployed_only, category=category, device=device)
-        return {"tools": found, "n_total": len(found)}
+        return impl.catalogue(deployed_only=deployed_only, category=category, device=device)
 
-    @mcp.tool
+    @mcp.tool(title="Search tools", annotations=_read_only("Search tools"))
     def search_tools(query: str, deployed_only: bool = True, limit: int = 10) -> dict[str, Any]:
-        """Find tools by keyword, matching the tool key, category and summary.
+        """Find tools by keyword, matching the tool key and its description.
 
-        Useful for questions like "what can fold a protein" or "which tools
-        score sequences". Returns the best `limit` matches under `tools`, each
-        with the `score` out of 100 it ranked on, plus `n_total` for how many
-        matched in all — raise `limit` only if the total says it is worth it.
-
-        Run what you find by its `tool_key`, exactly as given. A display name
-        is not a key, and inferring one produces a tool that does not exist.
+        Returns the best `limit` matches under `tools`, each with the `score` out of 100 it ranked
+        on, plus `n_total` for how many matched in all. Run what you find by its `tool_key`, exactly
+        as given: a display name is not a key.
         """
         return impl.search_tools(query, deployed_only=deployed_only, limit=limit, device=device)
 
-    @mcp.tool
+    @mcp.tool(title="Tool schema", annotations=_read_only("Tool schema"))
     def get_tool_schema(tool_key: str) -> dict[str, Any]:
         """Get the input, config and output schemas for a tool.
 
-        Call before run_tool unless you already know the shape — arguments are
-        validated strictly and unknown fields are rejected.
+        Step 1 of the workflow: get_tool_schema, then get_tool_example when available, then one
+        run_tool call. `has_example` says whether step 2 has anything to return.
         """
         return impl.get_tool_schema(tool_key)
 
-    @mcp.tool
+    @mcp.tool(title="Tool example input", annotations=_read_only("Tool example input"))
     def get_tool_example(tool_key: str) -> dict[str, Any] | None:
         """Get a known-good example input for a tool, or null if it declares none.
 
-        Shows the shape; bulky values such as structure coordinates are elided.
-        To actually run the example, call run_tool with use_example=True.
+        Step 2 of the workflow: get_tool_schema, then get_tool_example when available, then one
+        run_tool call. Use its structure as the template for the request rather than as
+        illustration. `run_tool(use_example=true)` runs it unchanged.
         """
         return impl.get_tool_example(tool_key)
 
-    @mcp.tool
+    @mcp.tool(title="Tool provenance", annotations=_read_only("Tool provenance"))
     def get_tool_info(tool_key: str) -> dict[str, Any]:
         """Where a tool comes from: who built the model, how to cite it, and the code that runs it.
 
-        Use this when reporting results, so the method is attributed and a reader can follow it
-        back to the paper, the weights, or the implementation. Separate from get_tool_schema, which
-        answers what arguments a tool takes and is called before every run.
+        Deliberately not part of get_tool_schema. That call answers "what arguments does this take"
+        and happens before every run; this one answers "what is this and who should be credited",
+        which is wanted when reporting a result rather than producing one.
+
+        `source` is this project's implementation -- the wrapper, environment, and example. `links`
+        are the model's own: its authors' repository, paper and weights. `license` and
+        `weights_access` say on what terms the weights may be used and how they are obtained.
         """
         return impl.get_tool_info(tool_key)
 
-    @mcp.tool
+    @mcp.tool(
+        title="Run a tool",
+        annotations=ToolAnnotations(
+            title="Run a tool", readOnlyHint=False, destructiveHint=False, idempotentHint=False, openWorldHint=True
+        ),
+    )
     async def run_tool(
         ctx: Context,
         tool_key: str,
         inputs: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
-        output_dir: str | None = None,
         use_example: bool = False,
+        output_dir: str | None = None,
         run_on: str | None = None,
     ) -> dict[str, Any]:
-        """Run a tool on this session's backend and return the result.
+        """Run a tool and return the result.
 
-        Blocks until it finishes. Most tools return in seconds once warm, but
-        the first call after a few minutes idle pays a container start and
-        model load, and a few tools (binder design, diffusion) legitimately run
-        for many minutes. Check the tool description before calling.
+        Required workflow: Call get_tool_schema(tool_key) and get_tool_example(tool_key) before
+        constructing inputs. Tool inputs vary and may use nested biological entity structures; never
+        guess their shape. Pass `use_example=true` to run the canonical example unchanged.
 
-        run_on overrides the backend for this call alone: "local" runs it on
-        this machine, "modal" dispatches it to the deployment. Useful for
-        sending a small CPU tool to the local machine without paying a
-        container start, or one GPU tool to Modal from a local session. Omit it
-        to use the session's own backend.
+        Blocks while it runs. A first call after a few minutes idle pays a container start and a
+        model load, and some tools legitimately run for many minutes.
 
-        Some tools are answered in this process whatever the backend, because
-        they need no GPU and no environment, or cannot be deployed at all. The
-        `ran_on` field in the result reports where the call actually ran.
+        run_on overrides the backend for this call alone: "local" runs it on this machine, "modal"
+        dispatches it to the deployment. Omit it to use the session's own backend. Some tools are
+        answered in this process whatever the backend, because they need no GPU and no environment,
+        or cannot be deployed at all; `ran_on` in the result reports where the call actually ran.
 
-        Structure inputs take a file path or an http(s) URL in place of inlined
-        content — {"query_structure": "/path/to/file.pdb"} — so a file already on
-        disk, such as another tool's output, never has to be read into the call.
-        Other bulky inputs, such as MSAs, take their content rather than a path.
-
-        Pass use_example=True to run the tool's canonical example input without
-        supplying it — useful for structure tools whose inputs are very large.
-
-        Large fields are written under output_dir (default ./proto_tools_outputs)
-        and returned as paths.
+        Structure inputs take a file path or an http(s) URL in place of inlined content, so a file
+        already on disk, such as another tool's output, never has to be read into the call. Large
+        output fields are written under output_dir (default ./proto_tools_outputs) and returned as
+        paths.
         """
         if run_on is None:
             target = device
@@ -286,28 +294,29 @@ def build_server(device: Device = "modal") -> FastMCP:
 
     if device == "modal":
 
-        @mcp.tool
-        async def deploy_tool(tool_key: str, environment: str, ctx: Context) -> dict[str, Any]:
-            """Deploy the Modal app serving a tool, after the user approves the expenditure.
+        @mcp.tool(
+            title="Deploy a tool",
+            annotations=ToolAnnotations(
+                title="Deploy a tool", readOnlyHint=False, destructiveHint=True, idempotentHint=True, openWorldHint=True
+            ),
+        )
+        async def deploy_tool(tool_key: str, ctx: Context, environment: str | None = None) -> dict[str, Any]:
+            """Build a tool's Modal app in your own workspace, so run_tool can dispatch to it.
 
-            Intended for a tool that list_tools reports as not deployed.
+            Takes several minutes and costs a build on your Modal account: the image is built and
+            the tool executed once, on a GPU where it needs one. The user is asked to confirm
+            before anything starts; declining deploys nothing and costs nothing. A tool only
+            needs this once; calling it again replaces the deployed app with the current version.
 
-            A deployment builds a container image and then executes the tool once, on a
-            GPU where the tool requires one. Both are billed to the user's own Modal
-            account, and both occur before any result is returned to the caller. The
-            user is asked to confirm beforehand; declining deploys nothing and incurs
-            no cost.
-
-            The operation may take several minutes. Progress is reported as the build
-            advances through its phases.
-
-            The environment argument is required. Naming the target Modal environment
-            explicitly, rather than inheriting whichever is ambient, prevents an
-            accidental deployment to production.
+            Deploys into the environment workspace_info reports. Pass `environment` only to deploy
+            somewhere else, after the user has agreed to that environment.
             """
+            from proto_tools.modal.app import resolve_environment
+
             app = impl.app_for_tool(tool_key)
             if app is None:
                 return {"ok": False, "error": f"{tool_key!r} is not a tool this deployment serves."}
+            environment = resolve_environment(environment)
 
             answer = await ctx.elicit(
                 f"Deploy {app} to Modal environment {environment!r}?\n\n"
