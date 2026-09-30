@@ -31,6 +31,10 @@ Proto-tools requires Python 3.10+:
 pip install git+https://github.com/evo-design/proto-tools.git
 ```
 
+Proto-tools requires Pydantic 2.12 or newer. Registered calls revalidate input
+and configuration models while excluding computed fields, so environments pinned
+to an older Pydantic release must upgrade before installing this version.
+
 To also run the MCP server, which exposes these tools to coding agents, install the `mcp` extra:
 
 ```bash
@@ -58,7 +62,7 @@ For shared filesystems, model weights can be reused to avoid downloading duplica
 
 ### Step 3: Gated model access (optional)
 
-A few tools use gated models or software that require accepting a license / terms-of-use first (e.g. ESM3, AlphaGenome, AlphaFold3, X3DNA). See [notes/gated-models.md](notes/gated-models.md) for the full list and per-model access steps.
+A few tools use gated models or software that require accepting a license / terms-of-use first (e.g. ESM3, AlphaGenome, X3DNA). See [notes/gated-models.md](notes/gated-models.md) for the full list and per-model access steps.
 
 ### Step 4: Remote compute (optional) <a href="https://modal.com"><img src="guides/assets/modal/modal-logo.png" alt="Modal" height="20" align="absmiddle"></a>
 
@@ -186,7 +190,7 @@ Each specific tool also ships a minimal `examples/example.ipynb` under `proto_to
 
 ## Using with a coding agent
 
-Run tools through natural language with any coding agent (Claude Code, Gemini CLI, OpenAI Codex CLI, etc.). Point the agent at `proto-tools agent-context`: it prints a primer covering the `Input → Config → run_*() → Output` pattern, the offline CLI discovery verbs, persistence and parallel execution, and links to the long-form notes on GitHub. The command ships in the wheel, so it works on a plain `pip install` with no repo checkout.
+Run tools through natural language with any coding agent (Claude Code, Gemini CLI, OpenAI Codex CLI, etc.). Point the agent at `proto-tools agent-context`: it prints a primer covering the `Input → Config → run_*() → Output` pattern, the CLI verbs for finding, inspecting and running tools (the same operations the MCP server exposes), persistence and parallel execution, and links to the long-form notes on GitHub. The command ships in the wheel, so it works on a plain `pip install` with no repo checkout.
 
 If you've cloned the repo for contributing, agents also pick up `CLAUDE.md` (symlinked as `AGENTS.md`/`GEMINI.md`) and the task-specific guides in [`.claude/skills/`](.claude/skills/) automatically.
 

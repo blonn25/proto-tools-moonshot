@@ -20,6 +20,7 @@ TOOL_MAP: dict[str, ToolEntry] = {
     "ablang-score": ToolEntry("proto-tools-ablang", "AbLangService", "score", True),
     "alphafold2-gradient": ToolEntry("proto-tools-alphafold2", "AlphaFold2Service", "gradient", True),
     "alphafold2-prediction": ToolEntry("proto-tools-alphafold2", "AlphaFold2Service", "predict", True),
+    "alphafold3-prediction": ToolEntry("proto-tools-alphafold3", "AlphaFold3Service", "predict", True),
     "alphagenome-predict-intervals": ToolEntry("proto-tools-alphagenome", "AlphaGenomeService", "predict_intervals", True),
     "alphagenome-predict-sequences": ToolEntry("proto-tools-alphagenome", "AlphaGenomeService", "predict_sequences", True),
     "alphagenome-predict-variants": ToolEntry("proto-tools-alphagenome", "AlphaGenomeService", "predict_variants", True),

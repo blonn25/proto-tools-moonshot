@@ -7,9 +7,6 @@ proto_check_gated_hf_repo "google/alphagenome-all-folds" "https://huggingface.co
 
 echo "Setting up AlphaGenome standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 # Resolve CUDA constraint (backward compat with ALPHAGENOME_CUDA_TOOLKIT_VERSION)
 CUDA_CONSTRAINT="${ALPHAGENOME_CUDA_TOOLKIT_CONSTRAINT:-${ALPHAGENOME_CUDA_TOOLKIT_VERSION:-}}"
 proto_install_cuda_toolkit "$CUDA_CONSTRAINT"

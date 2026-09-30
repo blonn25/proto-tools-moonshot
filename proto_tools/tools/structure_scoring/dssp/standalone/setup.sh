@@ -8,9 +8,6 @@ echo "Installing DSSP binary from conda-forge..."
 # binary-compatible and makes mkdssp fail at startup with an undefined symbol.
 "$MAMBA_BIN" install -y -p "$VENV_PATH" -c conda-forge "dssp=4.6.1" "libmcfp=1.4.2"
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Installing Python dependencies..."
 uv pip install -r requirements.txt
 

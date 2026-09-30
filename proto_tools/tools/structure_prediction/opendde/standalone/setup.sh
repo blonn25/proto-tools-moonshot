@@ -19,9 +19,6 @@ source standalone_helpers.sh
 
 echo "Setting up OpenDDE standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 # OpenDDE pins torch==2.7.1. Install it through the compute-matched proto index so
 # the CUDA build matches the detected platform, pinning the exact version here so
 # that `uv pip install -r requirements.txt` (which brings opendde[gpu]'s torch==2.7.1

@@ -6,12 +6,10 @@ This module provides standardized interfaces for protein structure prediction
 using AlphaFold3 from Google DeepMind.
 """
 
-import contextlib
 import json
 import logging
 import os
 import tempfile
-from collections.abc import Iterator
 from typing import Any, ClassVar
 
 from proto_tools.utils.progress import progress_bar
@@ -32,6 +30,7 @@ from proto_tools.tools.structure_prediction.shared_data_models import (
 )
 from proto_tools.tools.tool_registry import tool
 from proto_tools.utils import ConfigField, ToolInstance
+from proto_tools.utils.device import RemoteDevice
 from proto_tools.utils.tool_io import Metrics, MetricSpec
 
 # Type alias for AlphaFold3 JSON format
@@ -161,17 +160,9 @@ class AlphaFold3Config(MSAStructurePredictionConfig):
             If specified, creates a persistent directory at the given path that will
             NOT be automatically deleted. Default: ``None``.
 
-        model_dir (str | None): Local path to the directory containing AlphaFold3
-            model parameters (a single ``.bin`` or ``.bin.zst`` file per DeepMind's
-            release layout). If ``None`` (default), weights are resolved from
-            ``PROTO_ALPHAFOLD3_WEIGHTS_DIR``, then ``PROTO_MODEL_CACHE``, then
-            ``PROTO_HOME/proto_model_cache/alphafold3/`` (see ``notes/storage.md``).
-            Default: ``None``.
-
         sif_path (str | None): Optional path to a pre-built AlphaFold3 Apptainer
-            image (``.sif``). When set, the tool runs ``apptainer run`` against
-            this image (which dispatches via the sif's ``%runscript``) instead of
-            the in-env Python install. When ``None`` (default), inference.py looks
+            image (``.sif``). When set, the tool runs ``run_alphafold.py`` inside
+            this image via ``apptainer exec`` instead of the in-env Python install. When ``None`` (default), inference.py looks
             for ``$VENV_PATH/alphafold3.sif`` (provisioned by setup.sh) and falls
             back to the env-based install if absent.
             Default: ``None``.
@@ -221,12 +212,6 @@ class AlphaFold3Config(MSAStructurePredictionConfig):
         description="Prefix for the AlphaFold3 output directory. If None, uses temp directory with auto-cleanup.",
     )
 
-    model_dir: str | None = ConfigField(
-        title="AlphaFold3 Weights Directory",
-        default=None,
-        description="Directory with AlphaFold3 weights. If unset, resolves from env vars.",
-    )
-
     sif_path: str | None = ConfigField(
         title="AlphaFold3 Apptainer Image",
         default=None,
@@ -246,6 +231,14 @@ class AlphaFold3Config(MSAStructurePredictionConfig):
         description="Diffusion samples per seed; best by ranking score is kept. Total = len(seeds) x samples.",
     )
 
+    def remote_unsupported_reason(self, device: RemoteDevice) -> str | None:
+        """Local paths (``sif_path``, ``output_dir``) don't exist on a remote worker."""
+        if self.sif_path:
+            return f"sif_path points to a local Apptainer image not available on device='{device}'. Unset it, or run locally with device='cuda'."
+        if self.output_dir:
+            return f"output_dir writes to a local directory the caller cannot reach on device='{device}'. Unset it, or run locally with device='cuda'."
+        return None
+
 
 # ============================================================================
 # Tool Implementation
@@ -255,45 +248,8 @@ def example_input() -> Any:
     return AlphaFold3Input(complexes=["MKTL"])  # type: ignore[list-item]
 
 
-@contextlib.contextmanager
-def _config_overrides_env(model_dir: str | None) -> Iterator[None]:
-    """Propagate ``config.model_dir`` to ``PROTO_ALPHAFOLD3_WEIGHTS_DIR`` for the dispatch.
-
-    Setup.sh's fail-fast weights precheck and the env_vars.txt passthrough only
-    see env vars, not the config. When a caller supplies ``model_dir`` via the
-    config it must take precedence (the env var is just a fallback for callers
-    who don't set it). We temporarily mirror it onto the env var so setup.sh
-    validates the right directory, then restore the original value on exit.
-
-    Args:
-        model_dir (str | None): Config-supplied weights directory. When falsy
-            (``None`` or empty string), the env var is left untouched and
-            resolution falls back to ``PROTO_ALPHAFOLD3_WEIGHTS_DIR`` →
-            ``PROTO_MODEL_CACHE`` → ``PROTO_HOME`` defaults.
-    """
-    if not model_dir:
-        yield
-        return
-    key = "PROTO_ALPHAFOLD3_WEIGHTS_DIR"
-    sentinel = object()
-    original: Any = os.environ.get(key, sentinel)
-    os.environ[key] = model_dir
-    try:
-        yield
-    finally:
-        if original is sentinel:
-            os.environ.pop(key, None)
-        else:
-            os.environ[key] = original
-
-
 @tool(
     key="alphafold3-prediction",
-    local_only=(
-        "alphafold3 needs model parameters requested from DeepMind and held on your own disk, which "
-        "are not available on a remote worker. Run locally with device='cuda', pointing model_dir at "
-        "the parameters you were granted."
-    ),
     label="AlphaFold3 Structure Prediction",
     category="structure_prediction",
     input_class=AlphaFold3Input,
@@ -324,87 +280,85 @@ def run_alphafold3(
         n_seeds = max(len(config.seeds), 1)
         base_seeds = [config.get_random_int() for _ in range(n_seeds)]
 
-    with _config_overrides_env(config.model_dir):
-        for dispatch_idx, comp in enumerate(
-            progress_bar(
-                inputs.complexes,
-                desc="Folding structures (AlphaFold3)",
-                unit="complex",
-                total=len(inputs.complexes),
+    for dispatch_idx, comp in enumerate(
+        progress_bar(
+            inputs.complexes,
+            desc="Folding structures (AlphaFold3)",
+            unit="complex",
+            total=len(inputs.complexes),
+        )
+    ):
+        # Shift seeds per complex so duplicate inputs get non-overlapping seed slices.
+        step = len(base_seeds)
+        model_seeds = [s + dispatch_idx * step for s in base_seeds]
+
+        input_json = _create_input_json_from_complex(
+            comp,
+            f"{config.name}_{dispatch_idx}",
+            model_seeds,
+        )
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            # Determine output directory
+            if config.output_dir is None:
+                # Create inside temp directory for auto-cleanup
+                output_dir = os.path.join(temp_dir, f"{config.name}_{dispatch_idx}_af3_results")
+            else:
+                # Create at specified path (persists after execution)
+                output_dir = f"{config.output_dir}_af3_results"
+
+            # Create input directory for MSAs
+            input_dir = os.path.join(output_dir, "af3_inputs")
+            os.makedirs(input_dir, exist_ok=True)
+
+            # Write pre-computed MSAs to A3M files (per-complex slice).
+            if inputs.msas:
+                from proto_tools.tools.structure_prediction.shared_data_models import unwrap_complex_msas
+
+                per_chain_msas, unpaired_per_chain, is_paired = unwrap_complex_msas(inputs.msas[dispatch_idx])
+                if per_chain_msas:
+                    input_json = _assign_msas_to_input_json(
+                        input_json, per_chain_msas, unpaired_per_chain, is_paired, comp, input_dir, config.verbose
+                    )
+
+            # Write input JSON to file for worker protocol
+            input_json_path = os.path.join(input_dir, f"{config.name}_{dispatch_idx}.json")
+            with open(input_json_path, "w") as f:
+                json.dump(input_json, f, indent=2)
+
+            # Prepare dispatch input. The inference.py side picks the sif path
+            # when either config.sif_path is set or setup.sh provisioned one at
+            # $VENV_PATH/alphafold3.sif; otherwise it uses the env-based install.
+            input_data = {
+                "input_json_path": input_json_path,
+                "output_dir": output_dir,
+                "device": config.device,
+                "sif_path": config.sif_path,
+                "verbose": config.verbose,
+                "include_pae_matrix": config.include_pae_matrix,
+                "num_recycles": config.num_recycles,
+                "num_diffusion_samples": config.num_diffusion_samples,
+            }
+
+            # Dispatch to worker (goes through DeviceManager)
+            output_data = ToolInstance.dispatch(
+                "alphafold3",
+                input_data,
+                instance=instance,
+                config=config,
             )
-        ):
-            # Shift seeds per complex so duplicate inputs get non-overlapping seed slices.
-            step = len(base_seeds)
-            model_seeds = [s + dispatch_idx * step for s in base_seeds]
 
-            input_json = _create_input_json_from_complex(
-                comp,
-                f"{config.name}_{dispatch_idx}",
-                model_seeds,
+            # Extract results from dict
+            pdb_path = output_data["structure_pdb"]
+            metrics = AlphaFold3Metrics(**output_data["metrics"])
+
+            structure = Structure.from_file(
+                pdb_path,
+                b_factor_type=BFactorType.PLDDT,
+                metrics=metrics,
+                source="alphafold3-prediction",
             )
-
-            with tempfile.TemporaryDirectory() as temp_dir:
-                # Determine output directory
-                if config.output_dir is None:
-                    # Create inside temp directory for auto-cleanup
-                    output_dir = os.path.join(temp_dir, f"{config.name}_{dispatch_idx}_af3_results")
-                else:
-                    # Create at specified path (persists after execution)
-                    output_dir = f"{config.output_dir}_af3_results"
-
-                # Create input directory for MSAs
-                input_dir = os.path.join(output_dir, "af3_inputs")
-                os.makedirs(input_dir, exist_ok=True)
-
-                # Write pre-computed MSAs to A3M files (per-complex slice).
-                if inputs.msas:
-                    from proto_tools.tools.structure_prediction.shared_data_models import unwrap_complex_msas
-
-                    per_chain_msas, unpaired_per_chain, is_paired = unwrap_complex_msas(inputs.msas[dispatch_idx])
-                    if per_chain_msas:
-                        input_json = _assign_msas_to_input_json(
-                            input_json, per_chain_msas, unpaired_per_chain, is_paired, comp, input_dir, config.verbose
-                        )
-
-                # Write input JSON to file for worker protocol
-                input_json_path = os.path.join(input_dir, f"{config.name}_{dispatch_idx}.json")
-                with open(input_json_path, "w") as f:
-                    json.dump(input_json, f, indent=2)
-
-                # Prepare dispatch input. The inference.py side picks the sif path
-                # when either config.sif_path is set or setup.sh provisioned one at
-                # $VENV_PATH/alphafold3.sif; otherwise it uses the env-based install.
-                input_data = {
-                    "input_json_path": input_json_path,
-                    "output_dir": output_dir,
-                    "device": config.device,
-                    "model_dir": config.model_dir,
-                    "sif_path": config.sif_path,
-                    "verbose": config.verbose,
-                    "include_pae_matrix": config.include_pae_matrix,
-                    "num_recycles": config.num_recycles,
-                    "num_diffusion_samples": config.num_diffusion_samples,
-                }
-
-                # Dispatch to worker (goes through DeviceManager)
-                output_data = ToolInstance.dispatch(
-                    "alphafold3",
-                    input_data,
-                    instance=instance,
-                    config=config,
-                )
-
-                # Extract results from dict
-                pdb_path = output_data["structure_pdb"]
-                metrics = AlphaFold3Metrics(**output_data["metrics"])
-
-                structure = Structure.from_file(
-                    pdb_path,
-                    b_factor_type=BFactorType.PLDDT,
-                    metrics=metrics,
-                    source="alphafold3-prediction",
-                )
-                output_structures.append(normalize_output_chain_ids(structure, comp.chains))
+            output_structures.append(normalize_output_chain_ids(structure, comp.chains))
 
     return AlphaFold3Output(
         structures=output_structures,

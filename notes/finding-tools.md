@@ -10,20 +10,37 @@ from proto_tools.tools.tool_registry import ToolRegistry
 
 Returned values are Pydantic v2 `BaseModel` instances or plain JSON-serializable types. Outputs should round-trip through `.model_dump()` or `.model_dump_json()`.
 
-## CLI
+## CLI and MCP
+
+The CLI verbs `list`, `search`, `schema`, `example`, `info`, `run` and `workspace` mirror the MCP tools `list_tools`, `search_tools`, `get_tool_schema`, `get_tool_example`, `get_tool_info`, `run_tool` and `workspace_info`. The CLI, the local MCP server, and the hosted MCP server all call the same functions in `proto_tools/mcp/tools.py`, so they return the same results.
 
 ```bash
+proto-tools search "predict a protein structure"
 proto-tools list --category masked_models
+proto-tools schema esm2-embedding
+proto-tools example esm2-embedding --as-python
+proto-tools info esm3-embedding              # links, citation, DOI, license, weights access
+proto-tools run esm2-embedding --example
+proto-tools run esm2-embedding --inputs @inputs.json --config '{"model_checkpoint": "esm2_t6_8M_UR50D"}'
+proto-tools workspace --device modal
+```
+
+Mirrored verbs answer for this machine unless given `--device modal` or `--device proto`. `list` and `search` print text unless given `--json`; the others print the MCP payload as JSON and exit 1 when it reports `"ok": false`, including an unknown key, which comes back with `did_you_mean` suggestions.
+
+`python -m proto_tools` is equivalent when the `proto-tools` executable is shadowed.
+
+### CLI Only
+
+These developer docs views have no MCP counterpart.
+
+```bash
 proto-tools catalog --json
 proto-tools docs esm2-embedding
 proto-tools docs esm2-embedding --json
-proto-tools schema esm2-embedding --input
+proto-tools input esm2-embedding
 proto-tools signature esm2-embedding
-proto-tools example-input esm2-embedding
-proto-tools access esm3-embedding
+proto-tools notebook esm2-embedding
 ```
-
-`python -m proto_tools` is equivalent when the `proto-tools` executable is shadowed. Use `--json` on commands that return structured payloads when a script or agent needs machine-readable output.
 
 ## Identifier Resolution
 
@@ -103,6 +120,13 @@ ToolRegistry.get_example_notebook_path("esm2-embedding")
 - `"request"`: weights must be obtained from the provider out of band.
 
 Check access before dispatching tools that load model weights.
+
+`"open"` describes how the weights are *obtained*, not how they may be *used*.
+A tool can download its weights with no gate and still carry restrictive terms —
+`alphafold3` fetches its parameters from a public Google URL but its weights
+license bars commercial use and redistribution. For usage rights read
+`get_license()` (`commercial_use`, `redistribution`, `weights.text`), not
+`get_weights_access()`.
 
 ## Calling a Tool
 

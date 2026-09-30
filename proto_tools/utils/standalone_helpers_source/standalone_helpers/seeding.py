@@ -1,15 +1,13 @@
-"""Random seed and JAX compilation cache helpers for standalone scripts.
+"""Random seed helpers for standalone scripts.
 
-The seeding helpers set reproducible RNG state for PyTorch/JAX/NumPy/stdlib
-RNGs and, as a companion, expose the JAX persistent compilation cache so
-subsequent runs on the same shape skip the (sometimes minutes-long)
-XLA/Triton autotuning step.
+Set reproducible RNG state for PyTorch/JAX/NumPy/stdlib RNGs. The JAX
+persistent compilation cache is not configured here: the parent sets
+``JAX_COMPILATION_CACHE_DIR`` on every tool subprocess (see
+``persistent_worker._jax_compilation_cache_dir``).
 """
 
-import os
 import random
-from collections.abc import Callable
-from typing import Any, cast
+from typing import Any
 
 from .proto_logging import get_logger
 
@@ -113,57 +111,3 @@ def set_jax_seed(seed: int | None) -> Any:
     import jax
 
     return jax.random.PRNGKey(seed)
-
-
-def enable_jax_compilation_cache(toolkit: str) -> str | None:
-    """Enable JAX disk compilation cache for faster cold starts.
-
-    Persists compiled XLA kernels (and, transitively via
-    ``jax_persistent_cache_enable_xla_caches``, the Triton autotuner's
-    per-fusion cache) across process restarts. For large JAX models where
-    the first compile spends minutes on XLA/Triton autotuning, cached
-    shapes on subsequent runs drop from minutes to seconds — a dramatic
-    speedup for tests, CI, and repeat usage.
-
-    Must be called BEFORE any JAX computation happens (ideally right after
-    ``import jax``). Safe to call multiple times (idempotent per-process).
-    No-op if ``jax`` is not importable from the current environment.
-
-    The cache lives inside the tool's micromamba environment at
-    ``{CONDA_PREFIX}/jax_cache/``, so it is automatically cleaned up when
-    the environment is rebuilt or deleted. An explicit
-    ``JAX_COMPILATION_CACHE_DIR`` env var overrides this default.
-
-    Args:
-        toolkit (str): Tool name for logging (e.g., ``"alphagenome"``).
-
-    Returns:
-        str | None: Resolved cache directory path, or ``None`` if ``jax``
-            is not importable or the tool env path cannot be determined.
-    """
-    from pathlib import Path
-
-    try:
-        import jax
-    except ImportError as e:
-        logger.warning("enable_jax_compilation_cache(%s): jax not importable in this env: %s", toolkit, e)
-        return None
-
-    override = os.environ.get("JAX_COMPILATION_CACHE_DIR", "").strip()
-    if override:
-        cache_dir = Path(override)
-    else:
-        venv_path = os.environ.get("CONDA_PREFIX", "").strip()
-        if not venv_path:
-            logger.warning(
-                "Cannot enable JAX compilation cache for %s: CONDA_PREFIX not set (tool env path unknown).",
-                toolkit,
-            )
-            return None
-        cache_dir = Path(venv_path) / "jax_cache"
-
-    cache_dir.mkdir(parents=True, exist_ok=True)
-    config_update = cast(Callable[[str, str], None], jax.config.update)
-    config_update("jax_compilation_cache_dir", str(cache_dir))
-    logger.info("JAX compilation cache for %s enabled at %s", toolkit, cache_dir)
-    return str(cache_dir)

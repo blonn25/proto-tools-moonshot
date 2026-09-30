@@ -3,9 +3,6 @@ set -euo pipefail
 
 echo "Setting up Protenix standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 # Determine CUDA toolkit version to install for JIT compilation.
 # DETECTED_CUDA_VERSION is injected by compute_deps.py (e.g., "12" or "13").
 # Cap at 12.8 for CUDA 13+ since toolkit 13 is too new for PyTorch JIT.

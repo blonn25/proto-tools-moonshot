@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 
 import pytest
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, computed_field
 
 from proto_tools.tools.tool_registry import (
     MAX_RETRIES,
@@ -2462,3 +2462,57 @@ def test_non_iterable_tool_rejects_max_chunk_size(clean_registry):
         )
         def _f(inputs: MockToolInput, config: MockToolConfig) -> MockToolOutput:
             return MockToolOutput(tool_id="scalar-with-chunk", execution_time=0.0, success=True, result="x")
+
+
+def test_exact_model_revalidation_excludes_computed_fields() -> None:
+    """Computed outputs are omitted when an exact model is revalidated."""
+    from proto_tools.tools import tool_registry
+
+    class _Computed(BaseModel):
+        model_config = ConfigDict(extra="forbid")
+
+        value: int
+
+        @computed_field
+        @property
+        def doubled(self) -> int:
+            return self.value * 2
+
+    instance = _Computed(value=2)
+    assert instance.model_dump()["doubled"] == 4
+    assert tool_registry._coerce_model(instance, _Computed, "some-tool", "input") is instance
+
+
+def test_under_floor_pydantic_names_itself_instead_of_raising_typeerror() -> None:
+    """A dependency mismatch must not read like a bug in the tool.
+
+    Every tool call revalidates its input through
+    ``model_dump(exclude_computed_fields=...)``, a keyword added in pydantic 2.12
+    and declared as the floor in pyproject. Under an older resolve, the bare
+    ``TypeError`` would otherwise surface from inside the wrapper on the first call
+    and look like a broken tool.
+    """
+    from proto_tools.tools import tool_registry
+
+    class _Old(BaseModel):
+        value: int = 1
+
+        def model_dump(self, **kwargs):  # type: ignore[override]
+            if "exclude_computed_fields" in kwargs:
+                raise TypeError("BaseModel.model_dump() got an unexpected keyword argument 'exclude_computed_fields'")
+            return super().model_dump(**{k: v for k, v in kwargs.items() if k != "exclude_computed_fields"})
+
+    with pytest.raises(RuntimeError) as excinfo:
+        tool_registry._coerce_model(_Old(), _Old, "some-tool", "input")
+    message = str(excinfo.value)
+    assert "pydantic>=2.12" in message
+    assert "some-tool" in message
+
+    class _Other(BaseModel):
+        value: int = 1
+
+        def model_dump(self, **kwargs):  # type: ignore[override]
+            raise TypeError("something else entirely")
+
+    with pytest.raises(TypeError, match="something else entirely"):
+        tool_registry._coerce_model(_Other(), _Other, "some-tool", "input")

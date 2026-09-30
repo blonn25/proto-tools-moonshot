@@ -34,7 +34,7 @@ _client_logger = logging.getLogger(__name__)
 
 # Where a user goes to install, deploy, or set up Modal. Every dispatch error
 # ends with this so the fix is always one link away.
-PROTO_TOOLS_REPO = "https://github.com/proto-bio/proto-tools"
+PROTO_TOOLS_REPO = "https://github.com/evo-design/proto-tools"
 
 
 class ModalDispatchError(RuntimeError):

@@ -56,13 +56,23 @@ def test_deploy_invokes_modal_through_this_interpreter():
 def wheel_contents(tmp_path_factory):
     """Build the wheel once and return the names it contains.
 
-    Build isolation stays on. CI installs with uv, which leaves no setuptools
-    in the environment, so ``--no-build-isolation`` fails there while passing
-    anywhere setuptools happens to be installed.
+    The dev extra declares setuptools, which builds wheels itself from 70.1 on,
+    so disabling isolation exercises the checkout without resolving packages
+    from PyPI.
     """
     out = tmp_path_factory.mktemp("wheel")
     result = subprocess.run(
-        [sys.executable, "-m", "pip", "wheel", "--no-deps", "--wheel-dir", str(out), str(REPO)],
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "wheel",
+            "--no-deps",
+            "--no-build-isolation",
+            "--wheel-dir",
+            str(out),
+            str(REPO),
+        ],
         capture_output=True,
         text=True,
         check=False,
@@ -85,9 +95,11 @@ def test_wheel_ships_every_service_module(wheel_contents):
 
 def test_wheel_ships_standalone_overrides(wheel_contents):
     """An override missing from the wheel builds an image that fails only at warmup."""
-    expected = {str(p.relative_to(REPO)) for p in (REPO / "deployment" / "standalone_overrides").rglob("*.sh")}
+    overrides = (REPO / "proto_tools" / "modal").glob("**/standalone_overrides/**/*")
+    expected = {p.relative_to(REPO).as_posix() for p in overrides if p.is_file()}
+    assert expected, "found no standalone overrides under proto_tools/modal/; the search path is stale"
     missing = sorted(expected - wheel_contents)
-    assert not missing, f"wheel is missing override scripts: {missing}"
+    assert not missing, f"wheel is missing override files: {missing}"
 
 
 def test_override_may_be_a_bare_package(tmp_path, monkeypatch):

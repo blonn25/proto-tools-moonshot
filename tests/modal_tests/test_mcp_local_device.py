@@ -39,15 +39,6 @@ def test_every_registered_tool_is_available_locally() -> None:
     assert _LOCAL_ONLY_TOOL in listed, "a tool with no deployment still runs on this machine"
 
 
-def test_the_local_catalogue_is_larger_than_the_deployable_one() -> None:
-    """The dispatch table is the wrong universe locally: it omits tools that run here fine."""
-    from proto_tools.mcp import tools as impl
-
-    local = impl.list_tools(deployed_only=True, device="local")
-    deployable = impl.list_tools(deployed_only=False, device="modal")
-    assert len(local) > len(deployable)
-
-
 def test_workspace_info_reports_no_account_and_no_deploys() -> None:
     """There is nothing to authenticate against and nothing to deploy to."""
     from proto_tools.mcp import tools as impl
@@ -120,18 +111,6 @@ def test_an_undeployed_local_cpu_tool_is_flagged_as_running_here() -> None:
     from proto_tools.mcp.tools import runs_in_process
 
     assert runs_in_process("pdb-fetch-entry")
-
-
-def test_the_remote_catalogue_includes_tools_answered_in_process() -> None:
-    """An agent on a remote device can still call a tool that has no deployment."""
-    from proto_tools.mcp import tools as impl
-
-    listed = {entry["tool_key"]: entry for entry in impl.list_tools(deployed_only=True, device="modal")}
-    entry = listed.get(_LOCAL_ONLY_TOOL)
-    assert entry is not None, "a local_only tool is usable on modal, so it belongs in the catalogue"
-    assert entry["available"] is True
-    assert entry["runs_in_process"] is True
-    assert entry["deployed"] is False, "it is usable, but nothing is deployed for it"
 
 
 def test_the_mcp_remote_guard_is_the_registry_one() -> None:

@@ -8,9 +8,6 @@ source standalone_helpers.sh
 
 echo "Setting up Biohub ESM env (covers ESM3 and ESM C)..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 
 echo "Installing dependencies from requirements.txt..."

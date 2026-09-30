@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up AlphaFold2 (ColabDesign) standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit "${ALPHAFOLD2_CUDA_TOOLKIT_CONSTRAINT:-}"
 
 echo "Installing JAX, ColabDesign, and deps..."

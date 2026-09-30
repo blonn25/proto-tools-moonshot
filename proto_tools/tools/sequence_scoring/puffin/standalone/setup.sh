@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up Puffin standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 
 # selene-sdk pulls pytabix, whose sdist-built C extension needs zlib.h.

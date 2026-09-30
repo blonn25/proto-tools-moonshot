@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up ESM-IF standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 
 echo "Installing torch-geometric (required by ESM-IF GVP modules)..."

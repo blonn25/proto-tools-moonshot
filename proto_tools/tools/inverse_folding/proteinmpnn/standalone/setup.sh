@@ -5,9 +5,6 @@ source standalone_helpers.sh
 
 echo "Setting up ProteinMPNN standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit
 
 echo "Installing dependencies from requirements.txt..."

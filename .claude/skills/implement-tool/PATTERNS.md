@@ -97,13 +97,12 @@ if __name__ == "__main__":
         json.dump(output_data, f)
 ```
 
-**standalone/setup.sh** (Subagent 1) — sources `standalone_helpers.sh` (resolved off `PATH`) for shared functions:
+**standalone/setup.sh** (Subagent 1) — sources `standalone_helpers.sh` (resolved off `PATH`) for shared functions. The tool env already has `uv` (pinned by `UV_VERSION` in `tool_instance.py`), so use `uv pip install` directly and never install uv:
 ```bash
 #!/bin/bash
 set -euo pipefail
 source standalone_helpers.sh
 
-pip install uv
 uv pip install -r requirements.txt
 
 echo "Setup complete!"
@@ -115,7 +114,6 @@ echo "Setup complete!"
 set -euo pipefail
 source standalone_helpers.sh
 
-pip install uv
 uv pip install -r requirements.txt
 
 # Resolve weight directory based on PROTO_MODEL_CACHE
@@ -136,34 +134,13 @@ echo "Setup complete!"
 
 This is distinct from "gated but auto-downloadable" assets like HuggingFace gated repos: those *are* fetched by `setup.sh` once the user has a token, so use `proto_check_gated_hf_repo` (for the access check) plus `proto_resolve_weights_dir` (for the cache path). The current section is for the cases where the user has to place files on disk themselves before any setup runs.
 
-Use `proto_resolve_asset_availability` as a fail-fast precheck at the top of `setup.sh`, **before** any heavy install steps. The helper:
+Precheck at the top of `setup.sh`, **before** any heavy install steps:
 
-- Resolves the asset directory the same way `proto_resolve_weights_dir` does (so `PROTO_<TOOLKIT>_WEIGHTS_DIR` and `PROTO_MODEL_CACHE` work uniformly).
-- If the user explicitly set `PROTO_<TOOLKIT>_WEIGHTS_DIR` and the weights aren't there → exits 1 (a misconfiguration; tests **fail** so the user notices).
-- If the env var is unset and the default cache is empty → emits the `[proto-tools] ASSET_NOT_AVAILABLE: <toolkit>:<asset_kind>` sentinel and exits 64. `ToolInstance` raises `MissingAssetError` and the conftest hook converts that to a pytest **skip**, so machines without the gated asset get clean test output instead of cascading failures.
+- Resolve the asset directory with `proto_resolve_weights_dir` (so `PROTO_<TOOLKIT>_WEIGHTS_DIR` and `PROTO_MODEL_CACHE` work uniformly).
+- If the user explicitly set `PROTO_<TOOLKIT>_WEIGHTS_DIR` and the asset isn't there → exit 1 (a misconfiguration; tests **fail** so the user notices).
+- If nothing is configured and the default cache is empty → print `[proto-tools] ASSET_NOT_AVAILABLE: <toolkit>:<asset_kind>` to stderr, followed by provisioning steps, and exit 64. `ToolInstance` raises `MissingAssetError` and the conftest hook converts that to a pytest **skip**, so machines without the asset get clean test output instead of cascading failures.
 
-```bash
-#!/bin/bash
-set -euo pipefail
-source standalone_helpers.sh
-
-echo "Setting up {tool_display_name} environment..."
-
-proto_resolve_asset_availability {toolkit} "*.bin*" \
-    "https://example.com/model-license-or-access-form" \
-    weights \
-    "$(cat <<'HINT'
-{tool_display_name} weights require a manual provisioning step:
-  1. Visit the license URL above and request access.
-  2. After approval, download the weights archive.
-  3. Place {expected_filename} in the resolved directory above.
-HINT
-)"
-
-echo "Installing uv package manager..."
-pip install uv
-# ... rest of setup ...
-```
+Example: `tools/structure_prediction/x3dna/standalone/setup.sh`.
 
 When to use which helper. The key axis is *can `setup.sh` fetch the asset programmatically* — gating is orthogonal:
 
@@ -171,7 +148,7 @@ When to use which helper. The key axis is *can `setup.sh` fetch the asset progra
 |---|---|---|
 | Setup CAN fetch the asset (public URL, or HF repo where the user has a token) | `proto_resolve_weights_dir` | Setup downloads to the resolved path — no precheck needed. |
 | Setup CAN fetch but the source is gated (HF gated repo, license must be accepted) | `proto_check_gated_hf_repo` (+ `proto_resolve_weights_dir`) | Validates token + license acceptance, then proceeds with the normal download flow. |
-| Setup CANNOT fetch the asset — too large to auto-download, or no programmatic fetch path (manual approval flow, one-time email link, etc.) | `proto_resolve_asset_availability` | Precheck at the top of `setup.sh` so unprovisioned machines skip cleanly instead of building a broken env or failing tests. |
+| Setup CANNOT fetch the asset — too large to auto-download, or no programmatic fetch path (manual approval flow, one-time email link, etc.) | `proto_resolve_weights_dir` + `ASSET_NOT_AVAILABLE` sentinel, `exit 64` | Precheck at the top of `setup.sh` so unprovisioned machines skip cleanly instead of building a broken env or failing tests. |
 
 **standalone/requirements.txt** (Subagent 1):
 ```
@@ -312,9 +289,6 @@ if __name__ == "__main__":
 set -euo pipefail
 source standalone_helpers.sh
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 # If torchvision/torchaudio needed: proto_install_pytorch "" torchvision
 
@@ -363,9 +337,6 @@ fi
 #!/bin/bash
 set -euo pipefail
 source standalone_helpers.sh
-
-echo "Installing uv package manager..."
-pip install uv
 
 proto_install_jax MYTOOL
 
@@ -549,8 +520,6 @@ if ! command -v g++ &>/dev/null; then
     echo "ERROR: g++ not found. Install a C++ compiler (e.g., apt install g++)." >&2
     exit 1
 fi
-
-pip install uv
 
 # Compile from source
 BUILD_DIR=$(mktemp -d)

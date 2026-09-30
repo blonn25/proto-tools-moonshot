@@ -11,9 +11,6 @@ fi
 
 echo "Setting up ProGen3 standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 echo "Clearing package caches for ABI-sensitive dependencies..."
 uv cache clean torch 2>/dev/null || true
 uv cache clean flash-attn 2>/dev/null || true

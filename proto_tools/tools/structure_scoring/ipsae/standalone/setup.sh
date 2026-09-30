@@ -4,7 +4,6 @@ source standalone_helpers.sh
 
 echo "Setting up IPSAE standalone environment..."
 
-pip install uv
 uv pip install numpy
 
 # Download ipsae.py from DunbrackLab, pinned to a specific commit for reproducibility.

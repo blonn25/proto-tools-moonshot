@@ -19,7 +19,8 @@ Everything lives under `PROTO_HOME` regardless of install mode:
 ```
 PROTO_HOME/                   (default: ~/.proto/)
 ├── proto_model_cache/        model weights (HF_HOME, TORCH_HOME, resolve_weights_dir)
-│   └── databases/            provisioned MMseqs2 databases (override: PROTO_DATABASES_DIR)
+│   ├── databases/            provisioned MMseqs2 databases (override: PROTO_DATABASES_DIR)
+│   └── jax_cache/{toolkit}/  compiled JAX programs (JAX_COMPILATION_CACHE_DIR)
 ├── proto_tool_envs/          micromamba-managed tool venvs
 ├── uv_cache/                 uv package download cache (UV_CACHE_DIR)
 ├── pip_cache/                pip HTTP cache (PIP_CACHE_DIR)
@@ -41,6 +42,37 @@ export PIP_CACHE_DIR=~/.cache/pip
 ```
 
 The cache and tool envs share a filesystem by default, which lets `uv` hard-link from the cache into envs (saves bulk, because the extracted archive is not duplicated). Wiping `PROTO_HOME/proto_tool_envs/` preserves the cache, so the next rebuild is fast.
+
+## JAX compilation cache
+
+The first time a JAX model runs, XLA compiles it for your GPU. For large models like AlphaFold3 and AlphaGenome that takes several minutes. proto-tools saves the compiled model to disk, so the next run with the same input size, GPU, and JAX version loads it in seconds instead of compiling again.
+
+This happens automatically for every JAX tool: `persistent_worker._build_subprocess_env()` sets `JAX_COMPILATION_CACHE_DIR` for each tool, and tools that don't use JAX ignore it. The cache is stored next to your model weights, so it survives env rebuilds, and on Modal it lives on the shared volume where every container can use it.
+
+| `PROTO_MODEL_CACHE` | Cache location |
+|---|---|
+| *(unset, default)* | `{PROTO_HOME}/proto_model_cache/jax_cache/{toolkit}/` |
+| `/absolute/path` | `/absolute/path/jax_cache/{toolkit}/` |
+| `IN_ENV` | `{venv}/jax_cache/` |
+| `NONE` | Not set, unless you set `JAX_COMPILATION_CACHE_DIR` yourself |
+
+To put the cache somewhere else, or turn it off:
+
+```bash
+export JAX_COMPILATION_CACHE_DIR=/path/to/jax_cache   # one directory for every tool
+export PROTO_JAX_COMPILATION_CACHE=0                 # disable the cache
+```
+
+A single tool can opt out on its own by setting the variable to an empty value in its `standalone/env_vars.txt`:
+
+```text
+[set]
+JAX_COMPILATION_CACHE_DIR=
+```
+
+Leave the value truly empty. JAX treats an empty value as "off", but a space makes it write cache files into the working directory.
+
+A cached model only matches the GPU type and JAX version that compiled it, so a mismatch just triggers a fresh compile, never a wrong result. That also makes the cache safe to share between users on the same model cache. It grows as you run new input sizes, GPUs, and JAX versions; you can delete `jax_cache/`, or one tool's folder inside it, at any time, and the next run recompiles.
 
 ## Modes
 
@@ -123,6 +155,5 @@ wget -q -O "$WEIGHTS_DIR/model.pt" "https://example.com/model.pt"
 ## Exceptions
 
 - **ProteinMPNN**: Weights (~150 MB) live inside pip-installed ColabDesign. Inherently venv-local.
-- **AlphaFold3**: User-provided paths (`model_dir`, `db_dir`, `sif_path`). Not managed by `PROTO_MODEL_CACHE`.
 <!-- docs:ignore end -->
 

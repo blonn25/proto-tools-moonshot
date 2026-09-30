@@ -29,6 +29,8 @@ Tools with PyTorch/JAX dependencies use **centralized hardware detection** (`uti
 | `RECOMMENDED_JAX_SPEC` | `"jax[cuda12]>=0.5,<1"` | JAX version constraint with CUDA plugin |
 | `RECOMMENDED_JAX_VARIANT` | `"cuda12"` | JAX CUDA variant (cuda12, cuda13) |
 
+Every tool env is created with `pip` and `uv` (pinned by `UV_VERSION` in `proto_tools/utils/tool_instance.py`, or by the tool's optional `uv_version.txt`; see [uv Version Override](#uv-version-override)), so `setup.sh` calls `uv pip install` directly and never installs uv itself.
+
 ### Standard PyTorch Setup Pattern
 
 See `esm2`, `esmfold`, `boltz2` for reference implementations:
@@ -36,9 +38,6 @@ See `esm2`, `esmfold`, `boltz2` for reference implementations:
 ```bash
 #!/bin/bash
 set -euo pipefail
-
-echo "Installing uv package manager..."
-pip install uv
 
 # Install hardware-aware PyTorch version (from centralized detection)
 echo "Installing PyTorch: ${RECOMMENDED_TORCH_SPEC:-torch} (platform: ${DETECTED_COMPUTE_PLATFORM:-unknown})"
@@ -183,6 +182,7 @@ Each tool's `standalone/env_vars.txt` supports three sections:
 - `CONDA_PREFIX`: set to the **tool env path** (not the parent conda env) so uv/pip install into the correct environment
 - `VIRTUAL_ENV`: set to the **tool env path** for uv >=0.10 compatibility
 - `PATH`: `tool_env/bin` > `cuda/bin` (GPU) > parent PATH entries > system dirs
+- `JAX_COMPILATION_CACHE_DIR`: a per-toolkit directory beside the model weights, so JAX tools reuse compiled programs across processes (see [storage.md](storage.md#jax-compilation-cache)). A tool opts out with an empty `JAX_COMPILATION_CACHE_DIR=` under `[set]`
 - `LD_LIBRARY_PATH`: tool-specific `[set]` paths > parent `LD_LIBRARY_PATH` entries > `$CONDA_PREFIX/lib` (the latter two are skipped when `LD_LIBRARY_PATH` is in `[no_passthrough]`, in which case just the host's `libcuda.so.1` dir is appended)
 
 ## Foundation Environment (git, curl, make, cmake, pkg-config, gcc, g++)
@@ -217,8 +217,6 @@ Tools that install C++ extensions with ABI dependencies (torch, flash-attn, tran
 **Standard pattern for ABI-sensitive tools** (evo1, evo2, borzoi):
 
 ```bash
-echo "Installing uv package manager..."
-pip install uv
 
 # Clear caches BEFORE installing any ABI-sensitive packages
 echo "Clearing package caches for ABI-sensitive dependencies..."
@@ -290,6 +288,16 @@ The lookup key is built as `f"{platform.system().lower()}-{platform.machine()}"`
 
 **Consistency tests:** every shipped `python_version.txt` is validated by `tests/style_consistency_tests/test_python_version_consistency.py` (one parametrized result per tool). Parser unit tests live in `tests/tool_infra_tests/test_python_version_files.py`.
 
+## uv Version Override
+
+Every tool env is created with `uv` pinned to `UV_VERSION` in `proto_tools/utils/tool_instance.py`. A tool whose build breaks on that release can ship an optional `standalone/uv_version.txt` to pin a different one:
+
+```text
+default: 0.11.33
+```
+
+It uses the same keyed format and platform lookup as `python_version.txt`; values must be `major.minor.patch`. The file's content and resolved version are part of the setup hash, so adding or editing it rebuilds that tool's env. Bumping `UV_VERSION` itself rebuilds nothing: uv runs only while an env is built, so a finished env does not depend on it. Parser unit tests live in `tests/tool_infra_tests/test_uv_version_files.py`.
+
 ## Shared Environments
 
 Multiple tools may rely on the same dependencies. For example, ESM3 and ESM C, which both come from `Biohub/esm`, can share a single micromamba environment on disk, which avoids duplicating environments when adding a sibling model.
@@ -325,7 +333,11 @@ proto_tools/
 - A `shared_env.txt` pointing to a non-existent shared env raises with a clear error at dispatch time.
 - An empty `shared_env.txt` raises.
 
-**Concurrency:** Existing setup-lock at `<env_path>/.setup.lock` serializes concurrent setup attempts from different tools.
+**Concurrency:** Before checking or rebuilding an environment, `ToolInstance`
+takes a lock file beside it (`.<env dir name>.build.lock`), shared by every tool
+that uses the environment and every process using the same `PROTO_HOME`. A
+process that finds the lock held logs that it is waiting, then rechecks the
+environment once it gets the lock and reuses the finished build.
 
 **When to use a shared env:**
 

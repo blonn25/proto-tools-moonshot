@@ -3,8 +3,6 @@ set -euo pipefail
 source standalone_helpers.sh
 
 echo "Setting up Pangolin standalone environment..."
-echo "Installing uv package manager..."
-pip install uv
 
 proto_install_pytorch
 

@@ -21,7 +21,6 @@ import logging
 import os
 import random
 import re
-import shutil
 import subprocess
 import sys
 import time
@@ -38,7 +37,6 @@ import pytest
 import proto_tools.tools.testing  # noqa: F401
 from proto_tools import setup_logging
 from proto_tools.tools.tool_registry import ToolRegistry
-from proto_tools.utils.device import number_of_visible_gpus
 from proto_tools.utils.standalone_helpers_source.standalone_helpers.serialization import (
     AMINO_ACIDS_LIST,
     DNA_NUCLEOTIDES,
@@ -76,13 +74,31 @@ def log_filename_for_k_expression(k_expression: str) -> str:
     return f"pytest_{sanitized}.log"
 
 
+_CUDA_PROBE = Path(__file__).with_name("_cuda_probe.py")
+
+
 @functools.cache
+def _visible_gpus() -> tuple[int, str]:
+    """Return how many visible GPUs can execute CUDA, with a reason for skip messages.
+
+    Runs ``tests/_cuda_probe.py`` in a subprocess so no CUDA context lives in the
+    pytest process while tool workers use the same devices.
+    """
+    try:
+        result = subprocess.run(
+            [sys.executable, str(_CUDA_PROBE)], capture_output=True, text=True, timeout=120, check=False
+        )
+    except subprocess.TimeoutExpired:
+        return 0, "CUDA probe timed out"
+    count, _, reason = result.stdout.strip().partition("\t")
+    if not count.isdigit():
+        return 0, f"CUDA probe failed: {result.stderr.strip()[-200:] or 'no output'}"
+    return int(count), reason
+
+
 def _gpu_available() -> bool:
-    """Check if a GPU is likely available (without importing torch)."""
-    cvd = os.environ.get("CUDA_VISIBLE_DEVICES")
-    if cvd is not None and cvd.strip() == "":
-        return False
-    return shutil.which("nvidia-smi") is not None
+    """Return whether at least one visible GPU can execute CUDA."""
+    return _visible_gpus()[0] > 0
 
 
 def _all_subclasses(cls: type) -> set[type]:
@@ -1225,11 +1241,10 @@ def pytest_collection_modifyitems(config, items):
     """Modify test collection based on command line options and auto-mark tests."""
     # --env-report: keep only env-report smoke tests, deselect everything else
     if config.getoption("--env-report"):
-        skip_no_gpu = pytest.mark.skip(reason="--env-report: GPU not available")
         skip_ci_mark = pytest.mark.skip(reason="--env-report: skip_ci honored under GitHub Actions / --skip-ci")
         in_ci = os.getenv("GITHUB_ACTIONS") == "true" or config.getoption("--skip-ci")
-        gpu_available = _gpu_available()
-        visible_gpus = number_of_visible_gpus() if gpu_available else 0
+        visible_gpus, gpu_reason = _visible_gpus()
+        gpu_available = visible_gpus > 0
 
         selected = []
         deselected = []
@@ -1243,7 +1258,7 @@ def pytest_collection_modifyitems(config, items):
                 selected.append(item)
             elif "uses_gpu" in item.keywords and not gpu_available:
                 # Skip GPU tests on platforms without GPU, but still include in report
-                item.add_marker(skip_no_gpu)
+                item.add_marker(pytest.mark.skip(reason=f"--env-report: GPU not available: {gpu_reason}"))
                 selected.append(item)
             else:
                 # Check multi-GPU requirements (e.g., uses_gpu(2) on a 1-GPU machine)
@@ -1297,9 +1312,9 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_ci)
 
     # GPU/CPU dispatch: --cpu-only and --gpu-only are *selection filters* only.
-    # Whether a uses_gpu test runs is decided solely by the hardware availability
-    # check below (number_of_visible_gpus). A remote device bypasses every hardware
-    # gate because the GPUs live on the server, not on this machine.
+    # Whether a uses_gpu test runs is decided solely by the CUDA probe below
+    # (tests/_cuda_probe.py). A remote device bypasses every hardware gate because
+    # the GPUs live on the server, not on this machine.
     use_proto = config.getoption("--use-proto") or config.getoption("--use-modal")
 
     # Under --use-modal a benchmark can only run where a deployment exists, and TOOL_MAP is that
@@ -1405,16 +1420,19 @@ def pytest_collection_modifyitems(config, items):
             if current_arch not in allowed:
                 item.add_marker(pytest.mark.skip(reason=f"Requires platform {allowed}, current is {current_arch}"))
 
-    # Skip uses_gpu(n) tests when fewer than n GPUs are visible — bypassed
-    # under --use-proto (the GPUs live on the server).
-    visible_gpus = number_of_visible_gpus()
-    for item in items:
-        if use_proto:
-            continue
-        for marker in item.iter_markers("uses_gpu"):
-            required = marker.args[0] if marker.args else 1
-            if visible_gpus < required:
-                item.add_marker(pytest.mark.skip(reason=f"Requires {required} GPUs, only {visible_gpus} visible"))
+    # Skip uses_gpu(n) tests when fewer than n visible GPUs can run CUDA — bypassed
+    # under --use-proto (the GPUs live on the server). The probe only runs when a
+    # GPU test could actually execute here.
+    gpu_items = [] if use_proto or config.getoption("--cpu-only") else [i for i in items if "uses_gpu" in i.keywords]
+    if gpu_items:
+        visible_gpus, gpu_reason = _visible_gpus()
+        for item in gpu_items:
+            for marker in item.iter_markers("uses_gpu"):
+                required = marker.args[0] if marker.args else 1
+                if visible_gpus < required:
+                    item.add_marker(
+                        pytest.mark.skip(reason=f"Requires {required} GPUs, {visible_gpus} can run CUDA: {gpu_reason}")
+                    )
 
     # Skip uses_cpu(n) tests when fewer than n CPUs are visible. Bare uses_cpu = count=1.
     from proto_tools.utils.tool_pool import _detect_cpus
@@ -1738,9 +1756,9 @@ def make_persistent_fixture(toolkit: str, *, gpu: bool = True):
         (it will be normalized).
     gpu : bool
         When *True* (default), the fixture skips persistence when no
-        GPU is available: ``--cpu-only`` flag, ``CUDA_VISIBLE_DEVICES=""``,
-        or ``nvidia-smi`` not found.  When *False* (CPU-only tools),
-        persistence is always active.
+        GPU is available: ``--cpu-only`` flag, or no visible GPU can run
+        CUDA (``CUDA_VISIBLE_DEVICES=""``, no driver, or a failed probe).
+        When *False* (CPU-only tools), persistence is always active.
 
     Note:
         Skipped in benchmark mode (any of ``--benchmark``, ``--benchmark-report``,

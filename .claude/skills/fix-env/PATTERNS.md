@@ -147,8 +147,6 @@ See `utils/tool_instance.py` (`_ensure_micromamba`).
 #!/bin/bash
 set -euo pipefail
 
-pip install uv
-
 # Clear caches BEFORE installing ABI-sensitive packages
 uv cache clean torch 2>/dev/null || true
 uv cache clean flash-attn 2>/dev/null || true

@@ -11,9 +11,6 @@ fi
 
 echo "Setting up ProGen2 standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_pytorch
 
 echo "Installing remaining dependencies..."

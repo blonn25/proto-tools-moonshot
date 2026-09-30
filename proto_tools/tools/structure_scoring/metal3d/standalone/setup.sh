@@ -4,9 +4,6 @@ source standalone_helpers.sh
 
 echo "Setting up Metal3D standalone environment..."
 
-echo "Installing uv package manager..."
-pip install uv
-
 proto_install_cuda_toolkit
 proto_install_pytorch ""
 

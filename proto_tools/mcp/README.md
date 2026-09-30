@@ -95,6 +95,19 @@ Each deploy builds an image in your workspace and takes a few minutes. See
 Ask the agent to call `workspace_info` first. It reports which workspace and environment your
 calls reach, and how many tools are deployed.
 
+## Using the tools from the command line
+
+The `proto-tools` CLI has a command for each MCP tool:
+
+```bash
+proto-tools search "predict a protein structure"
+proto-tools schema esmfold-prediction
+proto-tools run esmfold-prediction --example
+```
+
+The others are `workspace`, `list`, `example`, and `info`. Commands run on your machine by
+default; add `--device modal` to use your Modal workspace instead.
+
 ## Hosted HTTPS server
 
 **Coming soon.** A hosted version of this server, reachable over HTTPS, so an agent can use

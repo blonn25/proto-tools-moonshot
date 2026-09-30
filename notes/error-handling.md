@@ -33,7 +33,7 @@ Treat the fields as the wire-format contract for capture mode, and don't write c
 
 ## Carve-out: `MissingAssetError` always raises
 
-`MissingAssetError` (signaled by `proto_resolve_asset_availability` in `standalone_helpers.sh` and raised in `proto_tools/utils/tool_instance.py`) **always propagates**, regardless of `PROTO_CAPTURE_ERRORS`. The pytest skip hook in `tests/conftest.py` relies on catching the real exception type to convert unprovisioned-asset failures into skips on machines that don't have gated weights / large databases.
+`MissingAssetError` (signaled by the `ASSET_NOT_AVAILABLE` sentinel a tool's `setup.sh` prints before exiting 64, and raised in `proto_tools/utils/tool_instance.py`) **always propagates**, regardless of `PROTO_CAPTURE_ERRORS`. The pytest skip hook in `tests/conftest.py` relies on catching the real exception type to convert unprovisioned-asset failures into skips on machines that don't have gated weights / large databases.
 
 ## Retry loop is unchanged
 

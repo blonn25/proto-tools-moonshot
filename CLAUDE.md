@@ -82,6 +82,7 @@ proto_tools/tools/{category}/{toolkit}/
     setup.sh
     requirements.txt
     python_version.txt
+    uv_version.txt         # optional uv pin override (default: UV_VERSION)
     env_vars.txt           # optional environment passthrough/blocklist
 ```
 
@@ -130,8 +131,10 @@ Rules that affect behavior:
 ## Runtime API
 
 `ToolRegistry` is the discovery and runtime surface for tools, schemas, docs,
-citations, links, licenses, example inputs, and access requirements. The CLI
-mirrors that surface through `proto-tools ...` commands.
+citations, links, licenses, example inputs, and access requirements. The agent
+surface (list, search, schema, example, info, run, workspace) lives once in
+`proto_tools/mcp/tools.py`; the MCP server, the `proto-tools` CLI, and the
+hosted MCP server are thin adapters over it, so change behavior there.
 
 Read `notes/finding-tools.md` for identifier resolution, registry methods,
 README/doc extraction, schemas, JSON surfaces, gated weights, and calling

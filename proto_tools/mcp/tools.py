@@ -285,6 +285,27 @@ def list_tools(
     return out
 
 
+def catalogue(
+    deployed_only: bool = True,
+    category: str | None = None,
+    device: Device = "modal",
+    *,
+    environment: str | None = None,
+    client: Any | None = None,
+) -> dict[str, Any]:
+    """Return :func:`list_tools` in the envelope every surface answers with.
+
+    Entries sit under ``tools``, the same key :func:`search_tools` uses, with ``n_total`` beside
+    them. An unknown category comes back as that error result on its own rather than wrapped.
+    """
+    found = list_tools(
+        deployed_only=deployed_only, category=category, device=device, environment=environment, client=client
+    )
+    if len(found) == 1 and found[0].get("ok") is False:
+        return found[0]
+    return {"tools": found, "n_total": len(found)}
+
+
 # The vocabulary an agent reaches for rarely matches a tool's own wording:
 # nobody searching for a structure comparison types "alignment". Substring
 # matching cannot bridge that, so map the common cases explicitly.
@@ -471,7 +492,11 @@ def _unknown_key(tool_key: str) -> dict[str, Any]:
 
 
 def get_tool_schema(tool_key: str) -> dict[str, Any]:
-    """Return the input, config and output JSON schemas for one tool."""
+    """Return the input, config and output JSON schemas for one tool, and whether it has an example.
+
+    ``has_example`` makes the next step decidable from this call: asking for an example that does
+    not exist is a wasted round trip, and not asking because none was expected is a guessed payload.
+    """
     from proto_tools.tools import ToolRegistry
 
     try:
@@ -484,6 +509,7 @@ def get_tool_schema(tool_key: str) -> dict[str, Any]:
         "input_schema": spec.input_model.model_json_schema(),
         "config_schema": spec.config_model.model_json_schema(),
         "output_schema": spec.output_model.model_json_schema(),
+        "has_example": ToolRegistry.get_example_input(tool_key) is not None,
     }
 
 
@@ -564,6 +590,9 @@ def get_tool_info(tool_key: str) -> dict[str, Any]:
 
     ``source`` is this project's implementation -- the wrapper, its environment and its example.
     ``links`` are the model's own: its authors' repository, paper and published weights.
+    ``license`` is the parsed ``license.yaml`` (code and weight terms, commercial use), or ``None``
+    when the toolkit ships none; ``weights_access`` is how the weights are obtained: ``"open"``,
+    ``"hf-gated"`` or ``"request"``.
     """
     from proto_tools.tools import ToolRegistry
 
@@ -581,6 +610,8 @@ def get_tool_info(tool_key: str) -> dict[str, Any]:
         "bibtex": ToolRegistry.get_citation(tool_key),
         "doi": ToolRegistry.get_doi(tool_key),
         "docs_url": ToolRegistry.get_docs_url(tool_key),
+        "license": ToolRegistry.get_license(tool_key),
+        "weights_access": ToolRegistry.get_weights_access(tool_key),
     }
 
 

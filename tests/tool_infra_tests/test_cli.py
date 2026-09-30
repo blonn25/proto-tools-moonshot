@@ -1,10 +1,11 @@
 """tests/tool_infra_tests/test_cli.py.
 
-Smoke tests for the ``proto-tools`` CLI entry point. Each verb maps to a
-``ToolRegistry`` classmethod, so coverage here is intentionally thin —
-just enough to catch breakage in argparse wiring, exit codes, and the
-text-vs-JSON output toggle. Behavioral coverage of the underlying
-functions lives in ``test_tool_docs.py``.
+Smoke tests for the ``proto-tools`` CLI entry point. Verbs are thin adapters,
+so coverage here is intentionally thin — just enough to catch breakage in
+argparse wiring, exit codes, and the text-vs-JSON output toggle, plus a check
+that the verbs mirroring MCP tools print exactly what those tools return.
+Behavioral coverage of the underlying functions lives in ``test_tool_docs.py``
+and ``tests/modal_tests/test_mcp*.py``.
 
 All tests invoke the CLI via the in-process ``main()`` rather than a
 subprocess so they stay fast (no Python startup cost per call).
@@ -19,6 +20,7 @@ from contextlib import redirect_stderr, redirect_stdout
 import pytest
 
 from proto_tools.cli import main
+from proto_tools.mcp import tools as impl
 
 
 def _run(*argv: str) -> tuple[int, str, str]:
@@ -30,7 +32,29 @@ def _run(*argv: str) -> tuple[int, str, str]:
     return code, out.getvalue(), err.getvalue()
 
 
-# ── Discovery verbs ─────────────────────────────────────────────────────────
+# ── Verbs mirroring the MCP tools ───────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        (
+            ("list", "--category", "masked_models", "--json"),
+            lambda: impl.catalogue(category="masked_models", device="local"),
+        ),
+        (("search", "fold a protein", "--json"), lambda: impl.search_tools("fold a protein", device="local")),
+        (("schema", "esm2-embedding"), lambda: impl.get_tool_schema("esm2-embedding")),
+        (("example", "esmfold-prediction"), lambda: impl.get_tool_example("esmfold-prediction")),
+        (("info", "esmfold-prediction"), lambda: impl.get_tool_info("esmfold-prediction")),
+        (("workspace",), lambda: impl.workspace_info("local")),
+    ],
+    ids=lambda v: v[0] if isinstance(v, tuple) else "",
+)
+def test_mirrored_verb_prints_the_mcp_payload(argv, expected) -> None:
+    """One implementation behind both surfaces: the CLI adds nothing and drops nothing."""
+    code, out, _ = _run(*argv)
+    assert code == 0
+    assert json.loads(out) == json.loads(json.dumps(expected(), default=str))
 
 
 def test_list_default_outputs_text() -> None:
@@ -48,12 +72,13 @@ def test_list_category_filter() -> None:
     assert any(line.startswith("esm2-embedding") for line in lines)
 
 
-def test_list_json_payload_is_valid() -> None:
-    code, out, _ = _run("list", "--category", "masked_models", "--json")
+def test_run_reads_inputs_and_config_from_json_and_files(tmp_path) -> None:
+    example = impl.get_tool_example("random-protein-sample")
+    inputs = tmp_path / "inputs.json"
+    inputs.write_text(json.dumps(example))
+    code, out, _ = _run("run", "random-protein-sample", "--inputs", f"@{inputs}", "--config", '{"seed": 7}')
     assert code == 0
-    payload = json.loads(out)
-    keys = [item["key"] for item in payload]
-    assert "esm2-embedding" in keys
+    assert json.loads(out)["ok"] is True
 
 
 def test_categories_outputs_known_value() -> None:
@@ -173,11 +198,11 @@ def test_signature_stays_small_for_a_tool_with_a_huge_example() -> None:
     """The reason the verb exists: cost is fixed, not proportional to the example payload.
 
     borzoi's example input is a 524,288 bp window (the model context length, enforced by
-    ``BorzoiInput``), so ``example-input`` cannot be made cheap for it at any fixture size.
+    ``BorzoiInput``), so ``example --as-python`` cannot be made cheap for it at any fixture size.
     """
     code, signature, _ = _run("signature", "borzoi-prediction")
     assert code == 0
-    _, example, _ = _run("example-input", "borzoi-prediction")
+    _, example, _ = _run("example", "borzoi-prediction", "--as-python")
     assert len(signature) < 1024
     assert len(example) > 500_000
 
@@ -228,27 +253,12 @@ def test_signature_parses_and_imports_resolve_for_every_tool() -> None:
     assert not failures, "signatures with unusable imports:\n" + "\n".join(failures)
 
 
-# ── Schema / example-input ─────────────────────────────────────────────────
+# ── example --as-python ────────────────────────────────────────────────────
 
 
-def test_schema_input_is_valid_json() -> None:
-    code, out, _ = _run("schema", "esm2-embedding", "--input")
-    assert code == 0
-    payload = json.loads(out)
-    assert "properties" in payload
-    assert "sequences" in payload["properties"]
-
-
-def test_example_input_is_valid_json() -> None:
-    code, out, _ = _run("example-input", "esm2-embedding")
-    assert code == 0
-    payload = json.loads(out)
-    assert "sequences" in payload
-
-
-def test_example_input_as_python_runs_verbatim() -> None:
+def test_example_as_python_runs_verbatim() -> None:
     """The emitted snippet is executable as-is, not just syntactically valid."""
-    code, out, _ = _run("example-input", "random-protein-sample", "--as-python")
+    code, out, _ = _run("example", "random-protein-sample", "--as-python")
     assert code == 0
 
     namespace: dict[str, object] = {}
@@ -256,9 +266,9 @@ def test_example_input_as_python_runs_verbatim() -> None:
     assert namespace["result"].success is True  # type: ignore[union-attr]
 
 
-def test_example_input_as_python_names_symbols_the_key_cannot_predict() -> None:
+def test_example_as_python_names_symbols_the_key_cannot_predict() -> None:
     """The point of the flag: registry key 'blast-create-db' does not yield these names."""
-    code, out, _ = _run("example-input", "blast-create-db", "--as-python")
+    code, out, _ = _run("example", "blast-create-db", "--as-python")
     assert code == 0
     assert "CreateBlastDbInput" in out  # not BlastCreateDbInput
     assert "run_create_blast_db" in out  # not run_blast_create_db
@@ -266,7 +276,7 @@ def test_example_input_as_python_names_symbols_the_key_cannot_predict() -> None:
 
 
 @pytest.mark.extensive
-def test_example_input_as_python_imports_resolve_for_every_tool() -> None:
+def test_example_as_python_imports_resolve_for_every_tool() -> None:
     """Every generated snippet parses and its imports bind the names it then uses."""
     import ast
 
@@ -275,9 +285,9 @@ def test_example_input_as_python_imports_resolve_for_every_tool() -> None:
     specs = {s.key: s for s in [*ToolRegistry.list_cpu_tools(), *ToolRegistry.list_gpu_tools()]}
     failures: list[str] = []
     for key, spec in sorted(specs.items()):
-        code, out, _ = _run("example-input", key, "--as-python")
+        code, out, _ = _run("example", key, "--as-python")
         if code != 0:
-            continue  # tools without an example input are covered by the JSON path
+            continue  # a tool without an example input has no snippet to check
         try:
             tree = ast.parse(out)
         except SyntaxError as exc:
@@ -302,16 +312,16 @@ def test_example_input_as_python_imports_resolve_for_every_tool() -> None:
 # ── Example notebook ───────────────────────────────────────────────────────
 
 
-def test_example_renders_markdown_and_code_fences() -> None:
-    code, out, _ = _run("example", "esm2-embedding")
+def test_notebook_renders_markdown_and_code_fences() -> None:
+    code, out, _ = _run("notebook", "esm2-embedding")
     assert code == 0
     assert out.startswith("# example notebook:")
     assert "example.ipynb" in out
     assert "```python" in out
 
 
-def test_example_missing_notebook_exits_one() -> None:
-    code, _, err = _run("example", "mmseqs2-clustering")
+def test_notebook_missing_notebook_exits_one() -> None:
+    code, _, err = _run("notebook", "mmseqs2-clustering")
     assert code == 1
     assert "No example notebook found" in err
 

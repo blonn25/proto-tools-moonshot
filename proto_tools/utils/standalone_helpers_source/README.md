@@ -17,7 +17,7 @@ published name, `from standalone_helpers import ...`.
 - **`standalone_helpers/`** — Python package of helpers, split by concern:
   - `device.py` — subprocess device env, JAX device resolution, model/params device movement
   - `memory.py` — `get_pytorch_memory_stats`, `get_jax_memory_stats`
-  - `seeding.py` — `get_random_int`, `set_torch_seed`, `set_jax_seed`, `enable_jax_compilation_cache`
+  - `seeding.py` — `get_random_int`, `set_torch_seed`, `set_jax_seed`
   - `weights.py` — `resolve_weights_dir`
   - `compression.py` — `compress_array`, `is_compressed_array` (large-array IPC wire format)
   - `__init__.py` — re-exports every public name for backward compat
@@ -31,8 +31,7 @@ have the full `proto_tools` package importable.
 - **`standalone_helpers.sh`** — Bash helper functions for `setup.sh` scripts.
   Sourced via `source standalone_helpers.sh`. Provides `proto_install_pytorch`,
   `proto_install_jax`, `proto_install_cuda_toolkit`, `proto_resolve_weights_dir`,
-  `proto_resolve_asset_availability`, `proto_check_gated_hf_repo`, and
-  `proto_download_gdrive`.
+  `proto_check_gated_hf_repo`, and `proto_download_gdrive`.
 
 ## Editing
 

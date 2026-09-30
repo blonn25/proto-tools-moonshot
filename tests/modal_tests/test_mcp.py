@@ -31,6 +31,36 @@ def test_server_registers_the_expected_surface():
     assert {t.name for t in asyncio.run(build_server("proto").list_tools())} == _READ_ONLY_SURFACE
 
 
+# The hosted MCP server is the canonical surface. Each shared tool's title, annotations (read-only,
+# destructive, idempotent, open-world) and parameters match it; ``run_tool``'s ``output_dir`` and
+# ``run_on`` are the local-only extras on top.
+_HOSTED_SURFACE = {
+    "workspace_info": ("Workspace and credentials", (True, False, True, False), set()),
+    "list_tools": ("List tools", (True, False, True, False), {"deployed_only", "category"}),
+    "search_tools": ("Search tools", (True, False, True, False), {"query", "deployed_only", "limit"}),
+    "get_tool_schema": ("Tool schema", (True, False, True, False), {"tool_key"}),
+    "get_tool_example": ("Tool example input", (True, False, True, False), {"tool_key"}),
+    "get_tool_info": ("Tool provenance", (True, False, True, False), {"tool_key"}),
+    "run_tool": ("Run a tool", (False, False, False, True), {"tool_key", "inputs", "config", "use_example"}),
+    "deploy_tool": ("Deploy a tool", (False, True, True, True), {"tool_key"}),
+}
+_LOCAL_EXTRAS = {"run_tool": {"output_dir", "run_on"}, "deploy_tool": {"environment"}}
+
+
+@pytest.mark.parametrize("name", sorted(_HOSTED_SURFACE))
+def test_each_tool_matches_the_hosted_server(name: str):
+    """An agent moving between the local and hosted servers sees the same tools, described the same way."""
+    from proto_tools.mcp import build_server
+
+    tool = next(t for t in asyncio.run(build_server("modal").list_tools()) if t.name == name)
+    title, hints, params = _HOSTED_SURFACE[name]
+    a = tool.annotations
+    assert tool.title == a.title == title
+    assert (a.readOnlyHint, a.destructiveHint, a.idempotentHint, a.openWorldHint) == hints
+    assert set(tool.parameters["properties"]) == params | _LOCAL_EXTRAS.get(name, set())
+    assert set(tool.parameters.get("required", [])) == ({"query"} if name == "search_tools" else params & {"tool_key"})
+
+
 def test_deploying_is_the_only_state_changing_tool():
     """Deployment incurs cost, and is the one such action exposed; nothing else mutates a workspace."""
     from proto_tools.mcp import build_server

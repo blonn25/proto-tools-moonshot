@@ -11,11 +11,6 @@ source standalone_helpers.sh
 
 echo "Setting up DeepPBS specificity standalone environment..."
 
-if ! command -v uv >/dev/null 2>&1; then
-  echo "Installing uv package manager..."
-  pip install uv
-fi
-
 echo "Installing PyTorch stack for DeepPBS..."
 uv pip install "torch==2.3.0" "torchvision==0.18.0" "torchaudio==2.3.0" --torch-backend=auto
 

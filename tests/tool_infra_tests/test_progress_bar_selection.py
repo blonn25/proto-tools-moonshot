@@ -5,6 +5,7 @@ makes the notebook renderer unreachable, which is how notebooks silently lost th
 for the length of one PR. The order of these two checks is the whole point of the tests.
 """
 
+import io
 from unittest.mock import patch
 
 from tqdm import tqdm
@@ -42,6 +43,34 @@ def test_a_redirected_stream_gets_a_plain_bar():
     bar = _bar(notebook=False, interactive=False)
     assert isinstance(bar, tqdm)
     assert not isinstance(bar, _AnimatedProgressBar | _NotebookProgressBar)
+
+
+def test_a_redirected_stream_does_not_emit_progress_frames():
+    """Captured agent commands should not fill logs with tqdm refreshes."""
+    stream = io.StringIO()
+    with (
+        patch("proto_tools.utils.progress._in_notebook", return_value=False),
+        patch("proto_tools.utils.progress._is_interactive", return_value=False),
+    ):
+        bar = progress_bar(total=2, desc="Running learned model", file=stream)
+    bar.update(2)
+    bar.close()
+    assert bar.disable is True
+    assert stream.getvalue() == ""
+
+
+def test_an_explicit_captured_stream_overrides_interactive_stderr():
+    """The selected output file controls rendering when stderr itself is a tty."""
+    stream = io.StringIO()
+    with (
+        patch("proto_tools.utils.progress._in_notebook", return_value=False),
+        patch("proto_tools.utils.progress._is_interactive", return_value=True),
+    ):
+        bar = progress_bar(total=1, file=stream)
+    bar.update(1)
+    bar.close()
+    assert bar.disable is True
+    assert stream.getvalue() == ""
 
 
 def test_disabling_beats_every_other_condition():
