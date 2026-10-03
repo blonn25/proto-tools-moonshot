@@ -23,6 +23,13 @@ def main():
         raise RuntimeError("No recognized model weights in the upstream repository.")
     allow = sorted(set(weights + [name for name in files if name.endswith((".json", ".txt", ".py"))]))
     snapshot = snapshot_download(repository, revision=info.sha, allow_patterns=allow, max_workers=2)
+    # The repository wrapper loads the repository's default revision. Pin its
+    # offline cache reference to the exact staged snapshot, without a network lookup.
+    refs = Path(snapshot).parent.parent / "refs"
+    refs.mkdir(exist_ok=True)
+    temporary = refs / "main.part"
+    temporary.write_text(info.sha)
+    temporary.replace(refs / "main")
     result = {
         "repository": repository, "revision": info.sha, "snapshot": snapshot,
         "files": allow, "staged_utc": datetime.now(timezone.utc).isoformat(),

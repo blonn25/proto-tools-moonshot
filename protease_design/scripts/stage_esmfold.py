@@ -1,7 +1,6 @@
 """Stage a managed GPU environment and pinned model snapshot on the login node."""
 
 import argparse
-import json
 import logging
 import os
 import subprocess

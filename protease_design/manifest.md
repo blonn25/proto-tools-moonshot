@@ -21,7 +21,9 @@
 Phase: initial literature review completed; revising the trigger to preserve
 protein folding, with scaffold verification and runtime preparation underway.
 
-No candidates have been generated or evaluated. No campaign SLURM jobs have been
+Generated 24 initial fusion sequences and five isolated-domain controls from
+the prospective specification. None have been structurally evaluated or selected.
+No campaign SLURM jobs have been
 submitted. Campaign GPU allocation: 0. No experimental work has been performed.
 CoreHPC project dependency installation is underway on the login node.
 
@@ -107,6 +109,16 @@ P94288 reference records. A numbering discrepancy requires care: ADP's PDB
 author-number offset is not a verified signal-peptide boundary. The 2015
 experimental expression construct removed 25 N-terminal residues; its activity
 was confirmed. Use that documented construct rather than a predicted cleavage.
+
+### 2026-10-02 Prospective library generation
+
+Defined the screen and acceptance targets in `design_specification.md` before
+generation. Executed `python protease_design/scripts/generate_candidates.py`:
+24 fusion sequences (four supported L-domain sequences × six spacers) and five
+isolated-domain controls were written under ignored `data/corehpc/protease_design/inputs/`.
+All sequences pass canonical-residue and catalytic-numbering checks. No
+structural or functional scores have yet been assigned. Added an offline
+ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 
 ## Job ledger
 
