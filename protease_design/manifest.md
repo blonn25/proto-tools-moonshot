@@ -339,3 +339,15 @@ preparation directory. This is a geometry-quality correction, not a relaxed
 acceptance criterion. D187N GS7 still has two transferred-occluded-state
 contacts below 2 Å. A prospectively recorded third round adds only D187N GS11
 as a longer-spacer alternative; all earlier results remain in the record.
+
+### 2026-10-03 Orthogonal domain recovery but unresolved domain placement
+
+MSA-supported pool job 2111943 completed in 12 min 32 s; analysis 2111967
+completed in 6 s. All 12 long-spacer fusions retain both native-like domains:
+CatD mean pLDDT 82.4--84.5, ADP 86.3--88.6, and domain RMSDs below 1.1 Å.
+However, all MSA-derived placements clash with transferred CatD states.
+This disagreement is retained, not averaged away. High interdomain PAE means
+neither predictor establishes the actual domain arrangement. A prospectively
+described, fixed two-torsion grid will test kinematic feasibility for both
+predictors while preserving domain geometry. Its outputs cannot establish
+favorable conformational populations, minimal leakage, or pH switching.

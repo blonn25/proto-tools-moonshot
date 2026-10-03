@@ -142,3 +142,26 @@ GS11, with 55 flexible-spacer residues (787 total residues), as a targeted
 alternative. Retain GS7 and its unfavorable diagnostics. This amendment does
 not establish that longer linkers improve folding or switching, and the same
 structural criteria apply. No activity-based selection has occurred.
+
+## Linker feasibility check after predictor disagreement
+
+MSA-supported Boltz preserves both folds but places ADP against the transferred
+CatD gate. Its interdomain PAE remains high. Neither predictor supplies a
+reliable unique domain orientation for this flexible fusion. Before final
+selection, scan an identical 12 × 12 grid of 30-degree changes to two glycine
+phi bonds: the first appended linker residue and the central spacer glycine.
+Use both predictors' geometries; keep domain internal coordinates, all bond
+lengths/angles, and stereochemistry unchanged. Reject new cross-partition
+heavy-atom pairs below 2 Å after excluding bonded/1–3 pairs. Require at least
+2 Å between ADP and either transferred CatD state, and at least 6 Å from the
+catalytic reference atoms to the other domain/linker. The pocket-distance
+criterion is an author-chosen steric diagnostic, not a substrate-accessibility
+or activity guarantee. Select the feasible grid point with the smallest total
+absolute rotation, breaking ties by greater transferred-state clearance.
+
+Retain every grid result and failure. This scan establishes only whether a
+covalently connected arrangement is geometrically accessible; fractions of
+passing grid points are not probabilities, equilibrium populations, or estimates
+of switching yield. It does not replace the raw predictor-disagreement result
+or experimentally resolve intramolecular inhibition. Extra reference residues
+absent from crystal structures remain a limitation of the transfer.
