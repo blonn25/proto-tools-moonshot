@@ -20,7 +20,7 @@ def main():
     native = read_reference(base/'references','1LYA','catd')
     positions=ca_positions(native,'catd')
     output=base/'results/rendered_candidate';output.mkdir(exist_ok=True)
-    sources=[('boltz_raw','boltz_refined_canonical'),('boltz_constructed','linker_scan_boltz_3d'),('esm_constructed','linker_scan_esm_3d')]
+    sources=[('boltz_raw','boltz_refined_projected'),('boltz_constructed','linker_scan_boltz_3d'),('esm_constructed','linker_scan_esm_3d')]
     metadata=[]
     for name,directory in sources:
         source=base/'results'/directory/item['id']/'structure.pdb'

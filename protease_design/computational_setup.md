@@ -157,3 +157,28 @@ once on a network-capable development host to stage fonts, then use
 source directory with figures and records input and PDF hashes. Its output is
 `data/corehpc/protease_design/manuscript_build/main.pdf`. The draft uses the
 official ICLR 2026 style but explicitly states that it has not been submitted.
+
+## Final preparation and feasibility analysis
+
+The canonical geometry protocol uses four explicit CatD disulfides, ff14SB,
+XML OBC2, restrained C-alpha positions, and a flat-bottom volume restraint for
+all alpha and Ile/Thr beta stereocenters. Accepted centers must retain at least
+1.8 Å³ of canonical signed volume. Boltz preparation explicitly projects H-bond
+constraints before the initial-energy comparison, after a diagnostic showed
+that comparing to unconstrained starting coordinates can reject a valid
+constrained minimum. Original rejected coordinates/checks remain separate.
+No trajectory, free-energy calculation, or pH-dependent simulation is performed.
+
+The original 144-point two-phi scan is retained under `linker_scan_esm` and
+`linker_scan_boltz`. The uniform 1,728-point extension adds the first linker
+glycine's psi angle; outputs are in `linker_scan_esm_3d` and
+`linker_scan_boltz_3d`. `--shard N --shards K` partitions records across CPU jobs,
+with no shared candidate writes. The coordinate audit independently verifies
+bond lengths, bond angles, domain rigidity, and stereochemistry after PDB
+rounding. Grid fractions are not equilibrium populations or success probabilities.
+
+`finalize_panel.py` assembles ten reviewed IDs only after complete domain,
+stereochemistry, disulfide, and kinematic checks. Its mature sequences are
+separate from the proposed donor/acceptor expression intermediates. The early
+experimental decision remains the parent-domain rate matrix on exact matched
+substrates in a qualified mild-pH interval.

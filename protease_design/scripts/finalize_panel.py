@@ -28,7 +28,7 @@ def main():
     inputs = [base / 'inputs' / name for name in ['candidates.json', 'round2/candidates.json', 'round3/candidates.json']]
     library = {r['id']: r for p in inputs for r in json.loads(p.read_text())['records']}
     analysis_paths = {name: base / 'results' / directory / 'structural_analysis.json' for name, directory in
-                      [('esm', 'analysis_esm_final'), ('boltz_msa', 'analysis_boltz_msa_final'), ('refined', 'analysis_refined_final')]}
+                      [('esm', 'analysis_esm_final'), ('boltz_msa', 'analysis_boltz_msa_final'), ('refined', 'analysis_refined_final'), ('boltz_refined', 'analysis_boltz_refined')]}
     analyses = {k: load_records(p) for k, p in analysis_paths.items()}
     assay = load_records(base / 'results/assay_metadata/assay_metadata.json')
     candidates, table, evidence = [], [], []
@@ -49,8 +49,12 @@ def main():
         stereo = repaired['canonical_stereochemistry']
         if stereo['inverted_centers'] or stereo['degenerate_centers'] or stereo['minimum_canonical_signed_volume_A3'] < 1.8:
             raise ValueError('Final geometry has unacceptable stereochemistry.')
-        if any(not 1.9 < x < 2.2 for x in repaired['domains']['catd']['disulfide_distances_A']):
-            raise ValueError('Disulfides need further review.')
+        for preparation in [repaired, analyses['boltz_refined'][name]]:
+            stereochemistry = preparation['canonical_stereochemistry']
+            if (stereochemistry['inverted_centers'] or stereochemistry['degenerate_centers'] or
+                    stereochemistry['minimum_canonical_signed_volume_A3'] < 1.8 or
+                    any(not 1.9 < x < 2.2 for x in preparation['domains']['catd']['disulfide_distances_A'])):
+                raise ValueError('Prepared stereochemistry/disulfides need further review.')
         scans = {}
         for method, directory in [('esm', 'linker_scan_esm_3d'), ('boltz_msa', 'linker_scan_boltz_3d')]:
             p = base / 'results' / directory / name / 'geometry_scan.json'

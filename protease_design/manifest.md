@@ -364,3 +364,22 @@ energy with a constrained minimum caused this rejection: project initial
 H-bond constraints before evaluating the starting energy, and retain both
 energies plus failure coordinates. This is a diagnostic hypothesis until the
 retry gives actual results; no threshold is relaxed.
+
+### 2026-10-03 Correct constrained-energy baseline
+
+Diagnostic 2112450 completed in 1 min 7 s. In that retry, the unconstrained
+energy was -105,187.22 kJ/mol, the constraint-projected starting energy
+261,762.13 kJ/mol, and the final constrained energy -89,434.70 kJ/mol. The old
+comparison would reject even this geometrically valid result. Explicit initial
+constraint projection supplies a comparable baseline; no energy or geometry
+threshold was relaxed. The final minimum canonical volume is 2.170 Å³, and
+C-alpha displacement is 0.288 Å. This does not establish why the earlier
+hydrogen preparation produced the much more negative -26.4-million value.
+Remaining Boltz records are being prepared in a separate `boltz_refined_projected`
+directory, retaining old successful and rejected attempts. Failed-dependency
+jobs 2112318, 2112319, and 2112379 were cancelled; no other user's job was touched.
+
+The completed ESM three-angle scan contains 429--782 feasible points of 1,728
+per tested fusion. All 13 independent coordinate audits passed: maximum bond
+length change 0.001365 Å and maximum bond-angle change 0.107 degrees, compatible
+with PDB rounding. These are geometric checks, not conformational probabilities.

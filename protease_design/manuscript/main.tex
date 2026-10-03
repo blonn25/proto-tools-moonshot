@@ -240,7 +240,10 @@ does not conceal its movement.
 
 Diagnostics include resolved-domain pLDDT, framework C-alpha RMSD, catalytic
 side-chain geometry, disulfide S--S distances, interdomain heavy-atom contacts,
-and partner proximity to catalytic atoms. Both experimental CatD states are
+and partner proximity to representative catalytic atoms. The representatives
+are CatD Asp39/237 CG and ADP Ser79 OG, Lys82 NZ, Tyr176 OH, and His317 NE2;
+these diagnostics do not resolve catalytic protonation or water placement.
+Both experimental CatD states are
 transferred into the predicted fusion frame to test geometric interference
 with ADP. Such a transfer assesses compatibility of a static arrangement; it
 does not predict the probability or kinetics of either state. The transfer
@@ -373,6 +376,9 @@ The final ESMFold preparation retains domain framework RMSDs of
 no inverted or degenerate alpha or Ile/Thr beta centers. These models retain
 inherited predictor confidence rather than newly estimated scores. Initial
 unprotected preparations that inverted or flattened stereocenters are excluded.
+The 1,728-point ESMFold scan yields 429--782 feasible points per fusion;
+all thirteen independent audits preserve bond lengths to within 0.001365~\angstrom{}
+and bond angles to within 0.107 degrees after PDB rounding.
 A 144-point two-phi scan finds arrangements satisfying both transferred-state
 and pocket-clearance checks for all 13 ESMFold models but only six raw Boltz
 models. Matched preparation and a uniform 1,728-point phi/psi extension
@@ -533,8 +539,15 @@ with a relaxed bound. Final preparation uses the original XML solvent on CUDA.
 A first CUDA pass without explicit chirality protection introduced inverted
 centers in two fusion models; those repaired coordinates are excluded. The
 subsequent signed-volume restraint and expanded alpha/beta audit address this
-specific preparation defect. These debugging outcomes are not biochemical
-results and are not counted as design successes.
+specific preparation defect. A later Boltz preparation failed an energy-descent test that compared an
+unconstrained starting geometry with a constrained minimum. In the diagnostic
+retry, the energies were -105,187.22 kJ/mol before projection, 261,762.13 kJ/mol
+after projection, and -89,434.70 kJ/mol after minimization. The old test would
+again reject that result. Explicit initial H-bond constraint projection
+provides a comparable baseline for subsequent Boltz preparations. The earlier
+much larger negative starting energy is not independently explained by this
+diagnostic. These debugging outcomes are not biochemical results and are not
+counted as design successes.
 
 \section{AI assistance disclosure}
 An OpenAI Codex assistant conducted literature searches, proposed the
