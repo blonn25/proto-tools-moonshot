@@ -18,12 +18,14 @@
 
 ## Current status
 
-Phase: literature review and initial sequence generation completed; preparing
-offline structure evaluation of the fold-preserving switch hypothesis.
+Phase: literature review and the complete first structure screen finished;
+independent predictions and restrained geometry checks are running.
 
 Generated 24 initial fusion sequences and five isolated-domain controls from
-the prospective specification. Five controls and the WT GS3 fusion have now
-been predicted with ESMFold. The full library has not yet been screened or selected.
+the prospective specification. All 29 have now been predicted with ESMFold.
+The final ten have not been selected. Domain preservation alone is insufficient:
+several predictions have severe interdomain loop clashes, and their relative
+domain orientation is uncertain (approximately 25 Å interdomain PAE).
 Hardware-probe job 2110367 completed successfully at commit `5ce12e48` on an
 RTX PRO 6000 Blackwell Server Edition (97,887 MiB; driver 595.71.05).
 The project `.venv` and editable development dependencies are installed.
@@ -31,8 +33,9 @@ Managed ESMFold environment/weight staging completed on the login node:
 PyTorch 2.10.0 with CUDA 12.8 and transformers 5.12.1; model revision
 `75a3841ee059df2bf4d56688166c8fb459ddd97a`. CPU geometry checks passed.
 All five controls have framework RMSD below 0.9 Å and mean resolved-domain
-pLDDT above 87.9. Boltz-2 weights are staging for independent validation.
-An eight-page ICLR-format draft compiles, with unfinished computations explicitly
+pLDDT above 87.9. Boltz-2 environment and weights are staged and a three-protein
+pilot is running. CPU OpenMM geometry checks are running for the WT parent and
+WT GS3 fusion. A nine-page ICLR-format draft compiles, with unfinished computations explicitly
 identified; the final results and figures are still being assembled.
 No experimental work has been performed.
 
@@ -141,6 +144,12 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | 2110770 | `0eebbd1a` | 4 CPUs, 16 GB | Explicit L/D peptide chemistry and mass balance | COMPLETED, exit 0; 2 s |
 | 2110771 | `0eebbd1a` | 4 CPUs, 16 GB | Original vector figures | COMPLETED, exit 0; 6 s |
 | 2110800 | `0eebbd1a` | 4 CPUs, 16 GB | Parent prediction versus crystal comparison | COMPLETED, exit 0; 2 s |
+| 2110847 | `1824ce2f` | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 0 | COMPLETED, exit 0; 14 min 1 s |
+| 2110848 | `16406443` executed | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 1 | COMPLETED, exit 0; 6 min 47 s |
+| 2111023 | `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz-2 two parents and WT GS3 | RUNNING at last check |
+| 2111024 | `16406443` | 4 CPUs, 16 GB | Restrained WT srCatD geometry repair | RUNNING at last check |
+| 2111025 | `16406443` | 4 CPUs, 16 GB | Restrained WT GS3 geometry repair | RUNNING at last check |
+| 2111026 | `16406443` | 4 CPUs, 16 GB | Partial enhanced structure analysis | COMPLETED, exit 0; 8 s |
 
 ### 2026-10-02 Initial structural analysis
 
@@ -177,6 +186,38 @@ Tectonic compiler and Times-compatible fonts. Generated three original figure
 sets as PDF/SVG/PNG; no synthetic experimental curves are presented.
 
 ## Decisions and unresolved questions
+
+### 2026-10-03 Full screen and independent-predictor troubleshooting
+
+All 24 ESMFold fusion predictions completed; analysis job 2111226 at isolated
+source revision `44b8c4f9` (runtime checkout `16406443`) found no missing records.
+All four GS5 constructs accommodate both transferred CatD states without
+sub-2 Å interdomain contacts. Only WT GS5 and Y10F GS5 are themselves free of
+such contacts in the raw prediction. Relative domain PAE is 25.0–26.3 Å, so the
+predicted domain orientation is not treated as established. The four GS5
+constructs are promising geometries, not an already selected final panel.
+
+PyMOL staging succeeded; CPU rendering job 2111227 completed in 14 seconds.
+The main CoreHPC checkout remains fixed at `16406443` while its jobs run.
+Analysis scripts use isolated worktrees inside the mirror and record both
+script and runtime revisions. Thirty bibliography metadata records are staged.
+
+Boltz pilot 2111023 stalled after preprocessing, with two idle child processes,
+0% GPU utilization and approximately 42 seconds of CPU use after more than
+20 minutes elapsed. Cancelled only this campaign job to release its GPU.
+Forked-loader deadlock is a hypothesis, not a proven root cause. Preparing a
+direct upstream CLI retry in the same managed environment, with zero loader
+workers and single-thread CPU libraries. The typed wrapper currently requires
+at least one loader worker; neither its source nor the managed environment is
+patched. Raw CLI outputs and exact command/configuration will be retained.
+
+Recovered Beyer & Dunn (1996), Table I, which specifies the short-form
+maturation region `IAKGPVSKPIEFFRLVTEGPIPE`, with cleavage between the paired
+phenylalanines. This resolves the engineered local junction, permitting a
+sequence-defined production proposal. Proposed vector context and appended
+ligation tags remain new engineering choices and require experimental checking.
+
+## Open decisions
 
 - Selectivity means avoiding the opposite substrate chirality; the user did not
   prescribe a numerical threshold.
