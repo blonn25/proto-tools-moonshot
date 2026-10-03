@@ -1,12 +1,12 @@
 """Submit one GPU job while reserving at most two campaign GPUs in total."""
 
+import argparse
 import fcntl
 import getpass
 import json
 import logging
 import re
 import subprocess
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -37,8 +37,12 @@ def count_reserved_gpus(queue_text):
 
 
 def main():
-    if len(sys.argv) < 2:
-        raise SystemExit("Usage: python submit_gpu.py SCRIPT_OR_MODULE_ARGS...")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--minutes", type=int, default=30)
+    parser.add_argument("arguments", nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    if not args.arguments or not 1 <= args.minutes <= 720:
+        raise SystemExit("Provide Python arguments and a wall time from 1 to 720 minutes.")
     root = Path(__file__).resolve().parents[2]
     if str(root) != "/mnt/scratch/group/CX500059_DS1/blonnquist/proto-tools-moonshot":
         raise SystemExit("Submit only from the documented CoreHPC project mirror.")
@@ -53,7 +57,8 @@ def main():
         reserved = count_reserved_gpus(queue)
         if reserved + 1 > 2:
             raise SystemExit(f"Two-GPU limit: {reserved} campaign GPUs already reserved.")
-        command = ["sbatch", "--parsable", "protease_design/scripts/gpu.slurm", *sys.argv[1:]]
+        command = ["sbatch", "--parsable", f"--time={args.minutes}", "--gres=gpu:1",
+                   "--nodes=1", "--ntasks=1", "protease_design/scripts/gpu.slurm", *args.arguments]
         job_id = subprocess.check_output(command, cwd=root, text=True).strip().split(";")[0]
         commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
         with (runtime / "jobs.jsonl").open("a") as ledger:

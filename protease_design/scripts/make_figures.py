@@ -100,7 +100,7 @@ def feasibility(directory):
     ax.plot(values, -4 - values, color=ORANGE, lw=1.2)
     ax.plot([-5, -2, -2], [-2, -2, -5], color=BLUE, lw=1.5)
     ax.text(-4.8, -4.7, "One-to-one fusion\ncan meet both targets", fontsize=9, color=BLUE)
-    ax.text(-4.8, -0.4, "Only an adjusted domain ratio\ncan meet both targets", fontsize=8, color=ORANGE)
+    ax.text(-4.75, -1.3, "Adjusted ratio\nneeded", fontsize=9, color=ORANGE, va="center")
     ax.text(-0.2, -0.8, "Neither", fontsize=9, color=GRAY)
     ax.set(xlim=(-5, 1), ylim=(-5, 1),
            xlabel=r"$\log_{10}[a_D(\mathrm{low})/a_L(\mathrm{low})]$",

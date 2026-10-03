@@ -22,14 +22,19 @@ Phase: literature review and initial sequence generation completed; preparing
 offline structure evaluation of the fold-preserving switch hypothesis.
 
 Generated 24 initial fusion sequences and five isolated-domain controls from
-the prospective specification. None have been structurally evaluated or selected.
+the prospective specification. Five controls and the WT GS3 fusion have now
+been predicted with ESMFold. The full library has not yet been screened or selected.
 Hardware-probe job 2110367 completed successfully at commit `5ce12e48` on an
 RTX PRO 6000 Blackwell Server Edition (97,887 MiB; driver 595.71.05).
 The project `.venv` and editable development dependencies are installed.
 Managed ESMFold environment/weight staging completed on the login node:
 PyTorch 2.10.0 with CUDA 12.8 and transformers 5.12.1; model revision
-`75a3841ee059df2bf4d56688166c8fb459ddd97a`. Initial isolated-domain and one-fusion
-jobs are queued. CPU geometry checks passed. No experimental work has been performed.
+`75a3841ee059df2bf4d56688166c8fb459ddd97a`. CPU geometry checks passed.
+All five controls have framework RMSD below 0.9 Å and mean resolved-domain
+pLDDT above 87.9. Boltz-2 weights are staging for independent validation.
+An eight-page ICLR-format draft compiles, with unfinished computations explicitly
+identified; the final results and figures are still being assembled.
+No experimental work has been performed.
 
 ## Work plan
 
@@ -129,10 +134,13 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | Job | Commit | Resources | Purpose | Status |
 | --- | --- | --- | --- | --- |
 | 2110367 | `5ce12e48` | 1 GPU, 8 CPUs, 96 GB | Hardware/module probe | COMPLETED, exit 0; 1 s |
-| 2110560 | `e1111525` | 1 GPU, 8 CPUs, 96 GB | Five isolated-domain ESMFold controls | Queued; 30 min limit |
-| 2110561 | `e1111525` | 1 GPU, 8 CPUs, 96 GB | WT GS3 fusion ESMFold pilot | Queued; 30 min limit |
+| 2110560 | `0eebbd1a` executed | 1 GPU, 4 CPUs, 64 GB | Five isolated-domain ESMFold controls | COMPLETED, exit 0; 1 min 43 s |
+| 2110561 | `0eebbd1a` executed | 1 GPU, 4 CPUs, 64 GB | WT GS3 fusion ESMFold pilot | COMPLETED, exit 0; 1 min 20 s |
 | 2110562 | `e1111525` | 4 CPUs, 16 GB | Geometry and residue-map checks | COMPLETED, exit 0; 3 passed |
 | 2110563 | `e1111525` | 4 CPUs, 16 GB | Native CatD state comparison | COMPLETED, exit 0; 3 s |
+| 2110770 | `0eebbd1a` | 4 CPUs, 16 GB | Explicit L/D peptide chemistry and mass balance | COMPLETED, exit 0; 2 s |
+| 2110771 | `0eebbd1a` | 4 CPUs, 16 GB | Original vector figures | COMPLETED, exit 0; 6 s |
+| 2110800 | `0eebbd1a` | 4 CPUs, 16 GB | Parent prediction versus crystal comparison | COMPLETED, exit 0; 2 s |
 
 ### 2026-10-02 Initial structural analysis
 
@@ -143,6 +151,30 @@ measurement of switching kinetics. Raw results are in ignored
 `data/corehpc/protease_design/results/analysis/structural_analysis.json`.
 The numerical checks verify rigid alignment without reflection, contact-count
 interpretation, and experimental residue mapping across CatD's chain break.
+
+### 2026-10-02 Successful pilot computations and manuscript preparation
+
+The GPU pilot ran on an L40S with 46,068 MiB. All five isolated controls finished
+in 103 seconds including model startup; WT GS3 finished in 80 seconds. Control
+framework RMSDs were ADP 0.891 Å and srCatD variants 0.682–0.689 Å. Mean
+resolved-domain pLDDT was 94.27 for ADP and 87.93–89.13 for srCatD. These are
+predicted structures compared with native references, not catalytic measurements.
+
+Pending pilot jobs were explicitly held before two source updates, and released
+after each pull; no source was pulled while they ran. Consequently their actual
+executed commit is `0eebbd1a`, differing from the original submission revision.
+Their requests were reduced before starting to 4 CPUs, 64 GB, and 10 minutes,
+improving backfill eligibility. The guard now accepts a bounded wall-time option
+and explicitly requests one GPU, one node, and one task.
+
+The Boltz-2 environment installed successfully. The first weight-staging attempt
+failed because its inference environment has no Hugging Face Hub package. The
+staging script now uses the already managed ESMFold environment's download
+helper; no inference implementation or installed environment was patched.
+The retry is in progress. Downloaded official ICLR style files and 27 DOI
+metadata records, with provenance. The manuscript draft builds using a scoped
+Tectonic compiler and Times-compatible fonts. Generated three original figure
+sets as PDF/SVG/PNG; no synthetic experimental curves are presented.
 
 ## Decisions and unresolved questions
 

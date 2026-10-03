@@ -3,9 +3,9 @@
 #SBATCH --comment=protease_design
 #SBATCH --partition=gpu
 #SBATCH --gres=gpu:1
-#SBATCH --cpus-per-task=8
-#SBATCH --mem=96G
-#SBATCH --time=02:00:00
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=64G
+#SBATCH --time=00:30:00
 #SBATCH --chdir=/mnt/scratch/group/CX500059_DS1/blonnquist/proto-tools-moonshot
 #SBATCH --output=logs/protease_gpu_%j.out
 #SBATCH --error=logs/protease_gpu_%j.err

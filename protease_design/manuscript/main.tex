@@ -1,8 +1,13 @@
 \documentclass{article}
 \usepackage{iclr2026_conference,times}
+% Explicit Times-compatible OpenType fonts for the portable XeTeX compiler.
+\usepackage{fontspec}
+\setmainfont{texgyretermes-regular.otf}[BoldFont=texgyretermes-bold.otf,
+  ItalicFont=texgyretermes-italic.otf,BoldItalicFont=texgyretermes-bolditalic.otf]
+\setmonofont{texgyrecursor-regular.otf}
 \usepackage{amsmath,amssymb,booktabs,graphicx,xcolor,hyperref,url}
 \iclrfinalcopy
-\title{A modular route toward chirality-selective proteolysis with mild pH control}
+\title{Toward a modular protease with pH control of peptide chirality preference}
 \author{Research draft}
 \newcommand{\CatD}{\mathrm{CatD}}
 \newcommand{\ADP}{\mathrm{ADP}}
