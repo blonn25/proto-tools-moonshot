@@ -80,6 +80,12 @@ including loops. The ADP fit includes all resolved C-alpha positions. There is
 no score-dependent outlier rejection. This operational framework mask is more
 inclusive than a secondary-structure-only core. Compare the complete resolved
 CatD domain on that same fit separately, so gate deviations remain visible.
+Native-state transfers contain only resolved reference atoms. They do not
+reconstruct the six-residue recombinant extension, unresolved termini, or the
+retained internal processing segment. The srCatD kinetic literature supplies
+separate support for regulation in the extended construct, but these static
+transfers are incomplete models of that construct.
+
 Reference numbering uses RCSB's SIFTS-to-UniProt mappings, not concatenated
 two-chain residue indices. Side-chain RMSDs are diagnostic: rotamer errors in
 unrelaxed predictions are not synonymous with a lost catalytic mechanism.

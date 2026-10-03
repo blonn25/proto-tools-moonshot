@@ -301,3 +301,29 @@ domain rows into the fusion sequence without inventing paired interdomain
 homology. Use the exact variant sequence only in each query row. This is an
 explicit method amendment motivated by a failed positive control; retain the
 single-sequence outputs and do not pool their scores with MSA-supported runs.
+
+### 2026-10-03 Alignment control recovery and stereochemistry correction
+
+Two public-parent searches returned 7,889 CatD and 5,744 ADP alignment rows;
+retained distinct homologs are capped at 511 per parent. Alignment-supported
+Boltz pilot 2111896 completed in 2 min 24 s. ADP now has 0.669 Å framework RMSD
+and 92.99 mean resolved pLDDT; CatD WT has 0.629 Å and 88.70. This resolves the
+failed no-alignment ADP method control, without establishing fusion function.
+Parent searches, exact A3M files, hashes, and assembly metadata are retained.
+
+The original CUDA refinement completed the 17-record pool in job 2111797
+(7 min 27 s). Independent analysis exposed inverted alpha centers in Y10F GS5
+(Thr586) and E180Q GS9 (Asp158, Thr606). These first-pass refined structures
+are excluded from final acceptance. All 37 original ESMFold predictions pass
+the expanded audit of alpha and Ile/Thr beta centers. Added a canonical
+signed-volume wall, calibrated to experimental reference geometry, and a final
+coordinate-level check. New results go in `esmfold_refined_chiral`; original
+and unsuccessful outputs remain available. No fold/stability claim follows
+from repair. A high-pH transferred-state contact in D187N GS7 still requires
+review before a final ten can be justified.
+
+New jobs: 2111935 (stereochemistry-preserving pool refinement), 2111936
+(MSA-pilot analysis), 2111937 (37-record expanded stereochemistry audit),
+2111943 (MSA-supported validation pool), and 2111944 (dependent refinement
+analysis), all at script `39631035`, runtime `16406443`, except the MSA pilot
+itself at `e02fdef6`. GPU jobs remain serialized through the aggregate guard.

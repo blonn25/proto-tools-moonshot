@@ -249,7 +249,9 @@ side-chain geometry, disulfide S--S distances, interdomain heavy-atom contacts,
 and partner proximity to catalytic atoms. Both experimental CatD states are
 transferred into the predicted fusion frame to test geometric interference
 with ADP. Such a transfer assesses compatibility of a static arrangement; it
-does not predict the probability or kinetics of either state.
+does not predict the probability or kinetics of either state. The transfer
+contains only resolved reference atoms; the recombinant extension and retained
+processing segment are not reconstructed in those conformations.
 
 Prospective triage targets are domain mean pLDDT of at least 80/100, framework
 RMSD approximately at most 2.5~\angstrom, and at most 0.75~\angstrom{} worsening
@@ -268,7 +270,13 @@ OXT is supplied geometrically, and hydrogens are added with standard pH-7
 preparation protonation. C-alpha atoms are restrained to their predicted
 positions with $k=1000$ kJ mol$^{-1}$ nm$^{-2}$. Minimization uses no cutoff,
 H-bond constraints, mixed-precision CUDA, tolerance 10 kJ mol$^{-1}$ nm$^{-1}$,
-and at most 1000 iterations per constraint-enforcement stage. No dynamics steps
+and at most 1000 iterations per constraint-enforcement stage. A flat-bottom
+signed-volume restraint protects every non-glycine alpha center and the
+Ile/Thr beta centers. Signs are calibrated against the experimental references;
+$E_\chi=\frac{k_\chi}{2}\min(0,sV-V_{\min})^2$, with
+$k_\chi=10^9$ kJ mol$^{-1}$ nm$^{-6}$ and $V_{\min}=0.001$ nm$^3$.
+It is inactive above the minimum canonical volume. Every retained model must
+pass a separate coordinate-level stereochemistry audit. No dynamics steps
 are taken. We retain energies, force diagnostics, coordinate displacement,
 and original and repaired structures. Confidence values are inherited from
 the prediction, not re-estimated after minimization. Energy descent and local
@@ -434,6 +442,25 @@ retained under ignored project data. The manifest records actual job states
 and revisions. The selected sequence files distinguish the mature ligated product from
 its expression intermediates. Per-design records preserve both successful
 diagnostics and unresolved biochemical requirements.
+
+\section{Runtime and numerical failures retained in the record}
+The initial Boltz persistent-worker pilot stalled after preprocessing, with
+idle loader children and negligible GPU use. A worker deadlock is a hypothesis,
+not an established root cause. The direct CLI with zero loader workers avoided
+this stall. Its first attempt then failed because the inherited NVIDIA compiler
+rejected Triton flags; explicitly selecting system GCC/G++ resolved that error.
+All completed predictions retain exact commands and checkpoint provenance.
+
+Generic OBC2 force evaluation was too slow on the tested CPU configuration.
+A substitution with the built-in optimized OBC kernel failed the declared
+energy-equivalence tolerance, including a roughly 7.89 kJ/mol discrepancy on
+the double-precision Reference platform. It was abandoned rather than accepted
+with a relaxed bound. Final preparation uses the original XML solvent on CUDA.
+A first CUDA pass without explicit chirality protection introduced inverted
+centers in two fusion models; those repaired coordinates are excluded. The
+subsequent signed-volume restraint and expanded alpha/beta audit address this
+specific preparation defect. These debugging outcomes are not biochemical
+results and are not counted as design successes.
 
 \section{AI assistance disclosure}
 An OpenAI Codex assistant conducted literature searches, proposed the
