@@ -10,6 +10,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from execution_provenance import revisions
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -42,7 +44,7 @@ def main():
     config = Boltz2Config(device="cuda:0", use_msa=False, recycling_steps=3,
                           sampling_steps=200, diffusion_samples=1, num_workers=2,
                           include_pae_matrix=True, seed=args.seed, timeout=3600, verbose=True)
-    provenance = {"commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    provenance = {**revisions(),
                   "job_id": os.environ["SLURM_JOB_ID"], "model": model,
                   "input_sha256": hashlib.sha256(args.input.read_bytes()).hexdigest(),
                   "config": config.model_dump(mode="json")}

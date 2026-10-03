@@ -18,6 +18,8 @@ from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from Bio.SeqUtils import seq1
 from scipy.spatial import cKDTree
 
+from execution_provenance import revisions
+
 
 def read_reference(directory, pdb_id, domain):
     """Index a chosen biological copy by construct position using SIFTS maps."""
@@ -267,7 +269,7 @@ def main():
                 score["framework_rmsd_delta_from_parent_A"] = score["framework_rmsd_A"] - control["framework_rmsd_A"]
                 score["plddt_delta_from_parent"] = score["resolved_mean_plddt"] - control["resolved_mean_plddt"]
     args.output.mkdir(parents=True, exist_ok=True)
-    output = {"commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+    output = {**revisions(),
               "job_id": os.environ["SLURM_JOB_ID"], "native_catd_state_comparison": native_comparison,
               "records": results, "missing_predictions": missing}
     (args.output / "structural_analysis.json").write_text(json.dumps(output, indent=2) + "\n")

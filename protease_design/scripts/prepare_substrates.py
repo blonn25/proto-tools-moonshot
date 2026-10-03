@@ -1,6 +1,5 @@
 """Build explicit enantiomeric substrate records and hydrolysis mass standards."""
 
-import hashlib
 import json
 import os
 from pathlib import Path

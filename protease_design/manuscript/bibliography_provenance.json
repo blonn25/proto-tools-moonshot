@@ -143,5 +143,10 @@
     "doi": "10.1021/acs.jctc.5b00255",
     "url": "https://api.crossref.org/v1/works/10.1021%2Facs.jctc.5b00255/transform",
     "sha256": "40092705994fa1446789d3dc0158c902831440302481131a04c58ff8a9a26c03"
+  },
+  "onufriev2004": {
+    "doi": "10.1002/prot.20033",
+    "url": "https://api.crossref.org/v1/works/10.1002%2Fprot.20033/transform",
+    "sha256": "a4070fc2fa84e9fa74a8c0ca0d885faccd1a3f09e98c66443c74e2f4d2ff80e3"
   }
 }

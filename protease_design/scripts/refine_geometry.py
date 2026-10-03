@@ -16,6 +16,8 @@ import numpy as np
 import openmm as mm
 from openmm import app, unit
 
+from execution_provenance import revisions
+
 
 def prepare_topology(pdb, disulfides):
     """Preserve intended disulfides and supply the missing terminal OXT if needed."""
@@ -143,7 +145,7 @@ def main():
             "source_commit": prior["commit"],
             "confidence_note": "pLDDT/PAE copied from original prediction; not re-estimated after refinement.",
         }
-        result = {**prior, "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        result = {**prior, **revisions(),
                   "job_id": os.environ["SLURM_JOB_ID"], "refinement": refinement,
                   "completed_utc": datetime.now(timezone.utc).isoformat(),
                   "elapsed_seconds": time.monotonic() - start,
