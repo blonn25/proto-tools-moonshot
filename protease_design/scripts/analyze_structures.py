@@ -19,6 +19,7 @@ from Bio.SeqUtils import seq1
 from scipy.spatial import cKDTree
 
 from execution_provenance import revisions
+from stereochemistry import audit, reference_signs
 
 
 def read_reference(directory, pdb_id, domain):
@@ -163,6 +164,7 @@ def main():
                                             references["1LYA"][p, "CA"]))
             for p in range(7, 23) if (p, "CA") in references["1LYA"] and (p, "CA") in references["1LYW"]},
     }
+    canonical_signs = reference_signs(references)
     records = []
     for filename in ("controls.json", "candidates.json"):
         records.extend(json.loads((args.inputs / filename).read_text())["records"])
@@ -209,6 +211,7 @@ def main():
                 incorrect_chirality.append(p)
         row["alpha_chirality_inverted_positions"] = incorrect_chirality
         row["alpha_chirality_degenerate_positions"] = degenerate_chirality
+        row["canonical_stereochemistry"] = audit(atoms, item["sequence"], canonical_signs)
         row["global_ptm"] = prediction_metrics.get("ptm")
         for domain in ("catd", "adp"):
             if domain not in domains:

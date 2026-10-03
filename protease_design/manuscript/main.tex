@@ -148,7 +148,7 @@ behavior have direct precedent. The L domain is placed first to leave that
 N terminus free after maturation. An aromatic-free spacer reduces obvious
 substrate-like motifs but cannot establish resistance to self-proteolysis.
 All constructs share a common biochemical hypothesis and should not be treated
-as 24 independent solutions to the catalytic problem.
+as independent solutions to the catalytic problem.
 
 \subsection{Reciprocal selectivity}
 Let $a_L(p)$ and $a_D(p)$ denote initial rates per nominal mole of intact,
@@ -221,11 +221,19 @@ ESMFold evaluates the five isolated-domain controls and the fusion library
 at a time. Model revision
 \texttt{75a3841ee059df2bf4d56688166c8fb459ddd97a}
 is staged locally for offline inference with PyTorch 2.10.0/CUDA 12.8 and
-transformers 5.12.1. An independent Boltz-2 screen is being evaluated with
-explicitly disabled MSA generation, three recycling steps, 200 diffusion steps,
-and a recorded random seed \citep{passaro2025}. Both are single-sequence
-evaluations of this artificial fusion; they do not model a pH-dependent ensemble.
-The project uses typed proto-tools wrappers \citep{merchant2026}.
+transformers 5.12.1. Boltz-2 2.2.1 uses three recycling steps, 200 diffusion
+steps, one sample, step scale 1.5, and seed 20261002 \citep{passaro2025}.
+Single-sequence Boltz is retained as a control. After it failed the native ADP
+control, a separately labeled evaluation supplies custom alignments from two
+public-parent ColabFold searches \citep{mirdita2022}. Distinct homologs are
+retained in server order, capped at 511 per parent. Rows are gap-padded outside
+their domain, with the exact candidate as query; no paired interdomain
+homology or structural template is supplied. Downloaded A3M files and hashes
+fix the inputs despite the unpinned hosted database version. These models do
+not predict a pH-dependent ensemble. The project uses proto-tools for managed
+environments, ESMFold, and alignment retrieval \citep{merchant2026}; Boltz runs
+through its upstream CLI with zero loader workers after a persistent-worker
+stall, and explicit GCC avoids an incompatible inherited compiler.
 
 \subsection{Structural screen}
 Each domain is aligned separately to its experimental reference using a proper
@@ -252,6 +260,20 @@ are author-chosen diagnostics, not calibrated probabilities of biochemical
 success. Discrepancies between methods and side-chain outliers require direct
 inspection rather than suppression by an aggregate score.
 
+\subsection{Restrained geometry preparation}
+OpenMM 8.4.0.post2 with its matching CUDA plugin applies ff14SB and the
+unmodified OBC2 XML implicit solvent model \citep{eastman2024,maier2015,onufriev2004}.
+The four native CatD disulfides are explicitly preserved, missing terminal
+OXT is supplied geometrically, and hydrogens are added with standard pH-7
+preparation protonation. C-alpha atoms are restrained to their predicted
+positions with $k=1000$ kJ mol$^{-1}$ nm$^{-2}$. Minimization uses no cutoff,
+H-bond constraints, mixed-precision CUDA, tolerance 10 kJ mol$^{-1}$ nm$^{-1}$,
+and at most 1000 iterations per constraint-enforcement stage. No dynamics steps
+are taken. We retain energies, force diagnostics, coordinate displacement,
+and original and repaired structures. Confidence values are inherited from
+the prediction, not re-estimated after minimization. Energy descent and local
+repair do not establish an equilibrium ensemble, pH stability, or catalysis.
+
 \subsection{Computational resource controls}
 Development and documentation occur in the Wynton repository; computational
 work runs through CoreHPC SLURM. Network dependencies and weights are staged
@@ -263,9 +285,10 @@ environments, caches, and logs remain inside the designated project mirrors.
 Isolated checkouts allow new analysis without changing source used by active
 jobs; their script and runtime revisions are recorded separately.
 
-\section{Results available at this draft stage}
+\section{Results}
 \paragraph{Verified sequence library.}
-The generator produced 24 unique fusion sequences and five isolated controls.
+The generator produced 24 initial and eight adaptive fusion sequences,
+plus five isolated controls.
 All use canonical residues and pass the prospective residue-mapping checks.
 This establishes a reproducible screening library; it is not evidence of
 expression, stability, or catalysis.
@@ -408,8 +431,9 @@ review, prospective design specification, running manifest, characterization
 plan, and executable scripts. Bulk reference records, inputs, predicted
 coordinates, confidence data, environment snapshots, and job results are
 retained under ignored project data. The manifest records actual job states
-and revisions. Final sequence and ranking artifacts will be added only after
-the corresponding computations have completed.
+and revisions. The selected sequence files distinguish the mature ligated product from
+its expression intermediates. Per-design records preserve both successful
+diagnostics and unresolved biochemical requirements.
 
 \section{AI assistance disclosure}
 An OpenAI Codex assistant conducted literature searches, proposed the

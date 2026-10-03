@@ -148,5 +148,10 @@
     "doi": "10.1002/prot.20033",
     "url": "https://api.crossref.org/v1/works/10.1002%2Fprot.20033/transform",
     "sha256": "a4070fc2fa84e9fa74a8c0ca0d885faccd1a3f09e98c66443c74e2f4d2ff80e3"
+  },
+  "mirdita2022": {
+    "doi": "10.1038/s41592-022-01488-1",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41592-022-01488-1/transform",
+    "sha256": "c6118dbb88c322c98a3462d8c54adacc52c2f1e9d771c3363cea7ca423da4b0a"
   }
 }

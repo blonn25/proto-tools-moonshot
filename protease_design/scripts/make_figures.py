@@ -34,7 +34,7 @@ def architecture(directory):
                                    (5.8, 3.7, ORANGE, "ADP\nD-peptide catalyst")]:
         ax.add_patch(FancyBboxPatch((x, 0.85), width, 1.1, boxstyle="round,pad=0.05", facecolor=color, edgecolor="none"))
         ax.text(x + width / 2, 1.4, label, ha="center", va="center", color="white", fontsize=9)
-    ax.text(0.2, 0.25, "4 CatD sequences × 6 spacers = 24 proposals; 737–762 residues", fontsize=9)
+    ax.text(0.2, 0.25, "4 CatD sequences × (6 initial + 2 adaptive spacers) = 32 proposals", fontsize=9)
     ax = axes[1]
     ax.set(xlim=(0, 10), ylim=(0, 3)); ax.axis("off")
     ax.text(0, 2.8, "b  Proposed reversible input and required readouts", weight="bold")
@@ -122,7 +122,7 @@ def native_ribbon(rendered, analysis, directory):
     xmin, xmax = max(0, xx.min() - 25), min(images[0].shape[1], xx.max() + 26)
     fig, axes = plt.subplots(1, 3, figsize=(7.1, 2.8), gridspec_kw={"width_ratios": [1, 1, 1.1]})
     for axis, im, title in zip(axes[:2], images, ["a  Accessible: 1LYA", "b  Occluded: 1LYW"]):
-        axis.imshow(im[ymin:ymax, xmin:xmax]); axis.axis("off")
+        axis.imshow(im[ymin:ymax, xmin:xmax]); axis.axis("off"); axis.set_anchor("N")
         axis.set_title(title, fontsize=9, loc="left")
     data = json.loads(analysis.read_text())["native_catd_state_comparison"]
     gate = data["native_gate_residue_CA_displacements_A"]

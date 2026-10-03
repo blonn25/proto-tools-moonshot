@@ -39,6 +39,7 @@ REFERENCES = {
     "eastman2024": "10.1021/acs.jpcb.3c06662",
     "maier2015": "10.1021/acs.jctc.5b00255",
     "onufriev2004": "10.1002/prot.20033",
+    "mirdita2022": "10.1038/s41592-022-01488-1",
 }
 
 

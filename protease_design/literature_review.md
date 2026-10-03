@@ -363,3 +363,19 @@ verification requires experiments. Ten selected constructs must be described
 as justified experimental candidates, not ten confirmed switches. If the
 fold-preserving pH interval cannot support a credible reciprocal switch, revisit
 the trigger rather than relaxing the user's stability requirement.
+
+## Alignment-supported structural validation: method amendment
+
+Mirdita et al., *ColabFold: making protein folding accessible to all*, Nature
+Methods (2022), [doi:10.1038/s41592-022-01488-1](https://doi.org/10.1038/s41592-022-01488-1),
+establishes accessible MMseqs2-based alignment generation for structure prediction.
+The [Boltz input documentation](https://github.com/jwohlwend/boltz/blob/main/docs/prediction.md)
+accepts a precomputed single-chain A3M and discourages `msa: empty`. Our
+single-sequence ADP positive control failed despite the native enzyme's known
+structure. This motivates a separately labeled alignment-supported check.
+Two parent searches are reused, with domain homologs gap-padded into each
+fusion and no paired interdomain evolutionary information. The same WT-domain
+homologs accompany each CatD variant; only the query carries its exact mutation.
+This change is a method-control repair, not evidence of biochemical success.
+Retain server-returned alignments and hashes, since a hosted database version
+is not under campaign control. No reference structure is supplied as a template.

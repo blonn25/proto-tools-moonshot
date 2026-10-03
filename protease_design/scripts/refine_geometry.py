@@ -18,6 +18,7 @@ import openmm as mm
 from openmm import app, unit
 
 from execution_provenance import revisions
+from stereochemistry import centers, reference_signs, volume
 
 
 def use_builtin_obc2(system, positions, platform, threads):
@@ -133,6 +134,10 @@ def main():
     os.environ["OPENMM_CPU_THREADS"] = str(threads)
     faulthandler.enable()
     faulthandler.dump_traceback_later(300, repeat=True)
+    from analyze_structures import read_reference
+    reference_dir = Path("data/corehpc/protease_design/references")
+    signs = reference_signs({key: read_reference(reference_dir, key, domain)
+                            for key, domain in (("1LYA", "catd"), ("4Y7P", "adp"))})
     records = json.loads(args.input.read_text())["records"]
     if args.only:
         if set(args.only) - {r["id"] for r in records}:
@@ -160,7 +165,8 @@ def main():
             if (old["refinement"]["source_structure_sha256"] != source_hash or
                     old["refinement"]["max_iterations"] != args.iterations or
                     old["refinement"]["platform"] != args.platform or
-                    old["refinement"].get("solvent_engine") != args.solvent_engine):
+                    old["refinement"].get("solvent_engine") != args.solvent_engine or
+                    old["refinement"].get("canonical_chirality_wall") != {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.001}):
                 raise ValueError("Existing refinement differs from input/configuration.")
             continue
         pdb = app.PDBFile(str(source / "structure.pdb"))
@@ -189,6 +195,23 @@ def main():
                 restraint.addParticle(atom.index, initial[atom.index].tolist())
                 ca_indices.append(atom.index)
         system.addForce(restraint)
+        # A flat-bottom signed-volume wall protects canonical stereochemistry.
+        # It is inactive above 1 A^3; normal tetrahedra are about 2-3 A^3.
+        expression = ("0.5*kchi*min(0,sgn*v-vmin)^2;"
+                      "v=(x2-x1)*((y3-y1)*(z4-z1)-(z3-z1)*(y4-y1))"
+                      "+(y2-y1)*((z3-z1)*(x4-x1)-(x3-x1)*(z4-z1))"
+                      "+(z2-z1)*((x3-x1)*(y4-y1)-(y3-y1)*(x4-x1))")
+        chirality_force = mm.CustomCompoundBondForce(4, expression)
+        chirality_force.addGlobalParameter("kchi", 1e9)
+        chirality_force.addGlobalParameter("vmin", 0.001)
+        chirality_force.addPerBondParameter("sgn")
+        atom_indices = {(int(a.residue.id), a.name): a.index for a in modeller.topology.atoms()}
+        protected = []
+        for p, kind, names in centers(item["sequence"]):
+            indices = [atom_indices[p, a] for a in names]
+            chirality_force.addBond(indices, [signs[kind]])
+            protected.append((p, kind, indices))
+        system.addForce(chirality_force)
         integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
         context = mm.Context(system, integrator, platform, properties)
         context.setPositions(modeller.positions)
@@ -202,6 +225,9 @@ def main():
         forces = np.array(state.getForces().value_in_unit(unit.kilojoule_per_mole / unit.nanometer))
         if not np.isfinite(final).all() or not np.isfinite(after) or after > before:
             raise RuntimeError("Refinement failed finite-coordinate or energy-descent checks.")
+        canonical_volumes = [signs[kind] * volume(final[indices]) for _, kind, indices in protected]
+        if min(canonical_volumes) < 0.0005:
+            raise RuntimeError("Refinement failed canonical alpha/beta stereochemistry check.")
         text = io.StringIO()
         app.PDBFile.writeFile(modeller.topology, state.getPositions(), text, keepIds=True)
         confidence = {}
@@ -221,6 +247,9 @@ def main():
             "platform": args.platform, "platform_properties": properties, "threads": threads,
             "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
             "solvent_engine": args.solvent_engine,
+            "canonical_chirality_wall": {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.001},
+            "minimum_canonical_signed_volume_A3": 1000 * min(canonical_volumes),
+            "protected_stereocenters": len(protected), "reference_chirality_signs": signs,
             "solvent_implementation": "XML CustomGBForce" if args.solvent_engine == "xml" else "GBSAOBCForce mapped from XML",
             "solvent_energy_equivalence": equivalence,
             "standard_protonation_pH": 7.0, "restraint_CA_k_kJ_mol_nm2": 1000,

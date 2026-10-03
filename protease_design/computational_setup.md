@@ -63,9 +63,14 @@ still runs in its own managed environment. Boltz's upstream runtime requires
 the affinity checkpoint to be present even though this project uses only the
 structure prediction function. The unused checkpoint is recorded as such.
 
-OpenMM 8.4.0.post2 is an additional project dependency for CPU geometry checks,
-installed from a binary wheel. The geometry script explicitly chooses the CPU
-platform, including hydrogen preparation; it does not consume an extra GPU.
+OpenMM 8.4.0.post2 and its matching `OpenMM-CUDA-12` plugin are additional
+project dependencies installed from binary wheels. Restrained minimization
+uses CUDA with the original ff14SB and `implicit/obc2.xml` force field;
+hydrogen placement uses allocated CPU threads. These are geometry checks, not
+molecular dynamics or pH simulations. CPU-only generic OBC2 proved prohibitively
+slow. A proposed optimized solvent substitution failed an energy-equivalence
+check and is excluded from final analysis. Set `CUDA_CACHE_PATH` and
+`OPENMM_CACHE_DIR` inside `data/corehpc/cache/` before submission.
 
 ## Submit and monitor
 
@@ -87,18 +92,40 @@ the Python script arguments.
 The scripts retain completed checkpoints only when their sequence, model,
 configuration, and structure hashes agree. If a time limit stops a job, rerun
 its exact command through the guard after checking the job state. Do not delete
-successful checkpoints. Boltz-2 uses `fold_boltz2.py` with its own result
-directory and explicit `use_msa=False`; no MSA server is contacted on compute
-nodes.
+successful checkpoints. The original Boltz persistent-worker pilot stalled;
+the completed runs use `fold_boltz2_cli.py` in the same managed environment,
+zero loader workers, and explicit system GCC/G++ to avoid the nvhpc module's
+incompatible `CC=nvc`. No library source or installed inference code was patched.
+Single-sequence runs are retained as method controls. Their ADP parent fails,
+so alignment-supported validation is staged separately:
+
+```bash
+# Login node: two public-parent searches, no local heavy computation.
+.venv/bin/python protease_design/scripts/stage_domain_msas.py
+# Offline SLURM inference; use the current isolated script path when appropriate.
+.venv/bin/python protease_design/scripts/submit_gpu.py --minutes 30 \
+  protease_design/scripts/fold_boltz2_cli.py \
+  data/corehpc/protease_design/inputs/validation_pool.json \
+  --msa-dir data/corehpc/protease_design/msas \
+  --output data/corehpc/protease_design/results/boltz2_msa
+.venv/bin/python protease_design/scripts/submit_gpu.py --minutes 30 \
+  protease_design/scripts/refine_geometry.py \
+  data/corehpc/protease_design/inputs/validation_pool.json --platform CUDA \
+  --output data/corehpc/protease_design/results/esmfold_refined_cuda
+```
+
+The two parent alignments come from the hosted ColabFold service via the
+repository's remote-search client. Retained A3M files and checksums define the
+actual inputs because the public server's database version cannot be pinned.
+Fusion MSAs contain unpaired domain homologs with gaps outside each domain;
+they supply no evolutionary evidence for an interdomain contact. No MSA server
+is contacted from compute nodes, and no structural template is supplied.
 
 CPU jobs are submitted using the CPU template:
 
 ```bash
 sbatch protease_design/scripts/cpu.slurm \
   protease_design/scripts/analyze_structures.py
-sbatch protease_design/scripts/cpu.slurm \
-  protease_design/scripts/refine_geometry.py \
-  data/corehpc/protease_design/inputs/candidates.json --only CDAD_WT_GS3
 squeue -u "$USER"
 sacct -j JOB_ID --format=JobID,State,ExitCode,Elapsed
 ```
