@@ -4,6 +4,16 @@ Review date: 2026-10-02. The initial feasibility review was completed before
 candidate generation. Implementation-specific sources will be added as needed.
 No experimental results have been generated in this project.
 
+Implementation-method update: OpenMM 8 supports reproducible molecular mechanics
+calculations ([Eastman et al., 2024](https://doi.org/10.1021/acs.jpcb.3c06662)).
+Amber ff14SB protein parameters ([Maier et al., 2015](https://doi.org/10.1021/acs.jctc.5b00255))
+and OBC implicit solvent ([Onufriev et al., 2004](https://doi.org/10.1002/prot.20033))
+are suitable for a narrowly scoped restrained geometry-repair diagnostic.
+This addition follows observation of compressed disulfide distances in both
+isolated and fusion ESMFold predictions. Such minimization neither establishes
+a pH-dependent conformational ensemble nor validates catalysis; energy changes
+across different sequences will not be used as activity scores.
+
 The review asks whether a protein composed exclusively of canonical L-amino
 acids can switch between cleaving L-peptides and entirely D-peptides with low
 opposite-chirality activity. It will separate direct experimental evidence from

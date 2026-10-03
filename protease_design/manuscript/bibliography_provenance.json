@@ -133,5 +133,15 @@
     "doi": "10.64898/2026.06.22.733870",
     "url": "https://api.crossref.org/v1/works/10.64898%2F2026.06.22.733870/transform",
     "sha256": "ab0e981b62bcc6f2bda49722bf9f4ed646e19a5de14188173ecccf601f42af5d"
+  },
+  "eastman2024": {
+    "doi": "10.1021/acs.jpcb.3c06662",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Facs.jpcb.3c06662/transform",
+    "sha256": "81e0b3f104bf81f9dfa88393585eb364352260ee5b89d0cae95d07e96c5470d9"
+  },
+  "maier2015": {
+    "doi": "10.1021/acs.jctc.5b00255",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Facs.jctc.5b00255/transform",
+    "sha256": "40092705994fa1446789d3dc0158c902831440302481131a04c58ff8a9a26c03"
   }
 }
