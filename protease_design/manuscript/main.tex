@@ -64,6 +64,15 @@ Structure prediction addresses primarily the first question. Neither a high
 confidence score nor a favorable substrate docking score establishes peptide
 hydrolysis or the off-target rate.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.93\linewidth]{architecture.pdf}
+\caption{Proposed architecture and input. The two catalytic functions have
+separate natural precedents. Reciprocal selectivity and reversible switching
+of the fusion remain hypotheses. Domain widths are schematic, not to scale.}
+\label{fig:architecture}
+\end{figure}
+
 \section{Related work and scaffold selection}
 \paragraph{D-peptide hydrolysis by L-proteins.}
 Alkaline D-peptidase (ADP) from \emph{Bacillus cereus} DF4-B cleaves
@@ -174,6 +183,17 @@ substrate competition, and coupling between domains can invalidate the
 independent-domain approximation. Rates below the detection limit support
 bounds, not zeros or infinite selectivity.
 
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\linewidth]{selectivity_feasibility.pdf}
+\caption{Analytical feasibility under independent domains and negligible
+intrinsic cross-cleavage. Blue satisfies both selectivity targets for a
+one-to-one fusion; orange requires a different domain ratio; gray admits no
+ratio satisfying both. The illustrative target of 100 is author-chosen.
+No experimental or simulated candidate rates are plotted.}
+\label{fig:feasibility}
+\end{figure}
+
 \section{Computational methods}
 \subsection{References, numbering, and provenance}
 Experimental structures and sequence records are downloaded with source URLs
@@ -253,6 +273,17 @@ contact-count interpretation, and residue indexing across the CatD chain break.
 These computations recover the large local rearrangement described in the
 structural literature. They were performed on experimental parent structures,
 not newly designed fusions.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{native_states.pdf}
+\caption{Reanalysis of experimental CatD conformations. (a,b) Projected C-alpha
+traces after a fixed-framework alignment excluding native residues 1--16.
+Colored segments show the gate; dots mark catalytic Asp C-alpha positions.
+(c) Displacements of matched gate positions. This compares deposited crystal
+structures and does not predict a pH response of a fusion.}
+\label{fig:native}
+\end{figure}
 
 \paragraph{Screening status.}
 The two initial GPU jobs are queued at the time of this draft. No fusion has

@@ -176,10 +176,33 @@ def main():
         if hashlib.sha256(pdb.read_bytes()).hexdigest() != run["structure_sha256"]:
             raise ValueError(f"Structure hash mismatch: {pdb}")
         atoms, confidence, scale = read_prediction(pdb, item["sequence"])
+        prediction_metrics = json.loads((directory / "metrics.json").read_text())
         domains = item.get("domains", {"adp" if item["id"] == "ADP_parent" else "catd": [1, item["length"]]})
         row = {"id": item["id"], "kind": item["kind"], "length": item["length"],
                "pdb_confidence_multiplier": scale, "prediction_job": run["job_id"],
                "sequence_sha256": item["sequence_sha256"], "domains": {}}
+        # Same ordered atom convention for every non-glycine L residue,
+        # including cysteine (whose CIP label differs from most L residues).
+        reference_volumes = []
+        for native in references.values():
+            for p in ca_positions(native, "adp", framework=False):
+                if all((p, a) in native for a in ("N", "C", "CA", "CB")):
+                    reference_volumes.append(float(np.dot(native[p, "N"] - native[p, "CA"],
+                        np.cross(native[p, "C"] - native[p, "CA"], native[p, "CB"] - native[p, "CA"]))))
+        expected_sign = np.sign(np.median(reference_volumes))
+        incorrect_chirality, degenerate_chirality = [], []
+        for p, residue in enumerate(item["sequence"], 1):
+            if residue == "G":
+                continue
+            volume = float(np.dot(atoms[p, "N"] - atoms[p, "CA"],
+                                  np.cross(atoms[p, "C"] - atoms[p, "CA"], atoms[p, "CB"] - atoms[p, "CA"])))
+            if abs(volume) < 0.1:
+                degenerate_chirality.append(p)
+            elif np.sign(volume) != expected_sign:
+                incorrect_chirality.append(p)
+        row["alpha_chirality_inverted_positions"] = incorrect_chirality
+        row["alpha_chirality_degenerate_positions"] = degenerate_chirality
+        row["global_ptm"] = prediction_metrics.get("ptm")
         for domain in ("catd", "adp"):
             if domain not in domains:
                 continue
@@ -192,6 +215,33 @@ def main():
             cat_atoms = [v for (p, a), v in atoms.items() if p <= domains["catd"][1]]
             adp_atoms = [v for (p, a), v in atoms.items() if p >= adp_start]
             row["interdomain_contacts"] = minimum_distance(cat_atoms, adp_atoms)
+            cat_keys = [key for key in atoms if key[0] <= domains["catd"][1]]
+            adp_keys = [key for key in atoms if key[0] >= adp_start]
+            tree = cKDTree([atoms[key] for key in adp_keys])
+            clashes = []
+            for key in cat_keys:
+                for index in tree.query_ball_point(atoms[key], 2.0):
+                    partner = adp_keys[index]
+                    clashes.append({"catd_position": key[0], "catd_atom": key[1],
+                                    "adp_position": partner[0], "adp_atom": partner[1],
+                                    "distance_A": float(np.linalg.norm(atoms[key] - atoms[partner])),
+                                    "catd_plddt": confidence[key[0]], "adp_plddt": confidence[partner[0]]})
+            row["interdomain_clash_pairs_below2A"] = sorted(clashes, key=lambda c: c["distance_A"])
+            cat_resolved = set(ca_positions(references["1LYA"], "catd", framework=False))
+            adp_resolved = {p + adp_start - 1 for p in ca_positions(references["4Y7P"], "adp")}
+            row["resolved_interdomain_contacts"] = minimum_distance(
+                [atoms[key] for key in cat_keys if key[0] in cat_resolved],
+                [atoms[key] for key in adp_keys if key[0] in adp_resolved])
+            if prediction_metrics.get("pae") is not None:
+                pae = np.asarray(prediction_metrics["pae"])
+                if pae.shape != (item["length"], item["length"]):
+                    raise ValueError(f"Unexpected PAE shape for {item['id']}: {pae.shape}")
+                ii = np.array(sorted(cat_resolved)) - 1
+                jj = np.array(sorted(adp_resolved)) - 1
+                row["resolved_PAE_A"] = {
+                    "catd_within": float(pae[np.ix_(ii, ii)].mean()),
+                    "adp_within": float(pae[np.ix_(jj, jj)].mean()),
+                    "interdomain_bidirectional": float(0.5 * (pae[np.ix_(ii, jj)].mean() + pae[np.ix_(jj, ii)].mean()))}
             row["partner_distance_to_catalytic_atoms"] = {
                 "catd": minimum_distance([atoms[p, "CG"] for p in (39, 237)], adp_atoms),
                 "adp": minimum_distance([atoms[adp_start + 78, "OG"]], cat_atoms),
