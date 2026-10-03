@@ -351,3 +351,16 @@ neither predictor establishes the actual domain arrangement. A prospectively
 described, fixed two-torsion grid will test kinematic feasibility for both
 predictors while preserving domain geometry. Its outputs cannot establish
 favorable conformational populations, minimal leakage, or pH switching.
+
+### 2026-10-03 Finite-grid audit and energy-check diagnostic
+
+The expanded ESMFold scan completed (2112287, 9 min 36 s), followed by its
+independent coordinate audit (2112378, 17 s). Boltz preparation 2112286 failed
+at Y10F GS7 after eight minutes: its initial energy was anomalously negative
+(about -26.4 million kJ/mol), and the finite/energy-descent check rejected the
+result. No accepted coordinates were written for that record. Its dependent
+jobs remain unrun. Investigate whether comparing an unconstrained starting
+energy with a constrained minimum caused this rejection: project initial
+H-bond constraints before evaluating the starting energy, and retain both
+energies plus failure coordinates. This is a diagnostic hypothesis until the
+retry gives actual results; no threshold is relaxed.

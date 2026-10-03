@@ -170,7 +170,8 @@ def main():
                     old["refinement"]["max_iterations"] != args.iterations or
                     old["refinement"]["platform"] != args.platform or
                     old["refinement"].get("solvent_engine") != args.solvent_engine or
-                    old["refinement"].get("canonical_chirality_wall") != {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.002}):
+                    old["refinement"].get("canonical_chirality_wall") != {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.002} or
+                    not old["refinement"].get("initial_constraints_projected", False)):
                 raise ValueError("Existing refinement differs from input/configuration.")
             continue
         pdb = app.PDBFile(str(source / "structure.pdb"))
@@ -219,6 +220,9 @@ def main():
         integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
         context = mm.Context(system, integrator, platform, properties)
         context.setPositions(modeller.positions)
+        unprojected_energy = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
+        # Compare energies on the same HBond-constraint manifold used in minimization.
+        context.applyConstraints(1e-6)
         before = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
         logging.info("%s: initial energy %.3f kJ/mol at %.1f s; minimizing", item["id"], before, time.monotonic() - start)
         mm.LocalEnergyMinimizer.minimize(context, 10 * unit.kilojoule_per_mole / unit.nanometer,
@@ -228,10 +232,16 @@ def main():
         after = state.getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
         forces = np.array(state.getForces().value_in_unit(unit.kilojoule_per_mole / unit.nanometer))
         if not np.isfinite(final).all() or not np.isfinite(after) or after > before:
-            raise RuntimeError("Refinement failed finite-coordinate or energy-descent checks.")
+            failure = {"id": item["id"], "unprojected_energy_kJ_mol": unprojected_energy,
+                       "projected_initial_energy_kJ_mol": before, "final_energy_kJ_mol": after,
+                       "finite_positions": bool(np.isfinite(final).all())}
+            (output / "rejected.json").write_text(json.dumps(failure, indent=2) + "\n")
+            np.savez(output / "rejected_positions.npz", positions_nm=final)
+            raise RuntimeError(f"Refinement failed finite-coordinate or energy-descent checks: {failure}")
         canonical_volumes = [signs[kind] * volume(final[indices]) for _, kind, indices in protected]
         if min(canonical_volumes) < 0.0018:
-            raise RuntimeError("Refinement failed canonical alpha/beta stereochemistry check.")
+            bad = [(p, kind, 1000 * v) for (p, kind, _), v in zip(protected, canonical_volumes) if v < 0.0018]
+            raise RuntimeError(f"Refinement failed canonical alpha/beta stereochemistry check: {bad}")
         text = io.StringIO()
         app.PDBFile.writeFile(modeller.topology, state.getPositions(), text, keepIds=True)
         confidence = {}
@@ -258,6 +268,7 @@ def main():
             "solvent_energy_equivalence": equivalence,
             "standard_protonation_pH": 7.0, "restraint_CA_k_kJ_mol_nm2": 1000,
             "max_iterations": args.iterations, "force_tolerance_kJ_mol_nm": 10,
+            "initial_constraints_projected": True, "unprojected_energy_kJ_mol": unprojected_energy,
             "energy_before_kJ_mol": before, "energy_after_kJ_mol": after,
             "final_force_rms_kJ_mol_nm": float(np.sqrt(np.mean(forces ** 2))),
             "CA_rms_displacement_A": float(10 * np.sqrt(np.mean(np.sum((final[ca_indices] - initial[ca_indices]) ** 2, axis=1)))),
