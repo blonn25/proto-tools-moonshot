@@ -168,3 +168,26 @@ targets are:
 
 - `implement-tool`: full lifecycle for implementing a new wrapper.
 - `fix-env`: debugging and fixing standalone environment setup failures.
+
+## Protease Design Campaign
+
+- The protease-design project may use **at most two GPUs concurrently on
+  CoreHPC**, aggregated across all of its jobs, job arrays, and interactive
+  allocations. This limit reserves capacity for the user's other work. Check
+  campaign allocations before every GPU submission; array throttling alone
+  does not enforce the limit across independent submissions. CPU jobs have no
+  user-imposed concurrency limit, but must still use SLURM and appropriate
+  resources.
+- Keep the literature review, design specifications, scripts, and a running
+  progress manifest in `protease_design/`. Update the manifest with decisions,
+  executed commands/jobs, commit identifiers, results, and outstanding work.
+- Every designed protein must contain only the 20 canonical L-amino acids.
+  Substrates in the D state are entirely D-amino acids. Evaluate both states
+  against both substrate chiralities; structural confidence alone does not
+  establish catalysis, switching, or selectivity.
+- If pH controls switching, select conditions supported by folding/stability
+  evidence for every required protein. Include a simple experimental check of
+  fold retention and activity recovery; do not count denaturation as switching.
+- The target is ten defensible candidates for experimental testing and an
+  ICLR-format manuscript. Distinguish established literature, computed
+  results, hypotheses, and experimental work that has not been performed.
