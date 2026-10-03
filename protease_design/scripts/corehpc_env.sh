@@ -14,6 +14,9 @@ export APPTAINER_TMPDIR="$PWD/data/corehpc/containers/tmp"
 export TMPDIR="$PWD/data/corehpc/tmp/${SLURM_JOB_ID:-setup}"
 export PROTO_ENV_LOG_DIR="$PWD/logs/protease_env"
 export PROTO_ENV_VERBOSE=1
+if [[ -d "$PWD/data/corehpc/protease_design/env_defs/boltz2" ]]; then
+  export PROTO_BOLTZ2_STANDALONE_DIR="$PWD/data/corehpc/protease_design/env_defs/boltz2"
+fi
 if [[ -d "$PWD/data/corehpc/protease_design/env_defs/esmfold" ]]; then
   export PROTO_ESMFOLD_STANDALONE_DIR="$PWD/data/corehpc/protease_design/env_defs/esmfold"
 fi

@@ -1,0 +1,10 @@
+{
+  "source": "https://github.com/ICLR/Master-Template/raw/master/iclr2026.zip",
+  "sha256": "b6d63b29992e153f804bb6d170c57db156c011b5bedf96a9f31d58813b909acf",
+  "files": [
+    "fancyhdr.sty",
+    "iclr2026_conference.bst",
+    "iclr2026_conference.sty",
+    "natbib.sty"
+  ]
+}

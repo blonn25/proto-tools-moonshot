@@ -26,8 +26,10 @@ the prospective specification. None have been structurally evaluated or selected
 Hardware-probe job 2110367 completed successfully at commit `5ce12e48` on an
 RTX PRO 6000 Blackwell Server Edition (97,887 MiB; driver 595.71.05).
 The project `.venv` and editable development dependencies are installed.
-Managed ESMFold environment/weight staging is underway on the login node.
-No inference jobs have run. No experimental work has been performed.
+Managed ESMFold environment/weight staging completed on the login node:
+PyTorch 2.10.0 with CUDA 12.8 and transformers 5.12.1; model revision
+`75a3841ee059df2bf4d56688166c8fb459ddd97a`. Initial isolated-domain and one-fusion
+jobs are queued. CPU geometry checks passed. No experimental work has been performed.
 
 ## Work plan
 
@@ -127,6 +129,20 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | Job | Commit | Resources | Purpose | Status |
 | --- | --- | --- | --- | --- |
 | 2110367 | `5ce12e48` | 1 GPU, 8 CPUs, 96 GB | Hardware/module probe | COMPLETED, exit 0; 1 s |
+| 2110560 | `e1111525` | 1 GPU, 8 CPUs, 96 GB | Five isolated-domain ESMFold controls | Queued; 30 min limit |
+| 2110561 | `e1111525` | 1 GPU, 8 CPUs, 96 GB | WT GS3 fusion ESMFold pilot | Queued; 30 min limit |
+| 2110562 | `e1111525` | 4 CPUs, 16 GB | Geometry and residue-map checks | COMPLETED, exit 0; 3 passed |
+| 2110563 | `e1111525` | 4 CPUs, 16 GB | Native CatD state comparison | COMPLETED, exit 0; 3 s |
+
+### 2026-10-02 Initial structural analysis
+
+The fixed-framework superposition of 1LYA and 1LYW gives 1.918 Å C-alpha RMSD
+and a maximum observed N-terminal gate displacement of 29.987 Å. This is a
+reanalysis of experimental structures, not a prediction for the fusion or a
+measurement of switching kinetics. Raw results are in ignored
+`data/corehpc/protease_design/results/analysis/structural_analysis.json`.
+The numerical checks verify rigid alignment without reflection, contact-count
+interpretation, and experimental residue mapping across CatD's chain break.
 
 ## Decisions and unresolved questions
 
