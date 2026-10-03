@@ -33,9 +33,11 @@ screen against experimental structures and an analytical requirement for
 reciprocal selectivity. Independent preparation and enzymatic ligation of the
 domains separates acidic maturation from final-switch characterization. A
 direct peptide-fragment assay, accompanied by structural and activity-recovery
-controls, can distinguish switching from irreversible damage. This draft
-currently documents the design rationale and prospective evaluation;
-structure-prediction screening is in progress. No fusion has been experimentally
+controls, can distinguish switching from irreversible damage. The first ESMFold
+screen preserves both domain folds in all 24 constructs, but 22 contain severe
+interdomain contacts and all have uncertain relative domain placement. Longer
+flexible spacers are therefore undergoing a separately identified second screen,
+alongside independent predictions and geometry checks. No fusion has been experimentally
 validated, and sufficient reciprocal activity in the proposed pH interval remains
 the central unresolved requirement.
 \end{abstract}
@@ -214,11 +216,11 @@ structure checksum.
 
 \subsection{Structure predictions and diagnostic controls}
 ESMFold evaluates the five isolated-domain controls and the fusion library
-\citep{lin2023}. The planned configuration uses four recycles and one sequence
+\citep{lin2023}. The configuration uses four recycles and one sequence
 at a time. Model revision
 \texttt{75a3841ee059df2bf4d56688166c8fb459ddd97a}
 is staged locally for offline inference with PyTorch 2.10.0/CUDA 12.8 and
-transformers 5.12.1. An independent Boltz-2 screen is being prepared with
+transformers 5.12.1. An independent Boltz-2 screen is being evaluated with
 explicitly disabled MSA generation, three recycling steps, 200 diffusion steps,
 and a recorded random seed \citep{passaro2025}. Both are single-sequence
 evaluations of this artificial fusion; they do not model a pH-dependent ensemble.
@@ -257,6 +259,8 @@ submission guard counts pending as well as running campaign GPU allocations
 and refuses any submission that would exceed two GPUs. CPU analyses use the
 CPU partition. Source revisions are synchronized through GitHub; results,
 environments, caches, and logs remain inside the designated project mirrors.
+Isolated checkouts allow new analysis without changing source used by active
+jobs; their script and runtime revisions are recorded separately.
 
 \section{Results available at this draft stage}
 \paragraph{Verified sequence library.}
@@ -285,11 +289,27 @@ structures and does not predict a pH response of a fusion.}
 \label{fig:native}
 \end{figure}
 
-\paragraph{Screening status.}
-The two initial GPU jobs are queued at the time of this draft. No fusion has
-yet passed structural evaluation or been selected into a final ten-design panel.
-This paragraph and the abstract will be replaced with the actual results when
-the screen completes; pending computations are not reported as successful runs.
+\paragraph{First structure screen.}
+All five isolated-domain controls and 24 initial fusions completed ESMFold
+prediction. Across the fusions, resolved-domain mean pLDDT was 88.07--89.81 for
+CatD and 91.21--92.27 for ADP. Framework RMSDs were 0.704--0.749 and
+0.888--0.959~\angstrom, respectively. No inverted or degenerate C-alpha
+stereocenters were detected against the signed-volume convention calibrated
+from experimental references. These favorable domain diagnostics did not
+establish acceptable whole-fusion geometry: 22 of 24 raw models had at least
+one interdomain heavy-atom separation below 2~\angstrom. Only WT GS5 and Y10F
+GS5 lacked these contacts. All four GS5 variants accommodated the two
+transferred CatD conformations without such severe overlaps, whereas the
+other initial spacers did not.
+
+Resolved interdomain PAE was 25.04--26.27~\angstrom, indicating substantial
+uncertainty in relative placement. Consequently, clashes are warning signs
+about these static predictions, not proof that the corresponding proteins
+cannot fold. Conversely, a clash-free arrangement does not establish that
+arrangement's population in solution. An adaptive second round adds eight
+GS7/GS9 constructs, retaining the original domain variants and triage criteria.
+Independent Boltz-2 predictions and restrained geometry checks are still in
+progress; a final ten-design panel has not yet been selected.
 
 \section{Proposed experimental characterization}
 \subsection{Production separates maturation from switching}
@@ -302,9 +322,11 @@ oligoglycine N terminus after tag removal rather than assuming removal of
 translation's initiating methionine.
 
 The CatD production route should preserve the documented short-form maturation
-and verify its FRLVTE N terminus. The published expression precursor, including
-its engineered processing junction, must be sequence-verified before synthesis
-or cloning; the mature design FASTA is not a complete expression precursor.
+and verify its FRLVTE N terminus. The engineered local processing junction is
+specified in the original Table I as KPIEF$|$FRLVTE; mapping it onto the UniProt
+proenzyme supplies a sequence-defined precursor proposal. Proposed purification
+and ligation tags are additional engineering choices, and the mature design
+FASTA is not a complete expression precursor.
 Refolding and maturation occur before ADP is introduced. After ligation, remove
 sortase, unligated domains, and released tails, and confirm product identity,
 purity, and each module's activity. Manufacturing yield, tag tolerance, and

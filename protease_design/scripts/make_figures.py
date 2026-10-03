@@ -110,6 +110,31 @@ def feasibility(directory):
     save(fig, directory, "selectivity_feasibility")
 
 
+def native_ribbon(rendered, analysis, directory):
+    """Compose actual CPU ray traces with the quantitative state comparison."""
+    if not all((rendered / f"native_{s}.png").exists() for s in ("low", "high")):
+        return
+    images = [plt.imread(rendered / f"native_{s}.png") for s in ("low", "high")]
+    # Identical crop preserves the shared camera and scale of both ray traces.
+    occupied = np.any(np.stack([im[:, :, :3] < 0.97 for im in images]), axis=(0, 3))
+    yy, xx = np.where(occupied)
+    ymin, ymax = max(0, yy.min() - 25), min(images[0].shape[0], yy.max() + 26)
+    xmin, xmax = max(0, xx.min() - 25), min(images[0].shape[1], xx.max() + 26)
+    fig, axes = plt.subplots(1, 3, figsize=(7.1, 2.8), gridspec_kw={"width_ratios": [1, 1, 1.1]})
+    for axis, im, title in zip(axes[:2], images, ["a  Accessible: 1LYA", "b  Occluded: 1LYW"]):
+        axis.imshow(im[ymin:ymax, xmin:xmax]); axis.axis("off")
+        axis.set_title(title, fontsize=9, loc="left")
+    data = json.loads(analysis.read_text())["native_catd_state_comparison"]
+    gate = data["native_gate_residue_CA_displacements_A"]
+    positions = sorted(map(int, gate))
+    axes[2].plot(positions, [gate[str(p)] for p in positions], "o-", color=GRAY, markersize=3, lw=1.3)
+    axes[2].set(xlabel="Native gate residue", ylabel="Cα displacement (Å)", ylim=(0, 34), xticks=[3, 6, 9, 12, 15])
+    axes[2].set_title("c  Gate rearrangement", fontsize=9, loc="left")
+    axes[2].spines[["top", "right"]].set_visible(False)
+    fig.tight_layout(w_pad=0.7)
+    save(fig, directory, "native_states_ribbon")
+
+
 def screen(analysis, directory):
     if not analysis.exists():
         return
@@ -140,6 +165,7 @@ def main():
     parser.add_argument("--references", type=Path, default=Path("data/corehpc/protease_design/references"))
     parser.add_argument("--analysis", type=Path, default=Path("data/corehpc/protease_design/results/analysis/structural_analysis.json"))
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/results/figures"))
+    parser.add_argument("--rendered", type=Path, default=Path("data/corehpc/protease_design/results/rendered"))
     args = parser.parse_args()
     if not os.environ.get("SLURM_JOB_ID"):
         raise SystemExit("Render scientific figures through the CPU SLURM template.")
@@ -148,6 +174,7 @@ def main():
     args.output.mkdir(parents=True, exist_ok=True)
     architecture(args.output)
     native_states(args.references, args.output)
+    native_ribbon(args.rendered, args.analysis, args.output)
     feasibility(args.output)
     screen(args.analysis, args.output)
 
