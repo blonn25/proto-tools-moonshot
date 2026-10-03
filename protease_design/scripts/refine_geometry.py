@@ -1,6 +1,7 @@
 """Restrained CPU geometry repair; not dynamics, a pH model, or activity evidence."""
 
 import argparse
+import faulthandler
 import hashlib
 import io
 import json
@@ -57,12 +58,18 @@ def main():
     parser.add_argument("--predictions", type=Path, default=Path("data/corehpc/protease_design/results/esmfold"))
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/results/esmfold_refined"))
     parser.add_argument("--iterations", type=int, default=1000)
+    parser.add_argument("--threads", type=int)
     args = parser.parse_args()
     if not os.environ.get("SLURM_JOB_ID"):
         raise SystemExit("Use the CPU SLURM template.")
     if args.shards < 1 or not 0 <= args.shard < args.shards:
         raise SystemExit("Invalid shard selection.")
-    os.environ["OPENMM_CPU_THREADS"] = os.environ["SLURM_CPUS_PER_TASK"]
+    threads = args.threads or int(os.environ["SLURM_CPUS_PER_TASK"])
+    if threads < 1 or threads > int(os.environ["SLURM_CPUS_PER_TASK"]):
+        raise SystemExit("Threads must fit the CPU allocation.")
+    os.environ["OPENMM_CPU_THREADS"] = str(threads)
+    faulthandler.enable()
+    faulthandler.dump_traceback_later(300, repeat=True)
     records = json.loads(args.input.read_text())["records"]
     if args.only:
         if set(args.only) - {r["id"] for r in records}:
@@ -70,6 +77,7 @@ def main():
         records = [r for r in records if r["id"] in args.only]
     records = records[args.shard::args.shards]
     platform = mm.Platform.getPlatformByName("CPU")
+    platform.setPropertyDefaultValue("Threads", str(threads))
     for item in records:
         start = time.monotonic()
         random.seed(20261002)
@@ -91,9 +99,11 @@ def main():
         ss = item.get("catd_disulfides", [] if item["id"] == "ADP_parent" else
                       [[33, 102], [52, 59], [228, 232], [271, 308]])
         modeller = prepare_topology(pdb, ss)
+        logging.info("%s: adding hydrogens with %d CPU threads", item["id"], threads)
         forcefield = app.ForceField("amber14/protein.ff14SB.xml", "implicit/obc2.xml")
         # Fixed standard protonation is a geometry-preparation convention only.
         modeller.addHydrogens(forcefield, pH=7.0, platform=platform)
+        logging.info("%s: hydrogens ready at %.1f s; creating restrained system", item["id"], time.monotonic() - start)
         system = forcefield.createSystem(modeller.topology, nonbondedMethod=app.NoCutoff,
                                          constraints=app.HBonds)
         restraint = mm.CustomExternalForce("0.5*k*((x-x0)^2+(y-y0)^2+(z-z0)^2)")
@@ -108,9 +118,10 @@ def main():
                 ca_indices.append(atom.index)
         system.addForce(restraint)
         integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
-        context = mm.Context(system, integrator, platform, {"Threads": os.environ["SLURM_CPUS_PER_TASK"]})
+        context = mm.Context(system, integrator, platform, {"Threads": str(threads)})
         context.setPositions(modeller.positions)
         before = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
+        logging.info("%s: initial energy %.3f kJ/mol at %.1f s; minimizing", item["id"], before, time.monotonic() - start)
         mm.LocalEnergyMinimizer.minimize(context, 10 * unit.kilojoule_per_mole / unit.nanometer,
                                         args.iterations)
         state = context.getState(getPositions=True, getEnergy=True, getForces=True)
@@ -135,7 +146,8 @@ def main():
         (output / "metrics.json").write_text((source / "metrics.json").read_text())
         refinement = {
             "method": "restrained geometry minimization; no MD steps", "openmm": mm.__version__,
-            "platform": "CPU", "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
+            "platform": "CPU", "threads": threads,
+            "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
             "standard_protonation_pH": 7.0, "restraint_CA_k_kJ_mol_nm2": 1000,
             "max_iterations": args.iterations, "force_tolerance_kJ_mol_nm": 10,
             "energy_before_kJ_mol": before, "energy_after_kJ_mol": after,
