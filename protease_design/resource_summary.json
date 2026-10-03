@@ -1,0 +1,13 @@
+{
+  "collected_utc": "2026-10-03T04:44:56.049893+00:00",
+  "time_zone_requested": "UTC",
+  "maximum_observed_concurrent_allocated_gpus": 2,
+  "allocated_gpu_seconds": 7390,
+  "job_count": 71,
+  "states": {
+    "COMPLETED": 60,
+    "CANCELLED": 7,
+    "FAILED": 4
+  },
+  "inventory_sha256": "ad7a6090b8beed885c999685b34509d1b27326b4aca92f904261147150eaf533"
+}

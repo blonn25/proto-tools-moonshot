@@ -18,8 +18,8 @@
 
 ## Current status
 
-Phase: computational design and ten-candidate selection complete; manuscript
-and reproducibility package undergoing final assembly and verification.
+Phase: completed computational campaign, ten-candidate experimental panel,
+ICLR-format manuscript, and verified reproducibility package.
 
 All 33 fusions and five controls have ESMFold results. Thirteen long-spacer
 fusions received alignment-supported Boltz validation, canonical geometry
@@ -136,6 +136,14 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 
 ## Job ledger
 
+The [complete accounting table](job_accounting.csv) records all 71 campaign
+jobs: 60 completed, four failed, and seven cancelled. Three cancellations
+occurred before allocation after a failed dependency. The
+[resource summary](resource_summary.json) records the source-inventory hash,
+2.053 allocated GPU-hours, and a maximum concurrent allocation of two GPUs.
+The table below details early runs; later scientific outcomes are documented
+in the dated entries and all final job states appear in the accounting table.
+
 | Job | Commit | Resources | Purpose | Status |
 | --- | --- | --- | --- | --- |
 | 2110367 | `5ce12e48` | 1 GPU, 8 CPUs, 96 GB | Hardware/module probe | COMPLETED, exit 0; 1 s |
@@ -160,16 +168,16 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | 2111452 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Updated composite/vector figures | COMPLETED, exit 0; 7 s |
 | 2111453 | script `20f3f669`, runtime `16406443` | 4 CPUs, 16 GB | Combined first/second-round analysis | COMPLETED, exit 0; 10 s |
 | 2111464 | script `70d71b76`, runtime `16406443` | Requested 1 CPU, 4 GB | Short minimization diagnostic | CANCELLED at 8 min 43 s; generic GB force bottleneck |
-| 2111578 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 parent pilot | Computation completed; 472.6 s refinement; diagnostic only |
+| 2111578 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 parent pilot | COMPLETED, exit 0:0; 7 min 54 s; diagnostic only |
 | 2111579 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 WT GS3 pilot | FAILED equivalence check, exit 1; 46 s |
 | 2111629 | script `8c410d0e`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz CLI with GCC | COMPLETED, exit 0; 2 min 29 s |
 | 2111630 | script `8c410d0e`, runtime `16406443` | 4 CPUs, 8 GB | Reference-precision OBC equivalence | FAILED, exit 1; 2 min 20 s; 7.89 kJ/mol discrepancy |
 | 2111743 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Original XML OBC2 CUDA pilot | COMPLETED, exit 0; 1 min 15 s |
 | 2111744 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | Assay metadata for 37 sequences | COMPLETED, exit 0; 1 s |
-| 2111796 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Single-sequence Boltz validation pool | RUNNING at last check |
-| 2111797 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Original XML OBC2 CUDA validation pool | PENDING at last check |
-| 2111798 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | Boltz pilot analysis | Output complete; scheduler verification pending |
-| 2111799 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | CUDA-refined pilot analysis | Output complete; scheduler verification pending |
+| 2111796 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Single-sequence Boltz validation pool | COMPLETED, exit 0:0; 10 min 51 s |
+| 2111797 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Original XML OBC2 CUDA validation pool | COMPLETED, exit 0:0; 7 min 27 s |
+| 2111798 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | Boltz pilot analysis | COMPLETED, exit 0:0; 0 min 2 s |
+| 2111799 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | CUDA-refined pilot analysis | COMPLETED, exit 0:0; 0 min 2 s |
 
 
 ### 2026-10-02 Initial structural analysis
@@ -411,6 +419,28 @@ mature sequences; their expression and assembly remain proposed.
 Figure job 2112686 completed in 21 seconds. The completed manuscript includes
 the actual method-control failure/recovery, raw-pose disagreement, rejected
 numerical preparations, ten-sequence panel, methods, characterization plan,
-and exact sequences. Layout and citations are being checked; the archive will
-include file hashes, exact alignments, selected coordinates, raw confidence,
+and exact sequences. Layout and citations were checked; the verified archive
+includes file hashes, exact alignments, selected coordinates, raw confidence,
 full-library analysis, and environment/model provenance without bulky weights.
+
+### 2026-10-03 Delivery verification
+
+The completed paper contains eight pages of main text and sixteen total pages
+including references and appendices, with six numbered figures and two tables.
+The cached offline build resolves all citations and cross-references; no overfull
+boxes or missing glyphs were reported. Rendered scientific figures, candidate
+table, appendix grid, and sequence pages were inspected. Final sequence and
+assembly checks pass for all ten candidates. Experimental worksheets are empty.
+
+The report ZIP passed CRC verification and includes a SHA256 manifest for every
+included file. The final build and archive hashes are retained in ignored
+`manuscript_build/build_provenance.json` and `deliverables/bundle_provenance.json`.
+The archive intentionally excludes weights, environments, and full-text papers.
+Model revisions, exact alignments, selected raw/prepared/constructed structures,
+prediction confidence, all analysis summaries, and source are included.
+
+All 71 SLURM campaign jobs have terminal states; no campaign GPU allocation
+remains. The only outstanding scientific steps are experimental: parent rates
+on exact substrates, fold-preserving pH qualification, production/ligation,
+and fusion selectivity and recovery measurements. This delivery makes no claim
+that those experiments have succeeded or that all ten constructs will switch.

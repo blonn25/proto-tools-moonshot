@@ -288,7 +288,9 @@ and refuses any submission that would exceed two GPUs. CPU analyses use the
 CPU partition. Source revisions are synchronized through GitHub; results,
 environments, caches, and logs remain inside the designated project mirrors.
 Isolated checkouts allow new analysis without changing source used by active
-jobs; their script and runtime revisions are recorded separately.
+jobs; their script and runtime revisions are recorded separately. Final SLURM
+accounting records 2.053 allocated GPU-hours, including unsuccessful runs,
+with a maximum of two campaign GPUs allocated concurrently.
 
 \section{Results}
 \paragraph{Verified sequence library.}
