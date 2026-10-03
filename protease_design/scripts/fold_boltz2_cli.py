@@ -52,9 +52,21 @@ def main():
               "recycling_steps": 3, "sampling_steps": 200, "diffusion_samples": 1,
               "step_scale": 1.5, "num_workers": 0, "seed": args.seed,
               "devices": 1, "output_format": "pdb", "cpu_threads": 1}
+    # The nvhpc module sets CC=nvc, which rejects Triton's GCC flags.
+    compiler = Path("/usr/bin/gcc")
+    cxx = Path("/usr/bin/g++")
+    if not compiler.is_file() or not cxx.is_file():
+        raise SystemExit("The validated system GCC/G++ compiler paths are unavailable.")
+    config["compiler"] = subprocess.check_output([str(compiler), "--version"], text=True).splitlines()[0]
+    cache_root = Path("data/corehpc/cache").resolve()
     env = dict(os.environ, OMP_NUM_THREADS="1", OPENBLAS_NUM_THREADS="1",
                MKL_NUM_THREADS="1", HF_HUB_OFFLINE="1", WANDB_MODE="offline",
-               PYTHONUNBUFFERED="1")
+               PYTHONUNBUFFERED="1", CC=str(compiler), CXX=str(cxx),
+               TRITON_CACHE_DIR=str(cache_root / "triton"),
+               TORCHINDUCTOR_CACHE_DIR=str(cache_root / "torchinductor"),
+               CUDA_CACHE_PATH=str(cache_root / "cuda"))
+    for key in ("TRITON_CACHE_DIR", "TORCHINDUCTOR_CACHE_DIR", "CUDA_CACHE_PATH"):
+        Path(env[key]).mkdir(parents=True, exist_ok=True)
     for item in records:
         output = args.output / item["id"]
         output.mkdir(parents=True, exist_ok=True)

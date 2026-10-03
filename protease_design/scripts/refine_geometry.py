@@ -51,8 +51,10 @@ scale directly. Preserve charges, dielectrics, ACE surface energy, and no cutoff
         frames.append(frame)
 
     def energies():
+        # Use double-precision Reference energies to separate parameter mapping
+        # from the optimized CPU kernel's single-precision arithmetic.
         integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
-        context = mm.Context(system, integrator, platform, {"Threads": str(threads)})
+        context = mm.Context(system, integrator, mm.Platform.getPlatformByName("Reference"))
         values = []
         for frame in frames:
             context.setPositions(frame * unit.nanometer)
@@ -70,6 +72,7 @@ scale directly. Preserve charges, dielectrics, ACE surface energy, and no cutoff
         raise ValueError(f"Optimized OBC2 failed solvent-energy equivalence: {before}, {after}")
     return {"custom_solvent_energies_kJ_mol": before, "builtin_solvent_energies_kJ_mol": after,
             "absolute_errors_kJ_mol": errors,
+            "comparison_platform": "Reference (double precision)",
             "tolerance": "max(0.1 kJ/mol, 1e-6 * abs(custom solvent energy)) per frame",
             "frames": "Original and two local coordinate perturbations; no minimization before comparison."}
 
