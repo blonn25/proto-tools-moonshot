@@ -23,6 +23,7 @@ protein folding, with scaffold verification and runtime preparation underway.
 
 No candidates have been generated or evaluated. No campaign SLURM jobs have been
 submitted. Campaign GPU allocation: 0. No experimental work has been performed.
+CoreHPC project dependency installation is underway on the login node.
 
 ## Work plan
 
@@ -87,6 +88,25 @@ and 1EI5 with URL and SHA256 provenance in ignored project data. Added CPU/GPU
 SLURM templates and a serialized GPU submission guard that reserves pending as
 well as running campaign allocations. Five meaningful guard checks passed;
 shell syntax and whitespace checks passed. No jobs have been submitted.
+
+### 2026-10-02 Source synchronization and recombinant scaffold evidence
+
+Created branch `research/protease-chirality-switch` and synchronized initial
+campaign commit `c4038812` through GitHub to CoreHPC. Staged only the new campaign
+section of `CLAUDE.md`; the user's pre-existing CoreHPC guidance remains a local
+change. Began project `.venv` installation with editable dev dependencies,
+using mirror-local caches and logs. No tool-specific environments were manually
+created.
+
+Goldfarb et al. (2005) directly studied pH switching in short recombinant
+cathepsin D and characterized four point substitutions. This resolves the
+earlier concern that only tissue-derived mature protein supports the mechanism.
+Separate domain preparation followed by sortase ligation is being evaluated
+to keep ADP out of acidic maturation. Downloaded 1LYA/1LYW and UniProt P07339/
+P94288 reference records. A numbering discrepancy requires care: ADP's PDB
+author-number offset is not a verified signal-peptide boundary. The 2015
+experimental expression construct removed 25 N-terminal residues; its activity
+was confirmed. Use that documented construct rather than a predicted cleavage.
 
 ## Job ledger
 

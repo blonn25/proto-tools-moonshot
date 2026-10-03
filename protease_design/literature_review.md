@@ -196,6 +196,29 @@ and below in the reported assay, with little activity above that range.
 behavior and activity of a fusion must be measured independently.
 [Primary paper](https://pmc.ncbi.nlm.nih.gov/articles/PMC3375537/).
 
+**Goldfarb et al., 2005.** The short recombinant cathepsin-D form and four
+point variants were tested for pH-dependent kinetics, recovery, and tryptophan
+fluorescence. E180Q, D187N, and Y10F increased catalytic efficiency on the
+reported substrate; E5Q decreased it. The proteins retained activity following
+exposure over pH 3–7.5. Refolding yields were a practical limitation. The
+processed construct has a six-residue N-terminal extension, FRLVTE, before
+the native mature sequence. **Implication:** use this experimentally supported
+recombinant scaffold and consider the characterized substitutions as a bounded
+design space. Their activity on our substrates and leakage at pH 7.5 remain
+unknown. Separate domain preparation can avoid exposing ADP to acidic maturation.
+[Primary paper](https://doi.org/10.1021/bi0511686),
+[author manuscript](https://pmc.ncbi.nlm.nih.gov/articles/PMC2569848/).
+
+**Popp et al., 2009; Kobashigawa et al., 2009.** Sortase-mediated ligation
+joins an LPXTG-tagged protein to an N-terminal oligoglycine acceptor using an
+ordinary peptide bond. Protein-to-protein ligation has been demonstrated.
+**Implication:** independently prepare the protease domains and join them under
+mild conditions, removing sortase and unreacted domains before assays. The
+joined sequence can contain only canonical residues. Ligation yield and
+retention of both activities are construct-specific uncertainties.
+[Protocol](https://doi.org/10.1002/0471140864.ps1503s56),
+[protein-ligation study](https://doi.org/10.1007/s10858-008-9296-5).
+
 **Dagliyan et al., 2018.** SPELL combined structural split-site selection with
 inducible reassembly and demonstrated controlled TEV activity. Background
 reassembly and weak induced activity were important limitations.
@@ -303,8 +326,11 @@ The original ADP–pepsinogen architecture is archived as a rejected strong-acid
 option. Evaluate cathepsin D followed by a spacer and ADP, preserving the mature
 cathepsin D N terminus and both catalytic domains. A C-terminal partner must
 leave the N-terminal switching trajectory and both substrate pockets accessible.
-Maturation to the intended cathepsin D terminus is an unresolved production
-problem that must be addressed before final candidate selection.
+Use the characterized short recombinant form rather than assuming native
+maturation. Independently prepare it and an oligoglycine-tagged ADP, then
+evaluate sortase-mediated joining as the first production route. The D module
+will not be present during acidic cathepsin-D maturation. Additional production
+steps are a tradeoff for preserving experimentally supported domain preparation.
 
 The mild-pH concept still requires adequate L cleavage at pH 5, low D leakage
 there, low L leakage at pH 7.5, and activity recovery without unfolding or

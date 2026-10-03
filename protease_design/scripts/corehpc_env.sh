@@ -14,6 +14,9 @@ export APPTAINER_TMPDIR="$PWD/data/corehpc/containers/tmp"
 export TMPDIR="$PWD/data/corehpc/tmp/${SLURM_JOB_ID:-setup}"
 export PROTO_ENV_LOG_DIR="$PWD/logs/protease_env"
 export PROTO_ENV_VERBOSE=1
+if [[ -d "$PWD/data/corehpc/protease_design/env_defs/esmfold" ]]; then
+  export PROTO_ESMFOLD_STANDALONE_DIR="$PWD/data/corehpc/protease_design/env_defs/esmfold"
+fi
 mkdir -p "$PROTO_HOME" "$PROTO_MODEL_CACHE" "$PROTO_DATABASES_DIR" \
   "$XDG_CACHE_HOME" "$PIP_CACHE_DIR" "$UV_CACHE_DIR" "$HF_HOME" \
   "$TORCH_HOME" "$TMPDIR" "$PROTO_ENV_LOG_DIR" "$MPLCONFIGDIR" \
