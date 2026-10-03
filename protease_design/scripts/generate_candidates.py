@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, default=Path("data/corehpc/protease_design/references"))
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/inputs"))
+    parser.add_argument("--variants", nargs="+", choices=list(VARIANTS), default=list(VARIANTS))
     parser.add_argument("--flexible-repeats", type=int, nargs="+", default=[1, 3, 5])
     parser.add_argument("--helical-repeats", type=int, nargs="*", default=[2, 4, 6])
     args = parser.parse_args()
@@ -44,7 +45,8 @@ def main():
     spacers.update({f"H{n}": "EAAAK" * n for n in args.helical_repeats})
     fusions = []
     controls = [record("ADP_parent", adp, kind="isolated_domain", source="P94288:26-388")]
-    for variant, substitution in VARIANTS.items():
+    for variant in args.variants:
+        substitution = VARIANTS[variant]
         domain = catd
         if substitution:
             position, original, replacement = substitution

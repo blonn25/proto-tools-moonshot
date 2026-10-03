@@ -131,3 +131,14 @@ increase heterogeneity and proteolysis risk, so greater length is not assumed
 to be superior. Keep the original 24 sequences and results intact, identify
 this adaptive second round separately, and retain the original evaluation
 criteria. No selectivity claim follows from satisfying the geometry screen.
+
+## Third-round amendment: one longer D187N spacer
+
+Defined after the canonical-stereochemistry refinement and before predicting
+this sequence. D187N GS7 has a borderline raw contact and gains two sub-2 Å
+contacts when the occluded reference state is transferred into its refined
+frame. The other nine leading ESMFold proposals pass that check. Add D187N
+GS11, with 55 flexible-spacer residues (787 total residues), as a targeted
+alternative. Retain GS7 and its unfavorable diagnostics. This amendment does
+not establish that longer linkers improve folding or switching, and the same
+structural criteria apply. No activity-based selection has occurred.

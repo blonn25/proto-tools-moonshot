@@ -166,7 +166,7 @@ def main():
                     old["refinement"]["max_iterations"] != args.iterations or
                     old["refinement"]["platform"] != args.platform or
                     old["refinement"].get("solvent_engine") != args.solvent_engine or
-                    old["refinement"].get("canonical_chirality_wall") != {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.001}):
+                    old["refinement"].get("canonical_chirality_wall") != {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.002}):
                 raise ValueError("Existing refinement differs from input/configuration.")
             continue
         pdb = app.PDBFile(str(source / "structure.pdb"))
@@ -196,14 +196,14 @@ def main():
                 ca_indices.append(atom.index)
         system.addForce(restraint)
         # A flat-bottom signed-volume wall protects canonical stereochemistry.
-        # It is inactive above 1 A^3; normal tetrahedra are about 2-3 A^3.
+        # It is inactive above 2 A^3; normal tetrahedra are about 2-3 A^3.
         expression = ("0.5*kchi*min(0,sgn*v-vmin)^2;"
                       "v=(x2-x1)*((y3-y1)*(z4-z1)-(z3-z1)*(y4-y1))"
                       "+(y2-y1)*((z3-z1)*(x4-x1)-(x3-x1)*(z4-z1))"
                       "+(z2-z1)*((x3-x1)*(y4-y1)-(y3-y1)*(x4-x1))")
         chirality_force = mm.CustomCompoundBondForce(4, expression)
         chirality_force.addGlobalParameter("kchi", 1e9)
-        chirality_force.addGlobalParameter("vmin", 0.001)
+        chirality_force.addGlobalParameter("vmin", 0.002)
         chirality_force.addPerBondParameter("sgn")
         atom_indices = {(int(a.residue.id), a.name): a.index for a in modeller.topology.atoms()}
         protected = []
@@ -226,7 +226,7 @@ def main():
         if not np.isfinite(final).all() or not np.isfinite(after) or after > before:
             raise RuntimeError("Refinement failed finite-coordinate or energy-descent checks.")
         canonical_volumes = [signs[kind] * volume(final[indices]) for _, kind, indices in protected]
-        if min(canonical_volumes) < 0.0005:
+        if min(canonical_volumes) < 0.0018:
             raise RuntimeError("Refinement failed canonical alpha/beta stereochemistry check.")
         text = io.StringIO()
         app.PDBFile.writeFile(modeller.topology, state.getPositions(), text, keepIds=True)
@@ -247,7 +247,7 @@ def main():
             "platform": args.platform, "platform_properties": properties, "threads": threads,
             "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
             "solvent_engine": args.solvent_engine,
-            "canonical_chirality_wall": {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.001},
+            "canonical_chirality_wall": {"k_kJ_mol_nm6": 1e9, "minimum_volume_nm3": 0.002},
             "minimum_canonical_signed_volume_A3": 1000 * min(canonical_volumes),
             "protected_stereocenters": len(protected), "reference_chirality_signs": signs,
             "solvent_implementation": "XML CustomGBForce" if args.solvent_engine == "xml" else "GBSAOBCForce mapped from XML",

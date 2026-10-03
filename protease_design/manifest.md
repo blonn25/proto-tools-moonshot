@@ -327,3 +327,15 @@ New jobs: 2111935 (stereochemistry-preserving pool refinement), 2111936
 2111943 (MSA-supported validation pool), and 2111944 (dependent refinement
 analysis), all at script `39631035`, runtime `16406443`, except the MSA pilot
 itself at `e02fdef6`. GPU jobs remain serialized through the aggregate guard.
+
+### 2026-10-03 Geometry acceptance tightening and targeted spacer amendment
+
+The first canonical-volume wall removed inversions but allowed a few centers
+to flatten to 0.94--0.97 Å³, well below native-like tetrahedral volumes.
+Those coordinates are not accepted as final. Raise the flat-bottom minimum
+from 1 to 2 Å³ and require every final center to exceed 1.8 Å³. Retain the
+same physical force field and C-alpha restraints; write a separate final
+preparation directory. This is a geometry-quality correction, not a relaxed
+acceptance criterion. D187N GS7 still has two transferred-occluded-state
+contacts below 2 Å. A prospectively recorded third round adds only D187N GS11
+as a longer-spacer alternative; all earlier results remain in the record.
