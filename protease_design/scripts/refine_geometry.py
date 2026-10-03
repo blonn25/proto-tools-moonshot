@@ -128,6 +128,10 @@ def main():
         raise SystemExit("Use the guarded GPU submission script.")
     if args.shards < 1 or not 0 <= args.shard < args.shards:
         raise SystemExit("Invalid shard selection.")
+    cache_root = Path("data/corehpc/cache").resolve()
+    for key, folder in [("CUDA_CACHE_PATH", "cuda"), ("OPENMM_CACHE_DIR", "openmm")]:
+        os.environ[key] = str(cache_root / folder)
+        (cache_root / folder).mkdir(parents=True, exist_ok=True)
     threads = args.threads or int(os.environ["SLURM_CPUS_PER_TASK"])
     if threads < 1 or threads > int(os.environ["SLURM_CPUS_PER_TASK"]):
         raise SystemExit("Threads must fit the CPU allocation.")

@@ -8,6 +8,7 @@ cross-partition clashes and test both transferred native CatD conformations.
 import argparse
 import hashlib
 import json
+import itertools
 import math
 import os
 import shutil
@@ -37,6 +38,7 @@ def main():
     parser.add_argument('input', type=Path)
     parser.add_argument('--predictions', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--include-first-psi', action='store_true')
     args = parser.parse_args()
     if not os.environ.get('SLURM_JOB_ID'):
         raise SystemExit('Use the CPU SLURM template.')
@@ -69,9 +71,15 @@ def main():
         pivots = [cat_end + 1, min(gly, key=lambda p: abs(p - middle))]
         if any(item['sequence'][p-1] != 'G' for p in pivots):
             raise ValueError('Phi pivots must be glycine.')
+        joints = [(pivots[0], 'phi')]
+        if args.include_first_psi:
+            joints.append((pivots[0], 'psi'))
+        joints.append((pivots[1], 'phi'))
         groups = np.zeros(len(keys), dtype=int)
-        for group, p in enumerate(pivots, 1):
-            groups[(positions > p) | ((positions == p) & np.array([name not in ('N', 'H', 'H1', 'H2', 'H3') for _, name in keys]))] = group
+        for group, (p, kind) in enumerate(joints, 1):
+            same = np.array([name not in ('N', 'H', 'H1', 'H2', 'H3') if kind == 'phi'
+                             else name in ('C', 'O', 'OXT') for _, name in keys])
+            groups[(positions > p) | ((positions == p) & same)] = group
         # Exclude graph distances 1 and 2 from nonbonded clash checks.
         topology = app.PDBFile(str(source / 'structure.pdb')).topology
         neighbors = {i: set() for i in range(len(keys))}
@@ -91,35 +99,35 @@ def main():
             rotation, translation, _ = fit([refs[state][p, 'CA'] for p in pp], [coordinates[key_index[p, 'CA']] for p in pp])
             transferred[state] = np.array(list(refs[state].values())) @ rotation + translation
         scans, best = [], None
-        for first in range(-180, 180, 30):
-            p = pivots[0]; origin = coordinates[key_index[p, 'N']]
-            first_coords = rotate(coordinates, groups >= 1, origin, coordinates[key_index[p, 'CA']] - origin, first)
-            for second in range(-180, 180, 30):
-                p = pivots[1]; origin = first_coords[key_index[p, 'N']]
-                xyz = rotate(first_coords, groups >= 2, origin, first_coords[key_index[p, 'CA']] - origin, second)
-                pairs = cKDTree(xyz[heavy]).query_pairs(2.0, output_type='ndarray')
-                clashes = 0
-                for left, right in pairs:
-                    i, j = heavy_indices[left], heavy_indices[right]
-                    if groups[i] != groups[j] and j not in excluded[i]:
-                        clashes += 1
-                tree = cKDTree(xyz[adp_mask])
-                state_min = {k: float(tree.query(v)[0].min()) for k, v in transferred.items()}
-                raw_min = float(tree.query(xyz[cat_mask])[0].min())
-                cat_pocket = float(cKDTree(xyz[other_cat]).query(xyz[[key_index[39, 'CG'], key_index[237, 'CG']]])[0].min())
-                adp_pocket = float(cKDTree(xyz[other_adp]).query(xyz[key_index[adp_start + 78, 'OG']])[0])
-                feasible = clashes == 0 and min(state_min.values()) >= 2.0 and raw_min >= 2.0 and min(cat_pocket, adp_pocket) >= 6.0
-                entry = {'delta_phi_degrees': [first, second], 'new_cross_partition_clash_pairs_below2A': clashes,
-                         'transferred_state_minimum_A': state_min, 'interdomain_minimum_A': raw_min,
-                         'partner_distance_to_catd_catalytic_atoms_A': cat_pocket,
-                         'partner_distance_to_adp_serine_A': adp_pocket, 'geometrically_feasible': feasible}
-                scans.append(entry)
-                rank = (abs(first) + abs(second), -min(state_min.values()))
-                if feasible and (best is None or rank < best[0]):
-                    best = rank, xyz, entry
+        for angles in itertools.product(range(-180, 180, 30), repeat=len(joints)):
+            xyz = coordinates.copy()
+            for group, ((p, kind), angle) in enumerate(zip(joints, angles), 1):
+                left, right = ('N', 'CA') if kind == 'phi' else ('CA', 'C')
+                origin = xyz[key_index[p, left]]
+                xyz = rotate(xyz, groups >= group, origin, xyz[key_index[p, right]] - origin, angle)
+            pairs = cKDTree(xyz[heavy]).query_pairs(2.0, output_type='ndarray')
+            clashes = 0
+            for left, right in pairs:
+                i, j = heavy_indices[left], heavy_indices[right]
+                if groups[i] != groups[j] and j not in excluded[i]:
+                    clashes += 1
+            tree = cKDTree(xyz[adp_mask])
+            state_min = {k: float(tree.query(v)[0].min()) for k, v in transferred.items()}
+            raw_min = float(tree.query(xyz[cat_mask])[0].min())
+            cat_pocket = float(cKDTree(xyz[other_cat]).query(xyz[[key_index[39, 'CG'], key_index[237, 'CG']]])[0].min())
+            adp_pocket = float(cKDTree(xyz[other_adp]).query(xyz[key_index[adp_start + 78, 'OG']])[0])
+            feasible = clashes == 0 and min(state_min.values()) >= 2.0 and raw_min >= 2.0 and min(cat_pocket, adp_pocket) >= 6.0
+            entry = {'delta_torsion_degrees': list(angles), 'new_cross_partition_clash_pairs_below2A': clashes,
+                     'transferred_state_minimum_A': state_min, 'interdomain_minimum_A': raw_min,
+                     'partner_distance_to_catd_catalytic_atoms_A': cat_pocket,
+                     'partner_distance_to_adp_serine_A': adp_pocket, 'geometrically_feasible': feasible}
+            scans.append(entry)
+            rank = (sum(abs(x) for x in angles), -min(state_min.values()))
+            if feasible and (best is None or rank < best[0]):
+                best = rank, xyz, entry
         result = {**revisions(), 'job_id': os.environ['SLURM_JOB_ID'], 'id': item['id'],
                   'source_structure_sha256': source_run['structure_sha256'], 'source_job_id': source_run['job_id'],
-                  'pivot_phi_residues': pivots, 'grid_step_degrees': 30, 'tested': len(scans),
+                  'pivot_phi_residues': pivots, 'torsion_joints': joints, 'grid_step_degrees': 30, 'tested': len(scans),
                   'feasible_grid_points': sum(row['geometrically_feasible'] for row in scans),
                   'note': 'Unweighted kinematic feasibility only. Not sampled thermodynamic populations, dynamics, or switching rates. Native-state transfer lacks unresolved/engineered residues.',
                   'grid': scans, 'selected': best[2] if best else None}

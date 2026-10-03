@@ -34,7 +34,7 @@ def architecture(directory):
                                    (5.8, 3.7, ORANGE, "ADP\nD-peptide catalyst")]:
         ax.add_patch(FancyBboxPatch((x, 0.85), width, 1.1, boxstyle="round,pad=0.05", facecolor=color, edgecolor="none"))
         ax.text(x + width / 2, 1.4, label, ha="center", va="center", color="white", fontsize=9)
-    ax.text(0.2, 0.25, "4 CatD sequences × (6 initial + 2 adaptive spacers) = 32 proposals", fontsize=9)
+    ax.text(0.2, 0.25, "24 initial + 8 longer-spacer + 1 targeted proposal = 33 fusions", fontsize=9)
     ax = axes[1]
     ax.set(xlim=(0, 10), ylim=(0, 3)); ax.axis("off")
     ax.text(0, 2.8, "b  Proposed reversible input and required readouts", weight="bold")

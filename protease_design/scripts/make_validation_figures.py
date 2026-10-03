@@ -58,7 +58,7 @@ def calibration(esm, single, msa, refined, output):
 
 def contact_screen(esm, msa, output):
     variants = ['WT', 'E180Q', 'D187N', 'Y10F']
-    spacers = ['GS1', 'GS3', 'GS5', 'H2', 'H4', 'H6', 'GS7', 'GS9']
+    spacers = ['GS1', 'GS3', 'GS5', 'H2', 'H4', 'H6', 'GS7', 'GS9', 'GS11']
     panels = [(esm, False, 'a  ESMFold: raw interdomain contacts'),
               (esm, True, 'b  ESMFold: transferred occluded CatD'),
               (msa, False, 'c  Boltz + MSA: raw interdomain contacts'),
@@ -68,7 +68,7 @@ def contact_screen(esm, msa, output):
     norm = BoundaryNorm([-0.5, 0.5, 4.5, 19.5, 49.5, 1000], cmap.N)
     fig, axes = plt.subplots(2, 2, figsize=(7.1, 4.6))
     for ax, (data, transferred, title) in zip(axes.flat, panels):
-        values = np.full((4, 8), np.nan)
+        values = np.full((4, len(spacers)), np.nan)
         for y, variant in enumerate(variants):
             for x, spacer in enumerate(spacers):
                 row = data.get(f'CDAD_{variant}_{spacer}')
@@ -80,7 +80,7 @@ def contact_screen(esm, msa, output):
             ax.text(x, y, '–' if np.isnan(value) else str(int(value)), ha='center', va='center',
                     fontsize=7, color='white' if value >= 20 else '#242424')
         ax.axvline(5.5, color='white', lw=2)
-        ax.set(xticks=range(8), xticklabels=spacers, yticks=range(4), yticklabels=variants)
+        ax.set(xticks=range(len(spacers)), xticklabels=spacers, yticks=range(4), yticklabels=variants)
         ax.tick_params(length=0, labelsize=7)
         ax.set_title(title, loc='left', fontsize=8)
         ax.spines[:].set_visible(False)
@@ -94,10 +94,10 @@ def contact_screen(esm, msa, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     base = Path('data/corehpc/protease_design/results')
-    parser.add_argument('--esm', type=Path, default=base / 'analysis_esm_stereo/structural_analysis.json')
+    parser.add_argument('--esm', type=Path, default=base / 'analysis_esm_final/structural_analysis.json')
     parser.add_argument('--single', type=Path, default=base / 'analysis_boltz_single_pool/structural_analysis.json')
-    parser.add_argument('--msa', type=Path, default=base / 'analysis_boltz_msa_pool/structural_analysis.json')
-    parser.add_argument('--refined', type=Path, default=base / 'analysis_refined_chiral/structural_analysis.json')
+    parser.add_argument('--msa', type=Path, default=base / 'analysis_boltz_msa_final/structural_analysis.json')
+    parser.add_argument('--refined', type=Path, default=base / 'analysis_refined_final/structural_analysis.json')
     parser.add_argument('--output', type=Path, default=base / 'figures')
     args = parser.parse_args()
     if not os.environ.get('SLURM_JOB_ID'):

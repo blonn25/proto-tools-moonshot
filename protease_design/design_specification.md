@@ -165,3 +165,15 @@ passing grid points are not probabilities, equilibrium populations, or estimates
 of switching yield. It does not replace the raw predictor-disagreement result
 or experimentally resolve intramolecular inhibition. Extra reference residues
 absent from crystal structures remain a limitation of the transfer.
+
+### Matched preparation and three-angle extension
+
+The two-phi scan found compatible arrangements for all 13 ESMFold proposals
+and six Boltz proposals. The others retained local cross-partition contacts,
+so a negative result from this narrow grid is inconclusive. Apply the same
+canonical-geometry preparation to Boltz before the next scan. Extend both
+predictor scans uniformly to a 12³ grid by also varying the first linker's
+psi angle. Every other criterion and the ranking rule stay fixed. Preserve
+both the original 144-point and the new 1,728-point tables. This is a more
+complete kinematic check, still not a thermodynamic ensemble. No grid count
+is used as a probability of experimental success.
