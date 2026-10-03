@@ -39,13 +39,17 @@ def main():
     parser.add_argument('--predictions', type=Path, required=True)
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--include-first-psi', action='store_true')
+    parser.add_argument('--shard', type=int, default=0)
+    parser.add_argument('--shards', type=int, default=1)
     args = parser.parse_args()
     if not os.environ.get('SLURM_JOB_ID'):
         raise SystemExit('Use the CPU SLURM template.')
     reference_dir = Path('data/corehpc/protease_design/references')
     refs = {k: read_reference(reference_dir, k, d) for k, d in [('1LYA', 'catd'), ('1LYW', 'catd'), ('4Y7P', 'adp')]}
     signs = reference_signs(refs)
-    for item in json.loads(args.input.read_text())['records']:
+    if args.shards < 1 or not 0 <= args.shard < args.shards:
+        raise ValueError('Invalid shard selection.')
+    for item in json.loads(args.input.read_text())['records'][args.shard::args.shards]:
         source, output = args.predictions / item['id'], args.output / item['id']
         source_run = json.loads((source / 'run.json').read_text())
         lines = (source / 'structure.pdb').read_text().splitlines()

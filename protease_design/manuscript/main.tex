@@ -27,19 +27,20 @@ the inactive function. We investigate a modular strategy that combines short
 recombinant human cathepsin D with alkaline D-peptidase in a canonical
 L-amino-acid polypeptide. A preliminary pH 5.0--7.5 interval is chosen from
 component-level evidence to avoid using global unfolding as the switching
-mechanism. Twenty-four constructs vary a previously characterized cathepsin-D
+mechanism. A 33-member adaptive library varies a previously characterized cathepsin-D
 substitution and a flexible or helical spacer. We define a computational
 screen against experimental structures and an analytical requirement for
 reciprocal selectivity. Independent preparation and enzymatic ligation of the
 domains separates acidic maturation from final-switch characterization. A
 direct peptide-fragment assay, accompanied by structural and activity-recovery
-controls, can distinguish switching from irreversible damage. The first ESMFold
-screen preserves both domain folds in all 24 constructs, but 22 contain severe
-interdomain contacts and all have uncertain relative domain placement. Longer
-flexible spacers are therefore undergoing a separately identified second screen,
-alongside independent predictions and geometry checks. No fusion has been experimentally
-validated, and sufficient reciprocal activity in the proposed pH interval remains
-the central unresolved requirement.
+controls, can distinguish switching from irreversible damage. Both domain folds are preserved in ESMFold predictions. Alignment-supported
+Boltz independently recovers native-like domains, but the methods disagree on
+relative placement and gate obstruction. Restrained preparation repairs local
+geometry; fixed linker-torsion scans test steric accessibility without assigning
+state probabilities. A ten-candidate experimental panel is being finalized from
+these checks. No fusion has been experimentally validated, and sufficient
+reciprocal activity in the proposed pH interval remains the central unresolved
+requirement.
 \end{abstract}
 
 \section{Introduction}
@@ -139,9 +140,11 @@ UniProt P94288 residues 26--388 without substitutions. Flexible spacers are
 $(\mathrm{GGGGS})_n$, $n\in\{1,3,5\}$; nominally helical spacers are
 $(\mathrm{EAAAK})_n$, $n\in\{2,4,6\}$. These established linker classes motivate
 a geometry comparison \citep{arai2001}; the helical label does not guarantee a
-rigid conformation in the final protein. The resulting 24 sequences span
-737--762 residues and preserve the native catalytic residues and four CatD
-disulfide pairs.
+rigid conformation in the final protein. The initial 24 sequences span
+737--762 residues. A separately recorded second round adds GS7 and GS9 for all
+four variants; a third adds D187N GS11 to investigate a borderline gate contact.
+The complete 33-sequence library spans 737--787 residues and preserves the
+native catalytic residues and four CatD disulfide pairs.
 
 The six-residue srCatD extension is retained because its processing and kinetic
 behavior have direct precedent. The L domain is placed first to leave that
@@ -186,16 +189,7 @@ substrate competition, and coupling between domains can invalidate the
 independent-domain approximation. Rates below the detection limit support
 bounds, not zeros or infinite selectivity.
 
-\begin{figure}[t]
-\centering
-\includegraphics[width=0.62\linewidth]{selectivity_feasibility.pdf}
-\caption{Analytical feasibility under independent domains and negligible
-intrinsic cross-cleavage. Blue satisfies both selectivity targets for a
-one-to-one fusion; orange requires a different domain ratio; gray admits no
-ratio satisfying both. The illustrative target of 100 is author-chosen.
-No experimental or simulated candidate rates are plotted.}
-\label{fig:feasibility}
-\end{figure}
+
 
 \section{Computational methods}
 \subsection{References, numbering, and provenance}
@@ -295,8 +289,8 @@ jobs; their script and runtime revisions are recorded separately.
 
 \section{Results}
 \paragraph{Verified sequence library.}
-The generator produced 24 initial and eight adaptive fusion sequences,
-plus five isolated controls.
+The generator produced 24 initial, eight second-round, and one targeted
+third-round fusion sequence, plus five isolated controls.
 All use canonical residues and pass the prospective residue-mapping checks.
 This establishes a reproducible screening library; it is not evidence of
 expression, stability, or catalysis.
@@ -339,10 +333,51 @@ Resolved interdomain PAE was 25.04--26.27~\angstrom, indicating substantial
 uncertainty in relative placement. Consequently, clashes are warning signs
 about these static predictions, not proof that the corresponding proteins
 cannot fold. Conversely, a clash-free arrangement does not establish that
-arrangement's population in solution. An adaptive second round adds eight
-GS7/GS9 constructs, retaining the original domain variants and triage criteria.
-Independent Boltz-2 predictions and restrained geometry checks are still in
-progress; a final ten-design panel has not yet been selected.
+arrangement's population in solution. The eight GS7/GS9 proposals preserve those domain
+folds; seven lack raw severe contacts. D187N GS7 has one 1.896~\angstrom{}
+contact involving a low-confidence CatD loop. It also shows gate-contact
+sensitivity after refinement, motivating D187N GS11. The latter has no raw
+interdomain or transferred-state contacts below 2~\angstrom.
+
+\paragraph{Method controls and predictor disagreement.}
+Without alignments, Boltz fails to recover the experimentally known ADP fold:
+22.093~\angstrom{} RMSD and 32.15 mean pLDDT. Supplying a parent alignment
+changes these to 0.669~\angstrom{} and 92.99, respectively
+(Fig.~\ref{fig:validation}). The CatD WT control gives 0.629~\angstrom{} and
+88.70 with its alignment. This positive-control recovery is essential before
+interpreting fusion predictions. Alignment-supported fusion domains have
+RMSDs below 1.1~\angstrom{} and mean pLDDT above 82. Yet all of their initial
+relative placements clash with transferred CatD states. Interdomain PAE is
+25.69--28.04~\angstrom{} in the original validation pool. Thus the second
+predictor supports domain-fold plausibility while leaving domain arrangement
+unresolved. Its unfavorable contact diagnostics remain visible in
+Appendix~\ref{app:contacts}.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{validation_controls.pdf}
+\caption{Computational controls and local preparation. (a) Experimental-parent
+fold recovery distinguishes Boltz's failed single-sequence ADP control from its
+alignment-supported result. Dashed lines mark the author-chosen domain triage
+targets. (b) Four CatD disulfides per long-spacer fusion, before and after
+canonical-stereochemistry-preserving preparation. Geometry repair is imposed
+by the physical model and restraints; it is not independent evidence of
+experimental folding or disulfide formation.}
+\label{fig:validation}
+\end{figure}
+
+\paragraph{Canonical geometry and flexible-linker feasibility.}
+The final ESMFold preparation retains domain framework RMSDs of
+0.743--0.788~\angstrom{} for CatD and 0.890--0.908~\angstrom{} for ADP across
+13 long-spacer fusions. Disulfide distances are 2.013--2.039~\angstrom, with
+no inverted or degenerate alpha or Ile/Thr beta centers. These models retain
+inherited predictor confidence rather than newly estimated scores. Initial
+unprotected preparations that inverted or flattened stereocenters are excluded.
+A 144-point two-phi scan finds arrangements satisfying both transferred-state
+and pocket-clearance checks for all 13 ESMFold models but only six raw Boltz
+models. Matched preparation and a uniform 1,728-point phi/psi extension
+investigate that discrepancy. Passing grid points establish only kinematic
+accessibility, not favorable free energies or switching populations.
 
 \section{Proposed experimental characterization}
 \subsection{Production separates maturation from switching}
@@ -426,8 +461,8 @@ chirality-switchable proteolysis or publication-level biochemical success.
 The analytical framework and explicit evidence separation are the principal
 methodological contributions of this draft. ICLR formatting does not imply
 that this work has been submitted, accepted, or meets that venue's novelty
-standard. The final report will preserve unsuccessful evaluations and identify
-remaining uncertainty alongside any selected experimental panel.
+standard. Unsuccessful evaluations and remaining biochemical uncertainty are retained
+alongside the proposed experimental panel.
 
 \bibliography{references}
 \bibliographystyle{iclr2026_conference}
@@ -442,6 +477,45 @@ retained under ignored project data. The manifest records actual job states
 and revisions. The selected sequence files distinguish the mature ligated product from
 its expression intermediates. Per-design records preserve both successful
 diagnostics and unresolved biochemical requirements.
+
+\section{Analytical and full-library diagnostics}
+\label{app:contacts}
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.62\linewidth]{selectivity_feasibility.pdf}
+\caption{Analytical feasibility under independent domains and negligible
+intrinsic cross-cleavage. Blue satisfies both selectivity targets for a
+one-to-one fusion; orange requires a different domain ratio; gray admits no
+ratio satisfying both. The illustrative target of 100 is author-chosen.
+No experimental or simulated candidate rates are plotted.}
+\label{fig:feasibility}
+\end{figure}
+\begin{figure}[h]
+\centering
+\includegraphics[width=\linewidth]{contact_screen.pdf}
+\caption{All evaluated raw placements, including unfavorable results. The
+rightmost spacer was added only for D187N. A native-state transfer is an
+incomplete steric diagnostic, not a full model of the engineered switch.
+Flexible-linker scans are reported separately and do not erase these results.}
+\end{figure}
+
+\section{Linker torsion scan details}
+The first appended glycine and the central glycine in the repeated spacer
+serve as joints. Each angle changes in 30-degree increments over a complete
+turn relative to the starting structure. The first scan varies their two phi
+angles; the extension also varies the first glycine's psi angle. Proper rigid
+rotations preserve the catalytic domains' internal coordinates, all bond
+lengths and bond angles, and canonical stereochemistry. Bonded and 1--3 atom
+pairs are excluded from nonbonded contact checks. New cross-partition heavy-atom
+contacts below 2~\angstrom{} are rejected. ADP must remain at least
+2~\angstrom{} from both transferred CatD states, and catalytic reference atoms
+must be at least 6~\angstrom{} from the partner domain/linker. The latter is
+an author-chosen geometric screen, not a complete substrate-access calculation.
+Among feasible points, the smallest total absolute angle change is retained,
+with transferred-state clearance breaking ties. Full grids are retained.
+No energy weighting or equilibrium sampling is applied. A feasible endpoint
+does not establish a collision-free transition pathway. Normalized grid counts
+must not be interpreted as state probabilities or experimental success rates.
 
 \section{Runtime and numerical failures retained in the record}
 The initial Boltz persistent-worker pilot stalled after preprocessing, with

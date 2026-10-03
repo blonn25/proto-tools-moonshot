@@ -87,3 +87,15 @@ Report desired/opposite-chirality rate ratios with uncertainty and detection
 limits. Undetectable off-target cleavage gives a lower bound on selectivity.
 Retained structure with lost activity, or recovered global CD with one damaged
 domain, does not establish the intended reversible switch.
+
+## Cleavage endpoint and early decision
+
+For the ADP-supported D-Phe4 reaction, D-Phe2 is the literature-supported main
+fragment: one tetrapeptide plus water yields two dipeptides. Confirm product
+identity and stoichiometry rather than requiring complete release of amino
+acids. [Nakano et al. (2015)](https://doi.org/10.1038/srep13836).
+The most economical first decision is the exact-substrate, parent-domain
+activity matrix across the qualified pH window. If the one-to-one selectivity
+interval in `selectivity_framework.md` is empty, spacer optimization alone
+has not solved the biochemical problem. Do not interpret production of ten
+fusion variants as ten independent chances to bypass that shared failure.
