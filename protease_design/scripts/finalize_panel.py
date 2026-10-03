@@ -28,8 +28,14 @@ def main():
     inputs = [base / 'inputs' / name for name in ['candidates.json', 'round2/candidates.json', 'round3/candidates.json']]
     library = {r['id']: r for p in inputs for r in json.loads(p.read_text())['records']}
     analysis_paths = {name: base / 'results' / directory / 'structural_analysis.json' for name, directory in
-                      [('esm', 'analysis_esm_final'), ('boltz_msa', 'analysis_boltz_msa_final'), ('refined', 'analysis_refined_final'), ('boltz_refined', 'analysis_boltz_refined')]}
+                      [('esm', 'analysis_esm_final'), ('boltz_msa', 'analysis_boltz_msa_final'), ('refined', 'analysis_refined_final'), ('boltz_refined', 'analysis_boltz_refined'),
+                       ('esm_constructed', 'analysis_esm_constructed'), ('boltz_constructed', 'analysis_boltz_constructed')]}
     analyses = {k: load_records(p) for k, p in analysis_paths.items()}
+    for method in ['esm', 'boltz_msa']:
+        for name in ['ADP_parent','srCatD_WT','srCatD_E180Q','srCatD_D187N','srCatD_Y10F']:
+            for score in analyses[method][name]['domains'].values():
+                if score['resolved_mean_plddt'] < 80 or score['framework_rmsd_A'] > 2.5:
+                    raise ValueError(f'Method control failed: {method}, {name}')
     assay = load_records(base / 'results/assay_metadata/assay_metadata.json')
     candidates, table, evidence = [], [], []
     for name in args.ids:
@@ -55,10 +61,22 @@ def main():
                     stereochemistry['minimum_canonical_signed_volume_A3'] < 1.8 or
                     any(not 1.9 < x < 2.2 for x in preparation['domains']['catd']['disulfide_distances_A'])):
                 raise ValueError('Prepared stereochemistry/disulfides need further review.')
+            if any(score['framework_rmsd_A'] > 2.5 for score in preparation['domains'].values()):
+                raise ValueError('Prepared domain framework needs further review.')
+        for method in ['esm_constructed', 'boltz_constructed']:
+            endpoint = analyses[method][name]
+            if (endpoint['interdomain_contacts']['minimum_angstrom'] < 2 or
+                    any(v['minimum_angstrom'] < 2 for v in endpoint['transferred_catd_states'].values()) or
+                    any(v['minimum_angstrom'] < 6 for v in endpoint['partner_distance_to_catalytic_atoms'].values())):
+                raise ValueError('Exported coordinates fail the geometric clearance checks.')
         scans = {}
         for method, directory in [('esm', 'linker_scan_esm_3d'), ('boltz_msa', 'linker_scan_boltz_3d')]:
             p = base / 'results' / directory / name / 'geometry_scan.json'
             scan = json.loads(p.read_text())
+            audits = load_records(base / 'results' / directory / 'coordinate_audit.json')
+            target_pdb = p.parent / 'structure.pdb'
+            if audits[name]['status'] != 'passed' or audits[name]['structure_sha256'] != hashlib.sha256(target_pdb.read_bytes()).hexdigest():
+                raise ValueError('Independent coordinate audit missing or mismatched.')
             if not scan['selected'] or not scan['selected']['geometrically_feasible']:
                 raise ValueError(f'No feasible constructed arrangement: {name}, {method}')
             scans[method] = {k: v for k, v in scan.items() if k != 'grid'}
@@ -81,7 +99,11 @@ def main():
     if len({r['sequence'] for r in candidates}) != 10:
         raise ValueError('Duplicate sequences.')
     args.output.mkdir(parents=True, exist_ok=True)
-    sources = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in inputs + list(analysis_paths.values())}
+    provenance_inputs = inputs + list(analysis_paths.values()) + [base / 'results/assay_metadata/assay_metadata.json']
+    for directory in ['linker_scan_esm_3d', 'linker_scan_boltz_3d']:
+        provenance_inputs.append(base / 'results' / directory / 'coordinate_audit.json')
+        provenance_inputs.extend(base / 'results' / directory / name / 'geometry_scan.json' for name in args.ids)
+    sources = {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in provenance_inputs}
     result = {'status': 'Ten candidates proposed for experimental testing; no measured switching, stability, expression, or selectivity.',
               'shared_go_no_go': 'Verify reciprocal parent-domain activity on an exact matched substrate within a fold-preserving pH window before scaling fusion production.',
               'input_sha256': sources, 'records': candidates}
@@ -107,7 +129,7 @@ def main():
             'boltz_transferred_occluded_atoms_below2A': m['transferred_catd_states']['1LYW']['atoms_a_within_2A'] if m else None,
             'decision': 'Experimental panel' if name in args.ids else
                 'Not advanced: short/helical spacer crowding in initial screen' if item['spacer_name'] not in ['GS5','GS7','GS9','GS11'] else
-                'Not selected: raw/refined gate-contact sensitivity; longer alternatives retained'})
+                'Not selected: no Boltz-derived feasible point in the fixed three-angle grid'})
     with (args.output / 'all_candidates.csv').open('w') as handle:
         writer = csv.DictWriter(handle, fieldnames=list(rows[0])); writer.writeheader(); writer.writerows(rows)
     (args.output / 'assay_record_template.csv').write_text('design_id,preparation_id,replicate,pH,temperature_C,buffer,nominal_intact_enzyme_M,substrate_id,substrate_chirality,substrate_M,time_s,intact_substrate_M,product_identity,product_M,soluble_recovery_fraction,module_L_activity_recovery_fraction,module_D_activity_recovery_fraction,notes\n')

@@ -18,22 +18,28 @@
 
 ## Current status
 
-Phase: literature review and all 32 fusion ESMFold predictions complete;
-independent prediction and restrained geometry validation are in progress.
+Phase: computational design and ten-candidate selection complete; manuscript
+and reproducibility package undergoing final assembly and verification.
 
-All 37 records (32 fusions and five controls) have complete ESMFold analyses.
-Nine long-spacer models have no raw sub-2 Å interdomain contacts; D187N GS7
-has one borderline 1.896 Å contact. The final ten are not yet selected.
-Single-sequence Boltz recovers the CatD parent but fails the known ADP fold
-(22.09 Å framework RMSD, 32.15 mean pLDDT). This is a failed method control,
-not evidence that the native ADP protein is nonfunctional. Alignment-supported
-validation is being prepared using two public-parent searches.
+All 33 fusions and five controls have ESMFold results. Thirteen long-spacer
+fusions received alignment-supported Boltz validation, canonical geometry
+preparation with both predictors, and fixed 1,728-point linker scans. Ten pass
+all domain, stereochemistry, disulfide, geometric-feasibility, and independent
+coordinate checks. Selected sequences and production intermediates are in
+`designs/`. Single-sequence Boltz's failed ADP control, unfavorable raw domain
+placements, and rejected preparation attempts remain in the record.
 
-Original-XML OBC2 refinement succeeded on CUDA for both parents and WT GS3;
-the severe raw contacts and compressed disulfides were repaired. Full-pool
-refinement and single-sequence Boltz reserve at most two GPUs together.
-The ICLR manuscript compiles; final candidate selection, results, and figures
-remain unfinished. No experimental work has been performed.
+The ICLR-format manuscript compiles to 16 pages including references and
+appendices; main text occupies eight pages. No experimental activity, stability,
+production, or switching measurements exist. Reciprocal parent-domain activity
+on the exact matched substrates in a qualified pH window is the shared early
+experimental decision. Y10F GS9 and D187N GS7 are particularly sensitive to the
+limited Boltz-derived geometry grid.
+
+SLURM accounting confirms at most two campaign GPUs allocated concurrently and
+2.053 allocated GPU-hours, including failed/cancelled allocated GPU runs.
+Final coordinate checks and figure rendering use only CPU jobs. No campaign
+job remains running after their completion.
 
 ## Work plan
 
@@ -383,3 +389,28 @@ The completed ESM three-angle scan contains 429--782 feasible points of 1,728
 per tested fusion. All 13 independent coordinate audits passed: maximum bond
 length change 0.001365 Å and maximum bond-angle change 0.107 degrees, compatible
 with PDB rounding. These are geometric checks, not conformational probabilities.
+
+### 2026-10-03 Final panel and exported-coordinate verification
+
+Projected-baseline Boltz preparation finished the remaining records in job
+2112465. CPU shards 2112489--2112492 completed the three-angle scan, and audit
+2112632 checked its constructed coordinates. Ten of thirteen Boltz-derived
+models pass the finite grid; WT GS5, E180Q GS5, and D187N GS5 do not. All thirteen
+ESMFold-derived models pass, so the intersection defines the final ten.
+Y10F GS9 has one feasible Boltz grid point and D187N GS7 eight; neither count
+is a thermodynamic population. Their sensitivity is retained in the panel notes.
+
+Finalizer checks all five parent controls, raw domain criteria, prepared
+stereochemistry/disulfides, exact unique canonical sequences, audit hashes,
+and donor/acceptor assembly. CPU jobs 2112845 and 2112846 independently reanalyzed
+exported ESM/Boltz endpoints after PDB rounding: all twenty selected structures
+retain no sub-2 Å interdomain or transferred-state contact and clear the
+representative catalytic markers. Four donors and four acceptors supply all ten
+mature sequences; their expression and assembly remain proposed.
+
+Figure job 2112686 completed in 21 seconds. The completed manuscript includes
+the actual method-control failure/recovery, raw-pose disagreement, rejected
+numerical preparations, ten-sequence panel, methods, characterization plan,
+and exact sequences. Layout and citations are being checked; the archive will
+include file hashes, exact alignments, selected coordinates, raw confidence,
+full-library analysis, and environment/model provenance without bulky weights.

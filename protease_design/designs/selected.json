@@ -1,0 +1,620 @@
+{
+  "status": "Ten candidates proposed for experimental testing; no measured switching, stability, expression, or selectivity.",
+  "shared_go_no_go": "Verify reciprocal parent-domain activity on an exact matched substrate within a fold-preserving pH window before scaling fusion production.",
+  "input_sha256": {
+    "data/corehpc/protease_design/inputs/candidates.json": "342fb3beab5b287dc6c9f2484ca1ea32fc8fea389ea6db77657e7d5024b7c6e8",
+    "data/corehpc/protease_design/inputs/round2/candidates.json": "f3fb634e70fbc48bebbfa0554a03d71bdabfe324e5893c07f34896a48a6e0861",
+    "data/corehpc/protease_design/inputs/round3/candidates.json": "0d1402f4b7a4f6ca3ac4c9dc1cb6fca4bd75bafec4c0b29238bbec19e8b7a5f0",
+    "data/corehpc/protease_design/results/analysis_esm_final/structural_analysis.json": "675f556cbc92049ce7725637a1a152b29f71fa7a5488a1a98cf8a07ffd8e0211",
+    "data/corehpc/protease_design/results/analysis_boltz_msa_final/structural_analysis.json": "dbf761d12efa300e4ccdd992a4382a627ab7b925e12c1fad1aff7c70fe8c3f2f",
+    "data/corehpc/protease_design/results/analysis_refined_final/structural_analysis.json": "4136f34fff562dfd89b7c99ed60dda48f9d6421e6acbbabdd79416a89d801f45",
+    "data/corehpc/protease_design/results/analysis_boltz_refined/structural_analysis.json": "c2df27b84db8ace39dc277cb85ec76578f8f1ca7b9a29a9ca46fb6f857438bf2",
+    "data/corehpc/protease_design/results/analysis_esm_constructed/structural_analysis.json": "f53a0adf5965ecb79a9246101856407103e11851daf522f7a26884fa75b5c3c0",
+    "data/corehpc/protease_design/results/analysis_boltz_constructed/structural_analysis.json": "a3dfc024b306945b0170db3e23b2c899db2002d85843a4e4e96dd3cfbeeca141",
+    "data/corehpc/protease_design/results/assay_metadata/assay_metadata.json": "f1e12e9580ab142a18c582ce49233721d31498df517856aa81b8dbf888538936",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/coordinate_audit.json": "6455f0b9d84044855180fb7c9b0c6a91d9292da023c35bf82b9ffaa4c35942e2",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_WT_GS7/geometry_scan.json": "ade37ca24306917e9a882cc0aebbabe4cb006f515638013d6e9330bf28a8ee5f",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_WT_GS9/geometry_scan.json": "9dd7ad9d06fd84e2eb59856f4f0d9cffabddc57e310911e5ac6aa2cb84ead293",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_E180Q_GS7/geometry_scan.json": "ef311f70015a31389f3a9d51d80d4c8e5bb443cc1682168dc8c7177b3ffc3de9",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_E180Q_GS9/geometry_scan.json": "4dcecf5e7e5451ff2bb74bc6649aab1fd6c690af0a16e20b95c967410b5d191a",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_D187N_GS7/geometry_scan.json": "813a236d8229426cd721eb54c0dccad7f836bb92d8d35b3739928047dbe2c1a3",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_D187N_GS9/geometry_scan.json": "bc1079db9007c32f2e7e90024fdf69dc7e4008947efd9246be5c6109ae528d85",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_D187N_GS11/geometry_scan.json": "3da8d0c4a32561fcf0aed8058679397022fac662e83887d3eb76616d1bc52464",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_Y10F_GS5/geometry_scan.json": "c32820efe4500516510ef105ca3af8a06119117a8285571bf2ad5c48ad7ff915",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_Y10F_GS7/geometry_scan.json": "a2be8ddf4ecf0fb40bc086025ed41cd906858a13279f652d72b26751066b3df0",
+    "data/corehpc/protease_design/results/linker_scan_esm_3d/CDAD_Y10F_GS9/geometry_scan.json": "80d366bad563a3e86335b491f34ec0d38857c434862cdf28a8ddf561e8f13c5e",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/coordinate_audit.json": "5c3fb7e7d4f14a825c648196102d75cf3ee5840f4ec021171b8fbdc669a0fa54",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_WT_GS7/geometry_scan.json": "9b9a3c73394c287800e8a55fc0522c5887225bce7fddad6f2d5c6c494c7dcd69",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_WT_GS9/geometry_scan.json": "a9da42c77232d330e1c17c3d584174eac55733c85317adfcc68119d459c66f55",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_E180Q_GS7/geometry_scan.json": "8087b04753a6be05a5d8d0dbae792ae3f9bab4e118d5a445b6d61af2547bc4e5",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_E180Q_GS9/geometry_scan.json": "6e9f43d2bf25b42ca7f1559331b8ee5f58f3646ae4c6b18443c476127689b258",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_D187N_GS7/geometry_scan.json": "228045b04095f75bcbe79f6f86a8d68923c233b2117dbe3eb8d0b32e5c7c2818",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_D187N_GS9/geometry_scan.json": "4af65b00397fecb5aefc6da6e6f45f70de8affd0747613f352874628dd2bd99e",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_D187N_GS11/geometry_scan.json": "b035156ed0293fe48e602f7e6ed7ca542ca6c834168b22e2a4d5106d27f3e625",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_Y10F_GS5/geometry_scan.json": "89189d3b140254fd2beaa99dc2a6a1dbd6284966996240a22c9e775da22092c2",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_Y10F_GS7/geometry_scan.json": "e1d03afb2b3406dd9e8edb3b6b49df0acb19b2a14914d4fe58d92344aa3fcefd",
+    "data/corehpc/protease_design/results/linker_scan_boltz_3d/CDAD_Y10F_GS9/geometry_scan.json": "1c509224a7f72aa73ed33543f97651088c0175168ca83df4ecb6c977ec13eb75"
+  },
+  "records": [
+    {
+      "id": "CDAD_WT_GS7",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 767,
+      "sequence_sha256": "5d07aa2abcea230ab628d7b89f998f5770b9d1da3f5ebf1811824e1004c78859",
+      "kind": "fusion",
+      "catd_variant": "WT",
+      "spacer_name": "GS7",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          404
+        ],
+        "adp": [
+          405,
+          767
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 379,
+      "adp_pdb_author_to_fusion_offset": 409,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          483,
+          486,
+          580,
+          721
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_WT_GS9",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 777,
+      "sequence_sha256": "f2892efd97d559f55b06f89cd0eed48fca2a3214d278784d77c66b36e4237c55",
+      "kind": "fusion",
+      "catd_variant": "WT",
+      "spacer_name": "GS9",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          414
+        ],
+        "adp": [
+          415,
+          777
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 389,
+      "adp_pdb_author_to_fusion_offset": 419,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          493,
+          496,
+          590,
+          731
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_E180Q_GS7",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGQLMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 767,
+      "sequence_sha256": "8923a8aad94e29b6646d1e81f807d3d07628186052f57c3976d1844701641eaf",
+      "kind": "fusion",
+      "catd_variant": "E180Q",
+      "spacer_name": "GS7",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          404
+        ],
+        "adp": [
+          405,
+          767
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 379,
+      "adp_pdb_author_to_fusion_offset": 409,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          483,
+          486,
+          580,
+          721
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_E180Q_GS9",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGQLMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 777,
+      "sequence_sha256": "535591d9fb20039579ca83ebd6a9f7504b4e1dd26102253053001fa74c548292",
+      "kind": "fusion",
+      "catd_variant": "E180Q",
+      "spacer_name": "GS9",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          414
+        ],
+        "adp": [
+          415,
+          777
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 389,
+      "adp_pdb_author_to_fusion_offset": 419,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          493,
+          496,
+          590,
+          731
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_D187N_GS7",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTNSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 767,
+      "sequence_sha256": "6d6024fcb04b3f5902f99937a6c3c8e82eb4c6d1f9c5c998b479b533f434e579",
+      "kind": "fusion",
+      "catd_variant": "D187N",
+      "spacer_name": "GS7",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          404
+        ],
+        "adp": [
+          405,
+          767
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 379,
+      "adp_pdb_author_to_fusion_offset": 409,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          483,
+          486,
+          580,
+          721
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_D187N_GS9",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTNSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 777,
+      "sequence_sha256": "9afe5df578e927c84e3897c0eb6185ec4d3d4364042eb8a15451c55fd392453a",
+      "kind": "fusion",
+      "catd_variant": "D187N",
+      "spacer_name": "GS9",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          414
+        ],
+        "adp": [
+          415,
+          777
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 389,
+      "adp_pdb_author_to_fusion_offset": 419,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          493,
+          496,
+          590,
+          731
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_D187N_GS11",
+      "sequence": "FRLVTEGPIPEVLKNYMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTNSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 787,
+      "sequence_sha256": "87cd5e41f91cf7533e1696cd6bc7c32738823e74f86b7992fc52d5a47aceae5e",
+      "kind": "fusion",
+      "catd_variant": "D187N",
+      "spacer_name": "GS11",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          424
+        ],
+        "adp": [
+          425,
+          787
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 399,
+      "adp_pdb_author_to_fusion_offset": 429,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          503,
+          506,
+          600,
+          741
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_Y10F_GS5",
+      "sequence": "FRLVTEGPIPEVLKNFMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 757,
+      "sequence_sha256": "3faabd70b5d5dfdf737277f28656e94435158dd32b4d44beb2142bd38720cc82",
+      "kind": "fusion",
+      "catd_variant": "Y10F",
+      "spacer_name": "GS5",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          394
+        ],
+        "adp": [
+          395,
+          757
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 369,
+      "adp_pdb_author_to_fusion_offset": 399,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          473,
+          476,
+          570,
+          711
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_Y10F_GS7",
+      "sequence": "FRLVTEGPIPEVLKNFMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 767,
+      "sequence_sha256": "ef688475d941bf300037ac96338d45feab15bfd3ea2472ae87846879f69e2585",
+      "kind": "fusion",
+      "catd_variant": "Y10F",
+      "spacer_name": "GS7",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          404
+        ],
+        "adp": [
+          405,
+          767
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 379,
+      "adp_pdb_author_to_fusion_offset": 409,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          483,
+          486,
+          580,
+          721
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    },
+    {
+      "id": "CDAD_Y10F_GS9",
+      "sequence": "FRLVTEGPIPEVLKNFMDAQYYGEIGIGTPPQCFTVVFDTGSSNLWVPSIHCKLLDIACWIHHKYNSDKSSTYVKNGTSFDIHYGSGSLSGYLSQDTVSVPCQSASSASALGGVKVERQVFGEATKQPGITFIAAKFDGILGMAYPRISVNNVLPVFDNLMQQKLVDQNIFSFYLSRDPDAQPGGELMLGGTDSKYYKGSLSYLNVTRKAYWQVHLDQVEVASGLTLCKEGCEAIVDTGTSLMVGPVDEVRELQKAIGAVPLIQGEYMIPCEKVSTLPAITLKLGGKGYKLSPEDYTLKVSQAGKTLCLSGFMGMDIPPPSGPLWILGDVFIGRYYTVFDRDNNRVGFAEAARLGGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGSQTLIVKAEPTQSVSSSVQTSTQRDRNSVKQAVRDTLQLGFPGILAKTSEGGKTWSYAAGVANLSSKKPMKTDFRFRIGSVTKTFTATVVLQLAEENRLNLDDSIEKWLPGVIQGNGYDDKQITIRQLLNHTSGIAEYTRSKSFDLMDTKKSYRAEELVKMGISMPPDFAPGKSWSYSNTGYVLLGILIETVTGNSYAEEIENRIIEPLELSNTFLPGNSSVIPGTKHARGYIQLDGASEPKDVTYYNPSMGSSAGDMISTADDLNKFFSYLLGGKLLKEQQLKQMLTTVPTGEAALGRYGLGIYETKLPNGVSIWGHGGSIPGFVTFAGGTLGGKHTLAVNLNSLNAESPDPFKNILLAEFSK",
+      "length": 777,
+      "sequence_sha256": "d48b5da395a45d1edd3e650887487fadc9d5ccb8d384005a140ec1d0548ea050",
+      "kind": "fusion",
+      "catd_variant": "Y10F",
+      "spacer_name": "GS9",
+      "spacer_sequence": "GGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGS",
+      "linker_sequence": "GGGGSLPETGGGGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGGGSGGS",
+      "domains": {
+        "catd": [
+          1,
+          354
+        ],
+        "linker": [
+          355,
+          414
+        ],
+        "adp": [
+          415,
+          777
+        ]
+      },
+      "catd_native_to_fusion_offset": 6,
+      "adp_precursor_to_fusion_offset": 389,
+      "adp_pdb_author_to_fusion_offset": 419,
+      "catalytic_positions": {
+        "catd": [
+          39,
+          237
+        ],
+        "adp": [
+          493,
+          496,
+          590,
+          731
+        ]
+      },
+      "catd_disulfides": [
+        [
+          33,
+          102
+        ],
+        [
+          52,
+          59
+        ],
+        [
+          228,
+          232
+        ],
+        [
+          271,
+          308
+        ]
+      ]
+    }
+  ]
+}

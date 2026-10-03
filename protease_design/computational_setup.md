@@ -25,7 +25,7 @@ are recorded in the manifest and each result's `run.json`.
 
 For new analyses while jobs still use the main mirror, an isolated detached
 Git worktree can live under `data/corehpc/protease_design/checkouts/COMMIT`.
-Run its analysis scripts by absolute path through the main mirror's SLURM
+Run its analysis scripts by absolute path through the current worktree's SLURM
 template, keeping the working directory, environment, and data in the mirror.
 New analysis records distinguish their script commit from the installed
 runtime commit. This avoids pulling into an active checkout or rebuilding
@@ -105,13 +105,13 @@ so alignment-supported validation is staged separately:
 # Offline SLURM inference; use the current isolated script path when appropriate.
 .venv/bin/python protease_design/scripts/submit_gpu.py --minutes 30 \
   protease_design/scripts/fold_boltz2_cli.py \
-  data/corehpc/protease_design/inputs/validation_pool.json \
+  data/corehpc/protease_design/inputs/validation_pool_round3.json \
   --msa-dir data/corehpc/protease_design/msas \
   --output data/corehpc/protease_design/results/boltz2_msa
 .venv/bin/python protease_design/scripts/submit_gpu.py --minutes 30 \
   protease_design/scripts/refine_geometry.py \
-  data/corehpc/protease_design/inputs/validation_pool.json --platform CUDA \
-  --output data/corehpc/protease_design/results/esmfold_refined_cuda
+  data/corehpc/protease_design/inputs/validation_pool_round3.json --platform CUDA \
+  --output data/corehpc/protease_design/results/esmfold_refined_canonical
 ```
 
 The two parent alignments come from the hosted ColabFold service via the
@@ -182,3 +182,29 @@ stereochemistry, disulfide, and kinematic checks. Its mature sequences are
 separate from the proposed donor/acceptor expression intermediates. The early
 experimental decision remains the parent-domain rate matrix on exact matched
 substrates in a qualified mild-pH interval.
+
+The final ESMFold preparation is in `esmfold_refined_canonical`; final Boltz
+preparation is in `boltz_refined_projected`. Older CUDA/chiral directories
+retain superseded diagnostics and must not be substituted as final results.
+`analysis_esm_constructed` and `analysis_boltz_constructed` recheck the exported
+endpoint coordinates after PDB rounding. Inherited pLDDT/PAE describe the
+original prediction, not confidence in the manually constructed orientation.
+
+After collecting the complete results, reproduce the selected deliverables:
+
+```bash
+python protease_design/scripts/finalize_panel.py --ids \
+  CDAD_WT_GS7 CDAD_WT_GS9 CDAD_E180Q_GS7 CDAD_E180Q_GS9 \
+  CDAD_D187N_GS7 CDAD_D187N_GS9 CDAD_D187N_GS11 \
+  CDAD_Y10F_GS5 CDAD_Y10F_GS7 CDAD_Y10F_GS9
+python protease_design/scripts/write_panel_report.py
+python protease_design/scripts/build_manuscript.py
+python protease_design/scripts/package_results.py
+```
+
+The archive lives in `data/corehpc/protease_design/deliverables/` and has a
+per-file SHA256 manifest. It includes exact alignments and selected-coordinate
+evidence, with weights and environments reconstructed through pinned staging
+metadata. `collect_job_inventory.py --include-jobs 2112318 2112319 2112379`
+retains known dependency jobs cancelled before starting, which the ordinary
+start-time query omits. Only campaign jobs enter the accounting summary.

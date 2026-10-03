@@ -18,19 +18,27 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--since', default='2026-10-02')
     parser.add_argument('--output', type=Path, default=Path('data/corehpc/protease_design/job_inventory.json'))
+    parser.add_argument('--include-jobs', nargs='*', default=[], help='Also retain known jobs cancelled before they started.')
     args = parser.parse_args()
     fields = ['JobIDRaw', 'JobName', 'State', 'ExitCode', 'ElapsedRaw', 'Start', 'End', 'AllocTRES', 'ReqTRES', 'NodeList']
     command = ['sacct', '-n', '-P', '-X', '-u', getpass.getuser(), '--starttime', args.since,
                '--format', ','.join(fields)]
     raw = subprocess.check_output(command, env=dict(os.environ, TZ='UTC'), text=True)
-    records, events = [], []
+    commands = [command]
+    if args.include_jobs:
+        extra = ['sacct', '-n', '-P', '-X', '-u', getpass.getuser(), '--jobs', ','.join(args.include_jobs),
+                 '--format', ','.join(fields)]
+        raw += subprocess.check_output(extra, env=dict(os.environ, TZ='UTC'), text=True)
+        commands.append(extra)
+    records, events, seen = [], [], set()
     now = datetime.now(timezone.utc)
     for row in csv.reader(io.StringIO(raw), delimiter='|'):
         if not row:
             continue
         record = dict(zip(fields, row))
-        if not record['JobName'].startswith('protease-'):
+        if not record['JobName'].startswith('protease-') or record['JobIDRaw'] in seen:
             continue
+        seen.add(record['JobIDRaw'])
         matches = re.findall(r'(?:^|,)gres/gpu=(\d+)(?:,|$)', record['AllocTRES'])
         gpus = int(matches[0]) if matches else 0
         record['allocated_gpus'] = gpus
@@ -45,7 +53,7 @@ def main():
         concurrent += delta
         maximum = max(maximum, concurrent)
     result = {**revisions(), 'collected_utc': now.isoformat(), 'time_zone_requested': 'UTC',
-              'command': command, 'maximum_observed_concurrent_allocated_gpus': maximum,
+              'commands': commands, 'maximum_observed_concurrent_allocated_gpus': maximum,
               'allocated_gpu_seconds': sum(int(r['ElapsedRaw']) * r['allocated_gpus'] for r in records),
               'records': records}
     args.output.write_text(json.dumps(result, indent=2) + '\n')

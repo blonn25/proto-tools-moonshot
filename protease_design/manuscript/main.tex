@@ -37,8 +37,8 @@ controls, can distinguish switching from irreversible damage. Both domain folds 
 Boltz independently recovers native-like domains, but the methods disagree on
 relative placement and gate obstruction. Restrained preparation repairs local
 geometry; fixed linker-torsion scans test steric accessibility without assigning
-state probabilities. A ten-candidate experimental panel is being finalized from
-these checks. No fusion has been experimentally validated, and sufficient
+state probabilities. Ten candidates pass the declared domain, stereochemistry,
+and two-predictor geometric-feasibility checks. No fusion has been experimentally validated, and sufficient
 reciprocal activity in the proposed pH interval remains the central unresolved
 requirement.
 \end{abstract}
@@ -381,9 +381,29 @@ all thirteen independent audits preserve bond lengths to within 0.001365~\angstr
 and bond angles to within 0.107 degrees after PDB rounding.
 A 144-point two-phi scan finds arrangements satisfying both transferred-state
 and pocket-clearance checks for all 13 ESMFold models but only six raw Boltz
-models. Matched preparation and a uniform 1,728-point phi/psi extension
-investigate that discrepancy. Passing grid points establish only kinematic
-accessibility, not favorable free energies or switching populations.
+models. Following matched geometry preparation, the uniform three-angle
+1,728-point scan finds feasible endpoints for ten of thirteen Boltz-derived
+models. WT GS5, E180Q GS5, and D187N GS5 have no passing point in that grid;
+they are excluded from the final panel. All ten retained Boltz endpoints pass
+independent bond-geometry, domain-rigidity, and stereochemistry audits.
+Passing points establish only endpoint feasibility, not favorable free
+energies, collision-free transition paths, or switching populations.
+
+\paragraph{Final experimental panel.}
+Ten sequences meet the combined checks (Table~\ref{tab:panel}). Their prepared
+domain framework RMSDs span 0.743--0.783~\angstrom{} for CatD and
+0.890--0.908~\angstrom{} for ADP with ESMFold, and 0.822--1.143 and
+0.709--0.890~\angstrom{}, respectively, with alignment-supported Boltz.
+Exact sequences, per-design evidence, selected coordinates, and assembly
+precursors accompany this report. The shared WT GS7 and GS9 architecture
+controls are the first fusion testing priorities after the parent-rate matrix.
+Boltz-derived Y10F GS9 has only one passing grid point and D187N GS7 only eight,
+compared with 30--309 for the other retained designs. This sensitivity lowers
+confidence in geometric robustness and is reported explicitly; counts are
+not probabilities. All ten remain exploratory biochemical candidates. Their
+common dependence on reciprocal parent activity makes the parent experiment
+more informative than immediate parallel manufacture of the complete panel.
+\input{selected_table}
 
 \section{Proposed experimental characterization}
 \subsection{Production separates maturation from switching}
@@ -434,7 +454,9 @@ free acid \citep{keilova1968}. An optional matched ester panel must distinguish
 terminal ester hydrolysis from peptide-bond cleavage. Check solubility and
 mass balance to avoid calling precipitation degradation.
 
-Quantify intact substrate and hydrolysis products by LC--MS/HPLC with standards,
+ADP cleaves the D tetrapeptide into two D dipeptides \citep{nakano2015};
+this is peptide degradation, not demonstrated exhaustive conversion to free
+amino acids. Quantify intact substrate and hydrolysis products by LC--MS/HPLC with standards,
 using initial rates for both enantiomers at both selected pH values. The two
 enantiomers have identical masses; analyze them separately or use validated
 chiral separation. Subsequently test mixed substrates to detect competition.
@@ -481,7 +503,12 @@ plan, and executable scripts. Bulk reference records, inputs, predicted
 coordinates, confidence data, environment snapshots, and job results are
 retained under ignored project data. The manifest records actual job states
 and revisions. The selected sequence files distinguish the mature ligated product from
-its expression intermediates. Per-design records preserve both successful
+its expression intermediates. Four CatD donors and four spacer-bearing ADP
+acceptors supply the ten exact products. The downloadable bundle includes
+a per-file SHA256 manifest, raw predictor confidence, exact alignments,
+selected coordinates before and after preparation, and all library-level
+analysis summaries. Weights and environments are reconstructed using the
+recorded revisions rather than bundled. Per-design records preserve both successful
 diagnostics and unresolved biochemical requirements.
 
 \section{Analytical and full-library diagnostics}
@@ -523,6 +550,20 @@ No energy weighting or equilibrium sampling is applied. A feasible endpoint
 does not establish a collision-free transition pathway. Normalized grid counts
 must not be interpreted as state probabilities or experimental success rates.
 
+\input{selected_grid}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{candidate_arrangements.pdf}
+\caption{WT GS9 illustrates unresolved interdomain orientation. All panels share
+one camera after CatD framework alignment. Local Boltz geometry preparation
+(a) is distinct from the feasible endpoints constructed from Boltz (b) and
+ESMFold (c). The purple native occluded gate omits engineered extensions and
+unresolved reference residues. Two-dimensional projection can superpose domains
+separated in depth. These coordinates demonstrate steric feasibility only;
+neither relative placement nor population is experimentally established.}
+\label{fig:arrangements}
+\end{figure}
+
 \section{Runtime and numerical failures retained in the record}
 The initial Boltz persistent-worker pilot stalled after preprocessing, with
 idle loader children and negligible GPU use. A worker deadlock is a hypothesis,
@@ -548,6 +589,8 @@ provides a comparable baseline for subsequent Boltz preparations. The earlier
 much larger negative starting energy is not independently explained by this
 diagnostic. These debugging outcomes are not biochemical results and are not
 counted as design successes.
+
+\input{selected_sequences}
 
 \section{AI assistance disclosure}
 An OpenAI Codex assistant conducted literature searches, proposed the
