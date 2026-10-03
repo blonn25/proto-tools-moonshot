@@ -57,7 +57,11 @@ def main():
             done = output / "run.json"
             if done.exists():
                 previous = json.loads(done.read_text())
-                if previous["sequence_sha256"] != item["sequence_sha256"] or previous["config"] != provenance["config"]:
+                if (previous["sequence_sha256"] != item["sequence_sha256"]
+                        or previous["config"] != provenance["config"]
+                        or previous["model"]["revision"] != model["revision"]
+                        or hashlib.sha256((output / "structure.pdb").read_bytes()).hexdigest()
+                        != previous["structure_sha256"]):
                     raise RuntimeError(f"Existing result disagrees with current input/config: {output}")
                 logging.info("Retaining completed result %s", item["id"])
                 continue

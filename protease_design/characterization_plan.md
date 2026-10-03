@@ -62,6 +62,13 @@ measurements at each selected pH.
 
 Run the enantiomers separately unless a validated chiral separation is used:
 ordinary mass spectrometry cannot distinguish an L peptide from its D mirror.
+After this calibration, examine a mixed-substrate reaction using validated
+chiral analysis to reveal competitive inhibition or altered rates. Literature
+reports that some D peptides inhibit cathepsin-D cleavage of L substrates;
+resistance to cleavage does not imply absence of binding. An optional matched
+Phe4 methyl-ester panel has more direct cathepsin-D precedent, but terminal
+ester hydrolysis must be resolved from peptide-bond cleavage and cannot itself
+count as peptide degradation.
 Use substrate-only, isolated-parent, unfused-mixture, and catalytic-knockout
 controls. Match enzyme concentration, reaction time, handling, and vehicle.
 Quench only withdrawn aliquots after the defined reaction time; quenching is

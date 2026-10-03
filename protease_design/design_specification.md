@@ -71,6 +71,16 @@ termini. Examine both experimental cathepsin-D conformations for steric
 interference from the partner; transferring a known conformation into a fusion
 is a geometric compatibility test, not an equilibrium population prediction.
 
+The fixed CatD framework fit excludes native residues 1–16, its experimentally
+identified moving gate; it otherwise retains all resolved C-alpha positions,
+including loops. The ADP fit includes all resolved C-alpha positions. There is
+no score-dependent outlier rejection. This operational framework mask is more
+inclusive than a secondary-structure-only core. Compare the complete resolved
+CatD domain on that same fit separately, so gate deviations remain visible.
+Reference numbering uses RCSB's SIFTS-to-UniProt mappings, not concatenated
+two-chain residue indices. Side-chain RMSDs are diagnostic: rotamer errors in
+unrelaxed predictions are not synonymous with a lost catalytic mechanism.
+
 Initial triage targets (author-chosen, not validated success probabilities):
 
 - Mean confidence at least 80/100 for each structured catalytic domain, with

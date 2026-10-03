@@ -18,6 +18,7 @@ outputs belong in ignored `data/corehpc/protease_design/`; logs belong in `logs/
 - [Literature review](literature_review.md)
 - [Design specification](design_specification.md)
 - [Fold-preserving characterization plan](characterization_plan.md)
+- [Quantitative selectivity requirements](selectivity_framework.md)
 
 The review must establish a feasible D-peptide catalyst and switching mechanism
 before candidate generation. Designs are experimental proposals, not validated

@@ -121,6 +121,15 @@ simplest entirely genetically encoded architecture.
 
 ## L-peptide catalysis and acid activation
 
+**Keilová, Bláha, and Keil, 1968.** Cathepsin D cleaved peptide bonds in
+tri- and tetraphenylalanine methyl esters. Changing stereochemistry at a
+susceptible bond blocked cleavage in a tested hexapeptide; D isomers could
+competitively inhibit L-substrate cleavage. **Implication:** aromatic oligomers
+have useful precedent, but methyl esters are not interchangeable with free
+carboxylates. Test mixed-substrate inhibition after measuring each enantiomer
+separately, and distinguish ester hydrolysis from actual peptide fragmentation.
+[Primary paper](https://doi.org/10.1111/j.1432-1033.1968.tb00232.x).
+
 **Baker, 1951.** Pepsin hydrolyzed suitable aromatic L-peptides, whereas tested
 substitutions by D residues blocked cleavage. **Implication:** investigate
 matched aromatic enantiomers, while verifying the exact chosen tetrapeptide

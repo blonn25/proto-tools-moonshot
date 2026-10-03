@@ -18,14 +18,16 @@
 
 ## Current status
 
-Phase: initial literature review completed; revising the trigger to preserve
-protein folding, with scaffold verification and runtime preparation underway.
+Phase: literature review and initial sequence generation completed; preparing
+offline structure evaluation of the fold-preserving switch hypothesis.
 
 Generated 24 initial fusion sequences and five isolated-domain controls from
 the prospective specification. None have been structurally evaluated or selected.
-No campaign SLURM jobs have been
-submitted. Campaign GPU allocation: 0. No experimental work has been performed.
-CoreHPC project dependency installation is underway on the login node.
+Hardware-probe job 2110367 completed successfully at commit `5ce12e48` on an
+RTX PRO 6000 Blackwell Server Edition (97,887 MiB; driver 595.71.05).
+The project `.venv` and editable development dependencies are installed.
+Managed ESMFold environment/weight staging is underway on the login node.
+No inference jobs have run. No experimental work has been performed.
 
 ## Work plan
 
@@ -122,7 +124,9 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 
 ## Job ledger
 
-No jobs submitted.
+| Job | Commit | Resources | Purpose | Status |
+| --- | --- | --- | --- | --- |
+| 2110367 | `5ce12e48` | 1 GPU, 8 CPUs, 96 GB | Hardware/module probe | COMPLETED, exit 0; 1 s |
 
 ## Decisions and unresolved questions
 
