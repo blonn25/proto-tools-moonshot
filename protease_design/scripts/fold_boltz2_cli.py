@@ -24,6 +24,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("input", type=Path)
     parser.add_argument("--only", nargs="*")
+    parser.add_argument("--msa-dir", type=Path, help="Staged custom single-chain A3M files named by design ID")
     parser.add_argument("--shard", type=int, default=0)
     parser.add_argument("--shards", type=int, default=1)
     parser.add_argument("--seed", type=int, default=20261002)
@@ -48,7 +49,7 @@ def main():
             raise SystemExit("Unknown ID.")
         records = [r for r in records if r["id"] in args.only]
     records = records[args.shard::args.shards]
-    config = {"interface": "upstream CLI", "model": "boltz2", "use_msa": False,
+    config = {"interface": "upstream CLI", "model": "boltz2", "use_msa": args.msa_dir is not None,
               "recycling_steps": 3, "sampling_steps": 200, "diffusion_samples": 1,
               "step_scale": 1.5, "num_workers": 0, "seed": args.seed,
               "devices": 1, "output_format": "pdb", "cpu_threads": 1}
@@ -67,7 +68,14 @@ def main():
                CUDA_CACHE_PATH=str(cache_root / "cuda"))
     for key in ("TRITON_CACHE_DIR", "TORCHINDUCTOR_CACHE_DIR", "CUDA_CACHE_PATH"):
         Path(env[key]).mkdir(parents=True, exist_ok=True)
+    base_config = config
     for item in records:
+        config = dict(base_config)
+        msa = args.msa_dir / f"{item['id']}.a3m" if args.msa_dir else None
+        if msa is not None:
+            from stage_domain_msas import read_a3m
+            rows = read_a3m(msa, item["sequence"])
+            config.update(msa_sha256=hashlib.sha256(msa.read_bytes()).hexdigest(), msa_rows=len(rows))
         output = args.output / item["id"]
         output.mkdir(parents=True, exist_ok=True)
         done = output / "run.json"
@@ -80,7 +88,7 @@ def main():
             continue
         input_file = output / "input.yaml"
         input_file.write_text("version: 1\nsequences:\n  - protein:\n      id: A\n      sequence: " +
-                              item["sequence"] + "\n      msa: empty\n")
+                              item["sequence"] + "\n      msa: " + (str(msa.resolve()) if msa else "empty") + "\n")
         raw = output / "raw"
         command = [str(executable), "predict", str(input_file.resolve()), "--out_dir", str(raw.resolve()),
                    "--cache", str(cache), "--model", "boltz2", "--devices", "1", "--accelerator", "gpu",

@@ -18,26 +18,22 @@
 
 ## Current status
 
-Phase: literature review and the complete first structure screen finished;
-second-round and independent predictions are queued, and geometry checks are running.
+Phase: literature review and all 32 fusion ESMFold predictions complete;
+independent prediction and restrained geometry validation are in progress.
 
-Generated 24 initial fusion sequences and five isolated-domain controls from
-the prospective specification. All 29 have now been predicted with ESMFold.
-The final ten have not been selected. Domain preservation alone is insufficient:
-several predictions have severe interdomain loop clashes, and their relative
-domain orientation is uncertain (approximately 25 Å interdomain PAE).
-Hardware-probe job 2110367 completed successfully at commit `5ce12e48` on an
-RTX PRO 6000 Blackwell Server Edition (97,887 MiB; driver 595.71.05).
-The project `.venv` and editable development dependencies are installed.
-Managed ESMFold environment/weight staging completed on the login node:
-PyTorch 2.10.0 with CUDA 12.8 and transformers 5.12.1; model revision
-`75a3841ee059df2bf4d56688166c8fb459ddd97a`. CPU geometry checks passed.
-All five controls have framework RMSD below 0.9 Å and mean resolved-domain
-pLDDT above 87.9. Boltz-2 environment and weights are staged and a three-protein
-pilot is running. CPU OpenMM geometry checks are running for the WT parent and
-WT GS3 fusion. A nine-page ICLR-format draft compiles, with unfinished computations explicitly
-identified; the final results and figures are still being assembled.
-No experimental work has been performed.
+All 37 records (32 fusions and five controls) have complete ESMFold analyses.
+Nine long-spacer models have no raw sub-2 Å interdomain contacts; D187N GS7
+has one borderline 1.896 Å contact. The final ten are not yet selected.
+Single-sequence Boltz recovers the CatD parent but fails the known ADP fold
+(22.09 Å framework RMSD, 32.15 mean pLDDT). This is a failed method control,
+not evidence that the native ADP protein is nonfunctional. Alignment-supported
+validation is being prepared using two public-parent searches.
+
+Original-XML OBC2 refinement succeeded on CUDA for both parents and WT GS3;
+the severe raw contacts and compressed disulfides were repaired. Full-pool
+refinement and single-sequence Boltz reserve at most two GPUs together.
+The ICLR manuscript compiles; final candidate selection, results, and figures
+remain unfinished. No experimental work has been performed.
 
 ## Work plan
 
@@ -153,13 +149,22 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | 2111226 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Complete first-screen analysis | COMPLETED, exit 0; 12 s |
 | 2111227 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Experimental-state ray tracing | COMPLETED, exit 0; 14 s |
 | 2111325 | script `951fe6d0`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz upstream-CLI pilot | FAILED, exit 1; 54 s; nvc rejects Triton compiler flag |
-| 2111366 | script `20f3f669`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Eight second-round ESMFold fusions | PENDING at last check |
+| 2111366 | script `20f3f669`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Eight second-round ESMFold fusions | COMPLETED, exit 0; 5 min 29 s |
 | 2111431 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Shared-camera structural renderings | COMPLETED, exit 0; 11 s |
 | 2111452 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Updated composite/vector figures | COMPLETED, exit 0; 7 s |
-| 2111453 | script `20f3f669`, runtime `16406443` | 4 CPUs, 16 GB | Combined first/second-round analysis | Pending after 2111366 |
+| 2111453 | script `20f3f669`, runtime `16406443` | 4 CPUs, 16 GB | Combined first/second-round analysis | COMPLETED, exit 0; 10 s |
 | 2111464 | script `70d71b76`, runtime `16406443` | Requested 1 CPU, 4 GB | Short minimization diagnostic | CANCELLED at 8 min 43 s; generic GB force bottleneck |
-| 2111578 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 parent pilot | RUNNING at last check |
+| 2111578 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 parent pilot | Computation completed; 472.6 s refinement; diagnostic only |
 | 2111579 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 WT GS3 pilot | FAILED equivalence check, exit 1; 46 s |
+| 2111629 | script `8c410d0e`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz CLI with GCC | COMPLETED, exit 0; 2 min 29 s |
+| 2111630 | script `8c410d0e`, runtime `16406443` | 4 CPUs, 8 GB | Reference-precision OBC equivalence | FAILED, exit 1; 2 min 20 s; 7.89 kJ/mol discrepancy |
+| 2111743 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Original XML OBC2 CUDA pilot | COMPLETED, exit 0; 1 min 15 s |
+| 2111744 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | Assay metadata for 37 sequences | COMPLETED, exit 0; 1 s |
+| 2111796 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Single-sequence Boltz validation pool | RUNNING at last check |
+| 2111797 | script `17356de4`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Original XML OBC2 CUDA validation pool | PENDING at last check |
+| 2111798 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | Boltz pilot analysis | Output complete; scheduler verification pending |
+| 2111799 | script `17356de4`, runtime `16406443` | 4 CPUs, 16 GB | CUDA-refined pilot analysis | Output complete; scheduler verification pending |
+
 
 ### 2026-10-02 Initial structural analysis
 
@@ -266,3 +271,33 @@ failed the predeclared 0.1 kJ/mol equivalence bound. The next diagnostic compare
 both implementations using the double-precision Reference platform, retaining
 the same bound, to distinguish parameter differences from CPU arithmetic.
 No failed fusion refinement is accepted or silently given a relaxed threshold.
+
+### 2026-10-03 Completed second round and successful CUDA refinement
+
+All eight GS7/GS9 ESMFold proposals preserve both native-like domain folds and
+accommodate both transferred CatD states without sub-2 Å interdomain contacts.
+Seven raw predictions are clash-free by this criterion; D187N GS7 has one
+1.896 Å contact involving a CatD residue with pLDDT 59. Combined with the two
+initial GS5 models, this gives nine raw clash-free proposals and a tenth to
+review, rather than ten selected enzymes. Interdomain PAE remains about 26 Å.
+
+The optimized solvent substitution failed even with double-precision Reference
+energies (approximately 7.894 kJ/mol discrepancy). Abandoned that substitution
+for final evaluation; its completed parent run is diagnostic only. Installed
+OpenMM's matching CUDA plugin in the project environment, retaining the
+original ff14SB/OBC2 XML force field. GPU pilot 2111743 completed in 75 seconds.
+CatD parent S--S distances become 2.033--2.038 Å; WT GS3 distances become
+2.016--2.038 Å and its minimum interdomain separation becomes 2.642 Å. Domain
+framework RMSDs remain below 1 Å. This is restrained geometry repair with
+fixed preparation protonation, not molecular dynamics or a pH-switch simulation.
+
+Boltz's explicit-GCC CLI retry completed all three pilot inputs. CatD WT agrees
+with the experimental structure (0.705 Å RMSD, 95.65 mean pLDDT), but the native
+ADP control fails (22.09 Å, 32.15 pLDDT); fusion ADP likewise fails. Single-sequence
+Boltz results cannot validate or reject the proposed ADP domain. The upstream
+documentation discourages empty MSAs. Prepare two public-parent alignments from
+the ColabFold service, cap distinct homologs at 511 per parent, and gap-pad
+domain rows into the fusion sequence without inventing paired interdomain
+homology. Use the exact variant sequence only in each query row. This is an
+explicit method amendment motivated by a failed positive control; retain the
+single-sequence outputs and do not pool their scores with MSA-supported runs.
