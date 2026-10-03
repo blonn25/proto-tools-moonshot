@@ -1,4 +1,4 @@
-"""Restrained CPU geometry repair; not dynamics, a pH model, or activity evidence."""
+"""Restrained geometry repair; not dynamics, a pH model, or activity evidence."""
 
 import argparse
 import faulthandler
@@ -116,9 +116,15 @@ def main():
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/results/esmfold_refined"))
     parser.add_argument("--iterations", type=int, default=1000)
     parser.add_argument("--threads", type=int)
+    parser.add_argument("--platform", choices=["CPU", "CUDA"], default="CPU")
+    parser.add_argument("--solvent-engine", choices=["xml", "builtin_checked"], default="xml")
     args = parser.parse_args()
     if not os.environ.get("SLURM_JOB_ID"):
-        raise SystemExit("Use the CPU SLURM template.")
+        raise SystemExit("Use a campaign SLURM template.")
+    if args.platform == "CUDA" and len(os.environ.get("CUDA_VISIBLE_DEVICES", "").split(",")) != 1:
+        raise SystemExit("CUDA refinement requires exactly one allocated GPU.")
+    if args.platform == "CUDA" and not os.environ.get("CUDA_VISIBLE_DEVICES"):
+        raise SystemExit("Use the guarded GPU submission script.")
     if args.shards < 1 or not 0 <= args.shard < args.shards:
         raise SystemExit("Invalid shard selection.")
     threads = args.threads or int(os.environ["SLURM_CPUS_PER_TASK"])
@@ -133,8 +139,11 @@ def main():
             raise SystemExit("Unknown sequence ID.")
         records = [r for r in records if r["id"] in args.only]
     records = records[args.shard::args.shards]
-    platform = mm.Platform.getPlatformByName("CPU")
-    platform.setPropertyDefaultValue("Threads", str(threads))
+    preparation_platform = mm.Platform.getPlatformByName("CPU")
+    preparation_platform.setPropertyDefaultValue("Threads", str(threads))
+    platform = mm.Platform.getPlatformByName(args.platform)
+    properties = {"Threads": str(threads)} if args.platform == "CPU" else {
+        "DeviceIndex": "0", "Precision": "mixed", "TempDirectory": os.environ["TMPDIR"]}
     for item in records:
         start = time.monotonic()
         random.seed(20261002)
@@ -149,7 +158,9 @@ def main():
         if (output / "run.json").exists():
             old = json.loads((output / "run.json").read_text())
             if (old["refinement"]["source_structure_sha256"] != source_hash or
-                    old["refinement"]["max_iterations"] != args.iterations):
+                    old["refinement"]["max_iterations"] != args.iterations or
+                    old["refinement"]["platform"] != args.platform or
+                    old["refinement"].get("solvent_engine") != args.solvent_engine):
                 raise ValueError("Existing refinement differs from input/configuration.")
             continue
         pdb = app.PDBFile(str(source / "structure.pdb"))
@@ -159,12 +170,14 @@ def main():
         logging.info("%s: adding hydrogens with %d CPU threads", item["id"], threads)
         forcefield = app.ForceField("amber14/protein.ff14SB.xml", "implicit/obc2.xml")
         # Fixed standard protonation is a geometry-preparation convention only.
-        modeller.addHydrogens(forcefield, pH=7.0, platform=platform)
+        modeller.addHydrogens(forcefield, pH=7.0, platform=preparation_platform)
         logging.info("%s: hydrogens ready at %.1f s; creating restrained system", item["id"], time.monotonic() - start)
         system = forcefield.createSystem(modeller.topology, nonbondedMethod=app.NoCutoff,
                                          constraints=app.HBonds)
-        equivalence = use_builtin_obc2(system, modeller.positions, platform, threads)
-        logging.info("%s: optimized OBC2 equivalence errors %s kJ/mol", item["id"], equivalence["absolute_errors_kJ_mol"])
+        equivalence = None
+        if args.solvent_engine == "builtin_checked":
+            equivalence = use_builtin_obc2(system, modeller.positions, preparation_platform, threads)
+            logging.info("%s: optimized OBC2 equivalence errors %s kJ/mol", item["id"], equivalence["absolute_errors_kJ_mol"])
         restraint = mm.CustomExternalForce("0.5*k*((x-x0)^2+(y-y0)^2+(z-z0)^2)")
         restraint.addGlobalParameter("k", 1000.0)
         for name in ("x0", "y0", "z0"):
@@ -177,7 +190,7 @@ def main():
                 ca_indices.append(atom.index)
         system.addForce(restraint)
         integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
-        context = mm.Context(system, integrator, platform, {"Threads": str(threads)})
+        context = mm.Context(system, integrator, platform, properties)
         context.setPositions(modeller.positions)
         before = context.getState(getEnergy=True).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole)
         logging.info("%s: initial energy %.3f kJ/mol at %.1f s; minimizing", item["id"], before, time.monotonic() - start)
@@ -205,9 +218,10 @@ def main():
         (output / "metrics.json").write_text((source / "metrics.json").read_text())
         refinement = {
             "method": "restrained geometry minimization; no MD steps", "openmm": mm.__version__,
-            "platform": "CPU", "threads": threads,
+            "platform": args.platform, "platform_properties": properties, "threads": threads,
             "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
-            "solvent_implementation": "GBSAOBCForce optimized CPU kernel, mapped from XML CustomGBForce",
+            "solvent_engine": args.solvent_engine,
+            "solvent_implementation": "XML CustomGBForce" if args.solvent_engine == "xml" else "GBSAOBCForce mapped from XML",
             "solvent_energy_equivalence": equivalence,
             "standard_protonation_pH": 7.0, "restraint_CA_k_kJ_mol_nm2": 1000,
             "max_iterations": args.iterations, "force_tolerance_kJ_mol_nm": 10,

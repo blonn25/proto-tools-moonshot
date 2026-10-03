@@ -147,14 +147,19 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | 2110847 | `1824ce2f` | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 0 | COMPLETED, exit 0; 14 min 1 s |
 | 2110848 | `16406443` executed | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 1 | COMPLETED, exit 0; 6 min 47 s |
 | 2111023 | `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz-2 persistent-worker pilot | CANCELLED after stall; 17 min 57 s |
-| 2111024 | `16406443` | 4 CPUs, 16 GB | Restrained WT srCatD geometry repair | RUNNING at last check |
-| 2111025 | `16406443` | 4 CPUs, 16 GB | Restrained WT GS3 geometry repair | RUNNING at last check |
+| 2111024 | `16406443` | 4 CPUs, 16 GB | Generic OBC2 WT srCatD pilot | CANCELLED after slow force evaluation; 55 min 6 s |
+| 2111025 | `16406443` | 4 CPUs, 16 GB | Generic OBC2 WT GS3 pilot | CANCELLED after slow force evaluation; 55 min 6 s |
 | 2111026 | `16406443` | 4 CPUs, 16 GB | Partial enhanced structure analysis | COMPLETED, exit 0; 8 s |
 | 2111226 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Complete first-screen analysis | COMPLETED, exit 0; 12 s |
 | 2111227 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Experimental-state ray tracing | COMPLETED, exit 0; 14 s |
-| 2111325 | script `951fe6d0`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz upstream-CLI pilot | PENDING at last check; wall time resized to 30 min |
+| 2111325 | script `951fe6d0`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz upstream-CLI pilot | FAILED, exit 1; 54 s; nvc rejects Triton compiler flag |
 | 2111366 | script `20f3f669`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Eight second-round ESMFold fusions | PENDING at last check |
-| 2111431 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Shared-camera structural renderings | Submitted |
+| 2111431 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Shared-camera structural renderings | COMPLETED, exit 0; 11 s |
+| 2111452 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Updated composite/vector figures | COMPLETED, exit 0; 7 s |
+| 2111453 | script `20f3f669`, runtime `16406443` | 4 CPUs, 16 GB | Combined first/second-round analysis | Pending after 2111366 |
+| 2111464 | script `70d71b76`, runtime `16406443` | Requested 1 CPU, 4 GB | Short minimization diagnostic | CANCELLED at 8 min 43 s; generic GB force bottleneck |
+| 2111578 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 parent pilot | RUNNING at last check |
+| 2111579 | script `74198b9c`, runtime `16406443` | 4 CPUs, 8 GB | Optimized OBC2 WT GS3 pilot | FAILED equivalence check, exit 1; 46 s |
 
 ### 2026-10-02 Initial structural analysis
 
@@ -238,3 +243,26 @@ of the two permitted GPUs.
 - A specific substrate and multidomain or multicomponent architecture are allowed.
 - Whether sufficient evidence can support ten switchable designs remains an open
   research question, not an assumed successful outcome.
+
+### 2026-10-03 Numerical and runtime diagnostics
+
+Boltz's direct CLI proceeded beyond the earlier worker stall, then failed in
+Triton JIT because the nvhpc module's `CC=nvc` rejects `-Wno-psabi`. A targeted
+retry selects system GCC/G++ and explicitly keeps Triton, Inductor, and CUDA
+caches inside the mirror. No package/environment source was patched.
+
+The short OpenMM diagnostic completed hydrogen placement and initial energy
+evaluation, but remained inside minimization. A native stack localized the
+slow calculation to `CpuCustomGBForce`; the cause of its extreme runtime is
+not established. Stop these trials rather than count them as completed results.
+The one-CPU diagnostic also exposed two srun processes despite the nominal
+single-task allocation. The CPU template now explicitly specifies one node,
+one task, and `srun --ntasks=1`. Original four-CPU runs showed one process each.
+
+The optimized OBC2 mapping preserved charges, offset/scaled radii, dielectric
+constants, surface term, and no cutoff. Parent CPU solvent-energy differences
+were 0.053--0.054 kJ/mol; the fusion differed by 0.238--0.245 kJ/mol and correctly
+failed the predeclared 0.1 kJ/mol equivalence bound. The next diagnostic compares
+both implementations using the double-precision Reference platform, retaining
+the same bound, to distinguish parameter differences from CPU arithmetic.
+No failed fusion refinement is accepted or silently given a relaxed threshold.
