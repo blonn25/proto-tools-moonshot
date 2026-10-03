@@ -1,0 +1,362 @@
+\documentclass{article}
+\usepackage{iclr2026_conference,times}
+\usepackage{amsmath,amssymb,booktabs,graphicx,xcolor,hyperref,url}
+\iclrfinalcopy
+\title{A modular route toward chirality-selective proteolysis with mild pH control}
+\author{Research draft}
+\newcommand{\CatD}{\mathrm{CatD}}
+\newcommand{\ADP}{\mathrm{ADP}}
+\newcommand{\angstrom}{\textup{\AA}}
+\newcommand{\Dpep}{\textsc{d}}
+\newcommand{\Lpep}{\textsc{l}}
+\graphicspath{{figures/}}
+
+\begin{document}
+\maketitle
+\lhead{Research draft in ICLR format; not submitted}
+
+\begin{abstract}
+Switching an expressible protein between cleavage of all-\Lpep{} and all-\Dpep{}
+peptides requires control of stereospecific catalysis as well as suppression of
+the inactive function. We investigate a modular strategy that combines short
+recombinant human cathepsin D with alkaline D-peptidase in a canonical
+L-amino-acid polypeptide. A preliminary pH 5.0--7.5 interval is chosen from
+component-level evidence to avoid using global unfolding as the switching
+mechanism. Twenty-four constructs vary a previously characterized cathepsin-D
+substitution and a flexible or helical spacer. We define a computational
+screen against experimental structures and an analytical requirement for
+reciprocal selectivity. Independent preparation and enzymatic ligation of the
+domains separates acidic maturation from final-switch characterization. A
+direct peptide-fragment assay, accompanied by structural and activity-recovery
+controls, can distinguish switching from irreversible damage. This draft
+currently documents the design rationale and prospective evaluation;
+structure-prediction screening is in progress. No fusion has been experimentally
+validated, and sufficient reciprocal activity in the proposed pH interval remains
+the central unresolved requirement.
+\end{abstract}
+
+\section{Introduction}
+Protease stereoselectivity normally protects peptides of the opposite backbone
+chirality. A useful switch would reverse which enantiomer is degraded while
+leaving the other substantially intact. Here the catalyst itself must contain
+only canonical L-amino acids, permitting recombinant production. This excludes
+the direct construction of a mirror-image D-protease. It does not exclude a
+natural L-protein whose active site recognizes D-peptides.
+
+We consider a single final polypeptide with two catalytic domains. The task is
+therefore to switch the substrate preference of the whole protein by reciprocal
+control of existing activities. It is not necessary to invert the stereochemical
+preference of one active site. This architecture preserves experimentally
+supported catalytic machinery while concentrating uncertainty in domain
+compatibility and regulation. The first target is purified in-vitro cleavage of
+short aromatic peptides; general degradation of arbitrary all-D proteins is
+outside the evidence available here.
+
+Our evaluation separates three questions: whether a sequence plausibly retains
+both folds, whether those folds remain intact during the input change, and
+whether the resulting rates exhibit the desired opposite selectivities.
+Structure prediction addresses primarily the first question. Neither a high
+confidence score nor a favorable substrate docking score establishes peptide
+hydrolysis or the off-target rate.
+
+\section{Related work and scaffold selection}
+\paragraph{D-peptide hydrolysis by L-proteins.}
+Alkaline D-peptidase (ADP) from \emph{Bacillus cereus} DF4-B cleaves
+D-phenylalanine oligomers, including an entirely D tetrapeptide, without reported
+cleavage of their L counterparts in the original study \citep{asano1996}.
+Its structure, 4Y7P, supports a conserved catalytic network involving Ser74,
+Lys77, Tyr171, and His312 in the publication's numbering \citep{nakano2015}.
+These coordinates describe an apo enzyme: the proposed peptide poses were
+computed. The documented expression construct deletes precursor residues
+1--25, and its activity was verified. A distinct D-aminopeptidase provides an
+alternative scaffold, but its larger architecture and different preferences
+are less convenient for this initial aromatic-substrate panel
+\citep{bompard2000}. Other enzymes with activity on D-amino-acid amides or
+mixed-chirality substrates do not automatically meet the all-D-peptide requirement
+\citep{fanuel1999,haim2026}.
+
+\paragraph{A conformationally regulated L-protease.}
+Human cathepsin D has experimentally observed active and occluded conformations
+\citep{baldwin1993,lee1998}. Movement of its N-terminal segment restricts access
+to the active site in the structure obtained at pH 7.5. The short recombinant
+form, srCatD, retains six additional N-terminal residues and can be produced
+through bacterial expression, refolding, and processing \citep{beyer1996}.
+Experiments with srCatD and substitutions E180Q, D187N, and Y10F connect these
+positions with catalytic efficiency and the lag following a pH change
+\citep{goldfarb2005}. Those measurements support the choice of variants but
+do not show that they improve reciprocal selectivity in an ADP fusion.
+
+\paragraph{Why begin with mild pH control?}
+The ADP study reports stability after incubation over pH 5--10 and measurable
+activity at pH 7.5, although its optimum is substantially more alkaline
+\citep{asano1996}. The proposed pH 5.0--7.5 window consequently uses an overlap
+in component stability rather than either enzyme's optimal rate. Stability
+after incubation is distinct from instantaneous activity: the acidic ADP
+leakage rate remains unknown. Likewise, cathepsin-D kinetics depend on substrate,
+and a crystal grown near pH 5 is not a kinetic measurement in dilute assay buffer.
+Pepsin-based switching involving very acidic activation was considered but not
+advanced, given the folding requirement and the lack of supporting ADP data
+there; pepsin itself also presents alkaline stability concerns \citep{konno2000}.
+
+\paragraph{Computational design context.}
+Diffusion-based backbone design and inverse folding substantially expand
+accessible protein architectures \citep{watson2023,dauparas2022,dauparas2025,rfdiffusion2}.
+Recent enzyme design results underscore the need to distinguish the actual
+chemical reaction established experimentally from a broad enzyme-class label
+\citep{lauko2025}. De novo pH-responsive assemblies and engineered protein
+switches offer alternative regulatory routes \citep{boyken2019,dagliyan2018}.
+For this project, redesigning an architecture around existing peptide-hydrolysis
+evidence is a more conservative experimental starting point than inventing
+both D-peptide catalysis and its switch simultaneously. This preference is a
+design judgment, not a comparative experimental success-rate estimate.
+
+\section{Design and quantitative requirements}
+\subsection{Construct architecture}
+The final ligated sequence has the form
+\begin{equation*}
+\mathrm{srCatD}\! -\! \mathrm{GGGGS}\! -\! \mathrm{LPET}\! -\!
+\mathrm{GGG}\! -\! \mathrm{spacer}\! -\! \mathrm{GGS}\! -\! \mathrm{ADP}_{26:388}.
+\end{equation*}
+The srCatD domain contains FRLVTE followed by UniProt P07339 residues 65--412.
+We compare WT, E180Q, D187N, and Y10F in native mature numbering. ADP uses
+UniProt P94288 residues 26--388 without substitutions. Flexible spacers are
+$(\mathrm{GGGGS})_n$, $n\in\{1,3,5\}$; nominally helical spacers are
+$(\mathrm{EAAAK})_n$, $n\in\{2,4,6\}$. These established linker classes motivate
+a geometry comparison \citep{arai2001}; the helical label does not guarantee a
+rigid conformation in the final protein. The resulting 24 sequences span
+737--762 residues and preserve the native catalytic residues and four CatD
+disulfide pairs.
+
+The six-residue srCatD extension is retained because its processing and kinetic
+behavior have direct precedent. The L domain is placed first to leave that
+N terminus free after maturation. An aromatic-free spacer reduces obvious
+substrate-like motifs but cannot establish resistance to self-proteolysis.
+All constructs share a common biochemical hypothesis and should not be treated
+as 24 independent solutions to the catalytic problem.
+
+\subsection{Reciprocal selectivity}
+Let $a_L(p)$ and $a_D(p)$ denote initial rates per mole of active domain at pH
+$p$ on a matched enantiomeric substrate pair, at fixed concentrations and
+terminal chemistry. Initially assume negligible intrinsic cross-cleavage and
+independent domains. With domain ratio $r=[L]/[D]$, the two selectivities are
+\begin{equation}
+S_{\mathrm{low}}=\frac{r a_L(\mathrm{low})}{a_D(\mathrm{low})},\qquad
+S_{\mathrm{high}}=\frac{a_D(\mathrm{high})}{r a_L(\mathrm{high})}.
+\end{equation}
+For both to meet a chosen engineering target $S$, the necessary interval is
+\begin{equation}
+\frac{S a_D(\mathrm{low})}{a_L(\mathrm{low})}\leq r\leq
+\frac{a_D(\mathrm{high})}{S a_L(\mathrm{high})}.
+\label{eq:ratio}
+\end{equation}
+For positive rates, this interval is nonempty exactly when
+\begin{equation}
+\frac{a_L(\mathrm{low})}{a_L(\mathrm{high})}
+\frac{a_D(\mathrm{high})}{a_D(\mathrm{low})}\geq S^2.
+\label{eq:range}
+\end{equation}
+A one-to-one fusion additionally fixes $r=1$, which must lie inside
+Eq.~\ref{eq:ratio}. Increasing the concentration of the whole fusion cannot
+repair an unfavorable selectivity ratio. These relations are analytical
+requirements, not fitted data or predicted activities.
+
+When cross-cleavage is non-negligible, define $a_{ij}$ for domain $i$ acting on
+substrate chirality $j$. Total rates become
+$v_L=[D](r a_{LL}+a_{DL})$ and
+$v_D=[D](a_{DD}+r a_{LD})$. This full matrix, measured at both pH values, is
+required to assess leakage. Partial maturation, unequal active fractions,
+substrate competition, and coupling between domains can invalidate the
+independent-domain approximation. Rates below the detection limit support
+bounds, not zeros or infinite selectivity.
+
+\section{Computational methods}
+\subsection{References, numbering, and provenance}
+Experimental structures and sequence records are downloaded with source URLs
+and SHA256 hashes. CatD states use 1LYA and 1LYW; ADP uses 4Y7P.
+RCSB SIFTS mappings connect each crystal polymer entity to its UniProt sequence.
+The two CatD crystal chains are mapped independently: concatenating them would
+incorrectly erase the segment absent after two-chain maturation. ADP author
+numbering is offset by 30 from the precursor and is not an expression-boundary
+annotation. Unresolved ADP residues 26--46 remain in every designed sequence.
+
+Canonical residue composition, catalytic mappings, sequence uniqueness, and
+construct boundaries are checked during generation. In srCatD, catalytic
+native Asp33 and Asp231 become positions 39 and 237. ADP precursor residues
+104, 107, 201, and 342 become positions 79, 82, 176, and 317 of its expressed
+domain. Every inference record includes the sequence hash, model revision,
+configuration, executed Git commit, SLURM job identifier, elapsed time, and
+structure checksum.
+
+\subsection{Structure predictions and diagnostic controls}
+ESMFold evaluates the five isolated-domain controls and the fusion library
+\citep{lin2023}. The planned configuration uses four recycles and one sequence
+at a time. Model revision
+\texttt{75a3841ee059df2bf4d56688166c8fb459ddd97a}
+is staged locally for offline inference with PyTorch 2.10.0/CUDA 12.8 and
+transformers 5.12.1. An independent Boltz-2 screen is being prepared with
+explicitly disabled MSA generation, three recycling steps, 200 diffusion steps,
+and a recorded random seed \citep{passaro2025}. Both are single-sequence
+evaluations of this artificial fusion; they do not model a pH-dependent ensemble.
+The project uses typed proto-tools wrappers \citep{merchant2026}.
+
+\subsection{Structural screen}
+Each domain is aligned separately to its experimental reference using a proper
+rigid Kabsch transform, with no reflection or scale change. The CatD framework
+includes all resolved C-alpha atoms except native residues 1--16, the known
+mobile gate. The ADP framework includes all resolved C-alpha atoms. No
+score-dependent outlier removal is allowed. Complete resolved-domain deviations
+on the same fit are reported separately so exclusion of the gate from fitting
+does not conceal its movement.
+
+Diagnostics include resolved-domain pLDDT, framework C-alpha RMSD, catalytic
+side-chain geometry, disulfide S--S distances, interdomain heavy-atom contacts,
+and partner proximity to catalytic atoms. Both experimental CatD states are
+transferred into the predicted fusion frame to test geometric interference
+with ADP. Such a transfer assesses compatibility of a static arrangement; it
+does not predict the probability or kinetics of either state.
+
+Prospective triage targets are domain mean pLDDT of at least 80/100, framework
+RMSD approximately at most 2.5~\angstrom, and at most 0.75~\angstrom{} worsening
+relative to the corresponding isolated control. Severe new overlaps and
+catalytic-pocket occupation require review. Linker uncertainty is reported
+separately rather than averaged into a single pass/fail score. These targets
+are author-chosen diagnostics, not calibrated probabilities of biochemical
+success. Discrepancies between methods and side-chain outliers require direct
+inspection rather than suppression by an aggregate score.
+
+\subsection{Computational resource controls}
+Development and documentation occur in the Wynton repository; computational
+work runs through CoreHPC SLURM. Network dependencies and weights are staged
+on its login node because compute nodes have no internet. A serialized
+submission guard counts pending as well as running campaign GPU allocations
+and refuses any submission that would exceed two GPUs. CPU analyses use the
+CPU partition. Source revisions are synchronized through GitHub; results,
+environments, caches, and logs remain inside the designated project mirrors.
+
+\section{Results available at this draft stage}
+\paragraph{Verified sequence library.}
+The generator produced 24 unique fusion sequences and five isolated controls.
+All use canonical residues and pass the prospective residue-mapping checks.
+This establishes a reproducible screening library; it is not evidence of
+expression, stability, or catalysis.
+
+\paragraph{Experimental-state comparison.}
+Reanalysis of 1LYA and 1LYW yielded a framework C-alpha RMSD of
+1.918~\angstrom{} and a maximum observed gate C-alpha displacement of
+29.987~\angstrom. Numerical checks verified rigid alignment without reflection,
+contact-count interpretation, and residue indexing across the CatD chain break.
+These computations recover the large local rearrangement described in the
+structural literature. They were performed on experimental parent structures,
+not newly designed fusions.
+
+\paragraph{Screening status.}
+The two initial GPU jobs are queued at the time of this draft. No fusion has
+yet passed structural evaluation or been selected into a final ten-design panel.
+This paragraph and the abstract will be replaced with the actual results when
+the screen completes; pending computations are not reported as successful runs.
+
+\section{Proposed experimental characterization}
+\subsection{Production separates maturation from switching}
+Prepare the srCatD donor and ADP acceptor independently, then join them by
+sortase-mediated transpeptidation \citep{popp2009,kobashigawa2009}.
+The donor presents a C-terminal GGGGS--LPETG site followed by a removable tail;
+the acceptor exposes GGG--spacer--GGS--ADP. The final Thr--Gly bond is an ordinary
+peptide bond, and all retained residues are canonical. Confirm the free
+oligoglycine N terminus after tag removal rather than assuming removal of
+translation's initiating methionine.
+
+The CatD production route should preserve the documented short-form maturation
+and verify its FRLVTE N terminus. The published expression precursor, including
+its engineered processing junction, must be sequence-verified before synthesis
+or cloning; the mature design FASTA is not a complete expression precursor.
+Refolding and maturation occur before ADP is introduced. After ligation, remove
+sortase, unligated domains, and released tails, and confirm product identity,
+purity, and each module's activity. Manufacturing yield, tag tolerance, and
+self-proteolysis remain experimental risks.
+
+\subsection{Qualify a mild, fold-preserving input window}
+Use purified fusion and synthetic peptides without a fluorescent reporter
+protein, coupled enzyme, or protein carrier. Begin near 25~$^\circ$C with
+separately prepared buffers spanning pH 5.0--7.5 in 0.5-unit increments.
+Match ionic strength and solvent, verify pH at assay temperature, and compare
+overlapping buffer chemistries. Introduce the protein by dilution or buffer
+exchange, avoiding concentrated acid or base directly in the protein stock.
+
+Measure isothermal far-UV CD before and after the intended assay interval,
+analytical size-exclusion behavior, soluble recovery, and fragmentation by
+SDS-PAGE or intact-mass analysis. Then cycle pH 7.5$\to$5.0$\to$7.5 and the
+reverse sequence. Assay each module at its own reference condition with fresh
+substrate and handling-matched controls. Global CD can conceal damage to one
+domain, making recovery of both activities essential. A preliminary criterion
+is at least 90\% activity recovery with no detectable unfolding, aggregation,
+or proteolytic loss at assay precision. This is an engineering criterion,
+not a guarantee of zero risk. Conditions failing qualification are excluded
+before selectivity is interpreted.
+
+\subsection{Measure all four state--chirality combinations}
+Start with free-acid D-Phe$_4$, an ADP-supported substrate, and the chemically
+matched L enantiomer. Establish parent CatD activity on the exact L compound
+before interpreting fusion data. Historical CatD evidence for tri- and
+tetraphenylalanine methyl esters does not establish identical behavior of the
+free acid \citep{keilova1968}. An optional matched ester panel must distinguish
+terminal ester hydrolysis from peptide-bond cleavage. Check solubility and
+mass balance to avoid calling precipitation degradation.
+
+Quantify intact substrate and hydrolysis products by LC--MS/HPLC with standards,
+using initial rates for both enantiomers at both selected pH values. The two
+enantiomers have identical masses; analyze them separately or use validated
+chiral separation. Subsequently test mixed substrates to detect competition.
+Include no-enzyme, isolated-parent, unfused-mixture, and catalytic-knockout
+controls. Quench only withdrawn analytical aliquots; quenching is not the
+switching input. Report time courses, switching lag, detection limits, and
+rate-ratio uncertainty across independent preparations.
+
+\section{Discussion and limitations}
+The architecture retains direct evidence for catalysis of each chirality while
+making a substantial new claim only as a testable hypothesis: both functions
+can be gated reciprocally within the same fold-preserving interval. The most
+informative early experiment is the parent-domain activity matrix in that
+interval. If it fails Eq.~\ref{eq:ratio} at a one-to-one ratio, making many
+linker variants is unlikely to solve the underlying rate imbalance. A variant
+with greater acidic L activity can also increase high-pH leakage; greater
+activity alone is not a successful switch.
+
+Computational comparisons with native structures are useful for detecting
+gross architectural damage. They cannot certify soluble expression,
+disulfide formation, ligation efficiency, catalytic competence, or a
+pH-dependent conformational population. Related predictors are also not
+statistically independent experiments and may share structural training data.
+The proposed panel is a controlled family of redesigns, not ten distinct
+mechanisms. Experimental validation is needed before claiming general
+chirality-switchable proteolysis or publication-level biochemical success.
+
+The analytical framework and explicit evidence separation are the principal
+methodological contributions of this draft. ICLR formatting does not imply
+that this work has been submitted, accepted, or meets that venue's novelty
+standard. The final report will preserve unsuccessful evaluations and identify
+remaining uncertainty alongside any selected experimental panel.
+
+\bibliography{references}
+\bibliographystyle{iclr2026_conference}
+
+\appendix
+\section{Reproducibility and artifact map}
+The repository's \texttt{protease\_design} directory contains the literature
+review, prospective design specification, running manifest, characterization
+plan, and executable scripts. Bulk reference records, inputs, predicted
+coordinates, confidence data, environment snapshots, and job results are
+retained under ignored project data. The manifest records actual job states
+and revisions. Final sequence and ranking artifacts will be added only after
+the corresponding computations have completed.
+
+\section{AI assistance disclosure}
+An OpenAI Codex assistant conducted literature searches, proposed the
+architecture and screening criteria, wrote analysis and orchestration code,
+and drafted this manuscript under the human request and constraints recorded
+in the project. The assistant is not an author. Human researchers must review
+the source interpretations, code, biological assumptions, and final claims
+before experimental use or submission. No experimental data were supplied or
+generated by the assistant. Any subsequently added measured data must be
+identified separately from predictions and proposals.
+
+\end{document}

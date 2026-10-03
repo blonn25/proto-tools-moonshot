@@ -29,7 +29,10 @@ def main():
     python = str(instance.env_path / "bin/python")
     freeze = subprocess.check_output([python, "-m", "pip", "freeze"], text=True)
     Path("data/corehpc/protease_design/boltz2_requirements_resolved.txt").write_text(freeze)
-    subprocess.run([python, str(Path(__file__).with_name("stage_boltz2_weights.py"))], check=True)
+    # The download helper uses Hugging Face Hub, already staged with ESMFold.
+    # Boltz's inference environment does not require or install that package.
+    downloader = ToolInstance.get("esmfold").env_path / "bin/python"
+    subprocess.run([str(downloader), str(Path(__file__).with_name("stage_boltz2_weights.py"))], check=True)
     logging.info("Boltz-2 ready for offline validation: %s", instance.env_path)
 
 

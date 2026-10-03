@@ -41,7 +41,7 @@ REFERENCES = {
 
 def retrieve(pair):
     key, doi = pair
-    url = "https://doi.org/" + urllib.parse.quote(doi, safe="/")
+    url = "https://api.crossref.org/v1/works/" + urllib.parse.quote(doi, safe="") + "/transform"
     request = urllib.request.Request(url, headers={"User-Agent": "ProteaseDesignLiteratureReview/1.0",
                                                   "Accept": "application/x-bibtex"})
     cache = Path("data/corehpc/protease_design/bibliography")
@@ -60,9 +60,18 @@ def main():
     directory = Path("protease_design/manuscript")
     directory.mkdir(exist_ok=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
-        results = list(pool.map(retrieve, REFERENCES.items()))
+        futures = {pool.submit(retrieve, pair): pair[0] for pair in REFERENCES.items()}
+        results, errors = [], {}
+        for future in concurrent.futures.as_completed(futures):
+            try:
+                results.append(future.result())
+            except (urllib.error.HTTPError, urllib.error.URLError) as error:
+                errors[futures[future]] = str(error)
+        results.sort(key=lambda row: list(REFERENCES).index(row[0]))
     (directory / "references.bib").write_text("\n\n".join(entry.strip() for _, entry, _ in results) + "\n")
     (directory / "bibliography_provenance.json").write_text(json.dumps({key: meta for key, _, meta in results}, indent=2) + "\n")
+    if errors:
+        raise SystemExit(f"Bibliography incomplete; cached successful entries. Missing: {errors}")
 
 
 if __name__ == "__main__":

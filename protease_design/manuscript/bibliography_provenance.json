@@ -1,0 +1,137 @@
+{
+  "asano1996": {
+    "doi": "10.1074/jbc.271.47.30256",
+    "url": "https://api.crossref.org/v1/works/10.1074%2Fjbc.271.47.30256/transform",
+    "sha256": "6af193d78f744844d9c0bdcec05d3c402193efb7aa4e02a895619a23fbf70fad"
+  },
+  "nakano2015": {
+    "doi": "10.1038/srep13836",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fsrep13836/transform",
+    "sha256": "a105adcdce751f3bd7c769fc641992d3e2567cc9ec7ef38ae380a77e455f464f"
+  },
+  "lee1998": {
+    "doi": "10.1038/2306",
+    "url": "https://api.crossref.org/v1/works/10.1038%2F2306/transform",
+    "sha256": "7906b8cb18ebf7451bd351488ad56bd697c3e274409734498b0b705d10247fe6"
+  },
+  "goldfarb2005": {
+    "doi": "10.1021/bi0511686",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Fbi0511686/transform",
+    "sha256": "23d5e50bead0cce55181c7ed9bd8726fc36d6d5a8b1db37b9e699743ca124373"
+  },
+  "beyer1996": {
+    "doi": "10.1074/jbc.271.26.15590",
+    "url": "https://api.crossref.org/v1/works/10.1074%2Fjbc.271.26.15590/transform",
+    "sha256": "905c00e912a6476445c88ac965397b55cb1970c3f88b6073942d7ad7d3c711b0"
+  },
+  "baldwin1993": {
+    "doi": "10.1073/pnas.90.14.6796",
+    "url": "https://api.crossref.org/v1/works/10.1073%2Fpnas.90.14.6796/transform",
+    "sha256": "0b810ab0e2d2d013cb520930e3ec3f3c55274f63f9d4e44e731e08ed66d3f81d"
+  },
+  "keilova1968": {
+    "doi": "10.1111/j.1432-1033.1968.tb00232.x",
+    "url": "https://api.crossref.org/v1/works/10.1111%2Fj.1432-1033.1968.tb00232.x/transform",
+    "sha256": "f2cb8a88ce0789469f5378e5fd92779c096900b78d8705f4f57d7965e61ad7e6"
+  },
+  "popp2009": {
+    "doi": "10.1002/0471140864.ps1503s56",
+    "url": "https://api.crossref.org/v1/works/10.1002%2F0471140864.ps1503s56/transform",
+    "sha256": "57acb6dba8f410e8f9400cdf8768218a90830dec02e93183ecc76d336f120afa"
+  },
+  "kobashigawa2009": {
+    "doi": "10.1007/s10858-008-9296-5",
+    "url": "https://api.crossref.org/v1/works/10.1007%2Fs10858-008-9296-5/transform",
+    "sha256": "ffa4124def476c9b193c947fe31fcb68e03f38ee70a2fd2da2a0f5fe63bde3b1"
+  },
+  "arai2001": {
+    "doi": "10.1093/protein/14.8.529",
+    "url": "https://api.crossref.org/v1/works/10.1093%2Fprotein%2F14.8.529/transform",
+    "sha256": "cdf07b13268be2f64294cc07a2c7f0443f70e76ae4fecc706f31149f45ebe2a7"
+  },
+  "lin2023": {
+    "doi": "10.1126/science.ade2574",
+    "url": "https://api.crossref.org/v1/works/10.1126%2Fscience.ade2574/transform",
+    "sha256": "3e978b248cab757858cd9ccf598bb52507b0c29deb396514a5369ddeb4299527"
+  },
+  "abramson2024": {
+    "doi": "10.1038/s41586-024-07487-w",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41586-024-07487-w/transform",
+    "sha256": "f61036a373300728c7c0f13707f8163db4f3653eabb733c6e9453c23aaf66231"
+  },
+  "watson2023": {
+    "doi": "10.1038/s41586-023-06415-8",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41586-023-06415-8/transform",
+    "sha256": "d4e04699f78b3b6fe936791e184b72e3243887dfc512f233003b5003d9ab4f82"
+  },
+  "dauparas2022": {
+    "doi": "10.1126/science.add2187",
+    "url": "https://api.crossref.org/v1/works/10.1126%2Fscience.add2187/transform",
+    "sha256": "67db99f3065b3182e57a4626f62a2fc33a5f97fe09dd77716780549f64e7be8a"
+  },
+  "dauparas2025": {
+    "doi": "10.1038/s41592-025-02626-1",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41592-025-02626-1/transform",
+    "sha256": "b5f49ac0af2206d7bb9e4c75241383c6b9b822ce094f348d92f896450d225ee8"
+  },
+  "lauko2025": {
+    "doi": "10.1126/science.adu2454",
+    "url": "https://api.crossref.org/v1/works/10.1126%2Fscience.adu2454/transform",
+    "sha256": "2a8bcc4ebaccaf7dfcbcf2e10cf5bec9e5f637705452e80d7f3b7af8f21d7c85"
+  },
+  "rfdiffusion2": {
+    "doi": "10.1038/s41592-025-02975-x",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41592-025-02975-x/transform",
+    "sha256": "fcffb58be2a8c3a3918057b192fa1d7bed77e576e67bfa65e488f2f65d7064e4"
+  },
+  "passaro2025": {
+    "doi": "10.1101/2025.06.14.659707",
+    "url": "https://api.crossref.org/v1/works/10.1101%2F2025.06.14.659707/transform",
+    "sha256": "38007399f608693d5f707a9c664620080396167e6bc7bd2d5444cd95d4ac99dd"
+  },
+  "olsson2011": {
+    "doi": "10.1021/ct100578z",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Fct100578z/transform",
+    "sha256": "4fe0967712f981724e63727def169fa810a82382bedce86e66b2162183ea230a"
+  },
+  "sondergaard2011": {
+    "doi": "10.1021/ct200133y",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Fct200133y/transform",
+    "sha256": "6a88e4e32ced7f49c104234c56bb4cd6a52e4b2d3046f987cc8e3c7507cccf25"
+  },
+  "boyken2019": {
+    "doi": "10.1126/science.aav7897",
+    "url": "https://api.crossref.org/v1/works/10.1126%2Fscience.aav7897/transform",
+    "sha256": "495b5867ab5945a661e416fd0b11a432c46ecba3aef021265f1c07e8a9894486"
+  },
+  "dagliyan2018": {
+    "doi": "10.1038/s41467-018-06531-4",
+    "url": "https://api.crossref.org/v1/works/10.1038%2Fs41467-018-06531-4/transform",
+    "sha256": "052ce5727828af4a3457f2036cb5be5c5dbd47dcf7f4f92e3aaec39690173b0c"
+  },
+  "konno2000": {
+    "doi": "10.1021/bi991923d",
+    "url": "https://api.crossref.org/v1/works/10.1021%2Fbi991923d/transform",
+    "sha256": "99ad1418b9ae1c3509df52c1975c8e4c10c170e7b3b3b57219cdf45df171b14b"
+  },
+  "bompard2000": {
+    "doi": "10.1016/S0969-2126(00)00188-X",
+    "url": "https://api.crossref.org/v1/works/10.1016%2FS0969-2126%2800%2900188-X/transform",
+    "sha256": "719656336cc06bfb9343ced10e4118ef6f1114a1ab7464f9c8fb0f0314476f54"
+  },
+  "fanuel1999": {
+    "doi": "10.1042/0264-6021:3410147",
+    "url": "https://api.crossref.org/v1/works/10.1042%2F0264-6021%3A3410147/transform",
+    "sha256": "b4f702fcd60eb91d3777d71bda08c049d049c085d86c3b9305748d2194d65b97"
+  },
+  "haim2026": {
+    "doi": "10.1002/anie.202521611",
+    "url": "https://api.crossref.org/v1/works/10.1002%2Fanie.202521611/transform",
+    "sha256": "c9c700612be9b471b4caa8aa830e535cde2e1a77240d8179731297592f2efd0f"
+  },
+  "merchant2026": {
+    "doi": "10.64898/2026.06.22.733870",
+    "url": "https://api.crossref.org/v1/works/10.64898%2F2026.06.22.733870/transform",
+    "sha256": "ab0e981b62bcc6f2bda49722bf9f4ed646e19a5de14188173ecccf601f42af5d"
+  }
+}
