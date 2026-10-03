@@ -32,6 +32,9 @@ The already folded final enzyme is assayed only in a qualified mild-pH window.
 Sortase compatibility, purification yield, and retention of each domain's
 activity remain experimental requirements. A directly expressed fusion is a
 later simplification if maturation can be demonstrated without damaging ADP.
+The subsequently verified maturation junction and sequence-defined production
+intermediates are documented in `production_design.md`; they do not change the
+mature fusion sequences used in the prospective screen.
 
 Screen six spacers: `(GGGGS)n` for n = 1, 3, 5, and `(EAAAK)n` for n = 2, 4, 6.
 This gives 24 fusion proposals across four cathepsin-D sequences. These are
@@ -106,3 +109,19 @@ reciprocal activity within a fold-preserving pH interval. There is no guarantee
 that ten proposals will pass, and no computational result establishes enzyme
 activity. The four state/chirality assays and folding controls in
 `characterization_plan.md` remain necessary.
+
+## Second-round amendment, after the initial ESMFold screen
+
+Recorded before generating second-round predictions. All four GS5 constructs
+accommodated both transferred native CatD states without sub-2 Å interdomain
+contacts; the shorter flexible and initial helical spacers did not. Because
+relative domain PAE remains about 25 Å, this is a geometric triage observation,
+not evidence that the fusion adopts that orientation in solution.
+
+Add `(GGGGS)7` and `(GGGGS)9` for each of the four CatD variants: eight further
+constructs, 767 or 777 residues. This tests whether additional separation reduces
+steric interference while preserving both domains. Longer flexible spacers can
+increase heterogeneity and proteolysis risk, so greater length is not assumed
+to be superior. Keep the original 24 sequences and results intact, identify
+this adaptive second round separately, and retain the original evaluation
+criteria. No selectivity claim follows from satisfying the geometry screen.

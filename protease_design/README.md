@@ -17,6 +17,7 @@ outputs belong in ignored `data/corehpc/protease_design/`; logs belong in `logs/
 - [Progress manifest](manifest.md)
 - [Literature review](literature_review.md)
 - [Design specification](design_specification.md)
+- [Sequence-defined production proposal](production_design.md)
 - [Fold-preserving characterization plan](characterization_plan.md)
 - [Quantitative selectivity requirements](selectivity_framework.md)
 - [Development and CoreHPC execution](computational_setup.md)

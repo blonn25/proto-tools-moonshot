@@ -204,7 +204,7 @@ script and runtime revisions. Thirty bibliography metadata records are staged.
 
 Boltz pilot 2111023 stalled after preprocessing, with two idle child processes,
 0% GPU utilization and approximately 42 seconds of CPU use after more than
-20 minutes elapsed. Cancelled only this campaign job to release its GPU.
+15 minutes elapsed. Cancelled only this campaign job after 17 min 57 s to release its GPU.
 Forked-loader deadlock is a hypothesis, not a proven root cause. Preparing a
 direct upstream CLI retry in the same managed environment, with zero loader
 workers and single-thread CPU libraries. The typed wrapper currently requires
@@ -216,6 +216,13 @@ maturation region `IAKGPVSKPIEFFRLVTEGPIPE`, with cleavage between the paired
 phenylalanines. This resolves the engineered local junction, permitting a
 sequence-defined production proposal. Proposed vector context and appended
 ligation tags remain new engineering choices and require experimental checking.
+
+Added an explicit second-round amendment before its predictions: test GS7 and
+GS9 spacers across the same four CatD variants, motivated by the initial GS5
+geometry. These eight adaptive proposals supplement, rather than replace, the
+original 24. The mature sequences remain separate from the newly specified
+expression intermediates. Boltz CLI retry job 2111325 is pending, reserving one
+of the two permitted GPUs.
 
 ## Open decisions
 

@@ -143,6 +143,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, default=Path("data/corehpc/protease_design/references"))
     parser.add_argument("--inputs", type=Path, default=Path("data/corehpc/protease_design/inputs"))
+    parser.add_argument("--extra-candidates", type=Path, nargs="*", default=[])
     parser.add_argument("--predictions", type=Path, default=Path("data/corehpc/protease_design/results/esmfold"))
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/results/analysis"))
     args = parser.parse_args()
@@ -165,6 +166,10 @@ def main():
     records = []
     for filename in ("controls.json", "candidates.json"):
         records.extend(json.loads((args.inputs / filename).read_text())["records"])
+    for path in args.extra_candidates:
+        records.extend(json.loads(path.read_text())["records"])
+    if len({r["id"] for r in records}) != len(records):
+        raise ValueError("Duplicate input IDs across libraries.")
     results, missing = [], []
     for item in records:
         directory = args.predictions / item["id"]
@@ -270,6 +275,9 @@ def main():
                 score["plddt_delta_from_parent"] = score["resolved_mean_plddt"] - control["resolved_mean_plddt"]
     args.output.mkdir(parents=True, exist_ok=True)
     output = {**revisions(),
+              "input_sha256": {str(p): hashlib.sha256(p.read_bytes()).hexdigest()
+                               for p in [args.inputs / "controls.json", args.inputs / "candidates.json",
+                                         *args.extra_candidates]},
               "job_id": os.environ["SLURM_JOB_ID"], "native_catd_state_comparison": native_comparison,
               "records": results, "missing_predictions": missing}
     (args.output / "structural_analysis.json").write_text(json.dumps(output, indent=2) + "\n")

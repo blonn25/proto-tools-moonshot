@@ -209,6 +209,11 @@ the native N-terminal pH switch. Production and mature-terminal verification
 are explicit design requirements, not routine assumptions.
 [Primary paper](https://doi.org/10.1074/jbc.271.26.15590).
 
+Follow-up source verification recovered Table I's engineered region
+`IAKGPVSKPIEF|FRLVTEGPIPE` (bar: activation site). This supports the
+sequence-defined precursor proposal in `production_design.md`; its appended
+ligation tags and vector context remain new engineering choices.
+
 **Conus et al., 2012.** Purified cathepsin D had detectable activity at pH 5
 and below in the reported assay, with little activity above that range.
 **Implication:** pH 5 is a reasonable screening boundary; substrate-dependent

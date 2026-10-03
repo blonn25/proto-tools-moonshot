@@ -21,7 +21,11 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--references", type=Path, default=Path("data/corehpc/protease_design/references"))
     parser.add_argument("--output", type=Path, default=Path("data/corehpc/protease_design/inputs"))
+    parser.add_argument("--flexible-repeats", type=int, nargs="+", default=[1, 3, 5])
+    parser.add_argument("--helical-repeats", type=int, nargs="*", default=[2, 4, 6])
     args = parser.parse_args()
+    if any(n < 1 for n in args.flexible_repeats + args.helical_repeats):
+        raise SystemExit("Spacer repeat counts must be positive.")
     sequences = {}
     sources = {}
     for accession in ("P07339", "P94288"):
@@ -36,8 +40,8 @@ def main():
     for position, residue in ((104, "S"), (107, "K"), (201, "Y"), (342, "H")):
         if sequences["P94288"][position - 1] != residue:
             raise ValueError(f"ADP catalytic mapping mismatch at precursor {position}")
-    spacers = {f"GS{n}": "GGGGS" * n for n in (1, 3, 5)}
-    spacers.update({f"H{n}": "EAAAK" * n for n in (2, 4, 6)})
+    spacers = {f"GS{n}": "GGGGS" * n for n in args.flexible_repeats}
+    spacers.update({f"H{n}": "EAAAK" * n for n in args.helical_repeats})
     fusions = []
     controls = [record("ADP_parent", adp, kind="isolated_domain", source="P94288:26-388")]
     for variant, substitution in VARIANTS.items():

@@ -10,6 +10,8 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+from execution_provenance import revisions
+
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -43,7 +45,7 @@ def main():
                            max_batch_residues=800, include_pae_matrix=True, verbose=True)
     args.output.mkdir(parents=True, exist_ok=True)
     provenance = {
-        "commit": subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip(),
+        **revisions(),
         "job_id": os.environ["SLURM_JOB_ID"], "model": model,
         "config": config.model_dump(mode="json"),
         "input_file": str(args.input),
