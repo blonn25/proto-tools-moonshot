@@ -3,8 +3,11 @@
 This is an analytical framework, not fitted experimental data or a prediction
 of candidate activity. It makes the remaining biochemical requirements explicit.
 
-Let `a_L(p)` and `a_D(p)` be initial cleavage rates per mole of the corresponding
-domain on a chosen matched substrate pair at pH `p`. Concentrations, terminal
+Let `a_L(p)` and `a_D(p)` be initial cleavage rates normalized to nominal moles
+of the corresponding intact, processed domain on a matched substrate pair at
+pH `p`. These effective rates include each state's catalytically available
+fraction; normalizing only to the open conformer would remove the very gating
+effect being tested. Concentrations, terminal
 chemistry, temperature, and the observation window are fixed. Initially assume
 each isolated domain has negligible activity on the other enantiomer. Let
 `r = [L domain]/[D domain]`; an intact one-to-one fusion fixes `r = 1`.
@@ -52,8 +55,10 @@ unequal active fractions, substrate competition, and self-proteolysis can all
 invalidate predictions from isolated-domain measurements.
 
 For a fusion with two active sites, nominal protein concentration does not
-establish either site's active fraction. Determine each module's functional
-concentration or report rates per nominal fusion concentration transparently.
+establish either site's active fraction. Report rates per nominal fusion
+concentration for the switching comparison, and characterize functional
+concentration separately at each module's reference condition. Do not silently
+switch normalization conventions between states.
 Distinguish transient switching lag from steady-state rates by recording full
 time courses after buffer exchange. Below-detection rates supply bounds rather
 than zero-valued denominators. Do not extrapolate an unmeasured acidic ADP rate

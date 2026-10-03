@@ -2,6 +2,8 @@
 #SBATCH --job-name=protease-cpu
 #SBATCH --comment=protease_design
 #SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=16G
 #SBATCH --time=02:00:00
@@ -16,4 +18,4 @@ export OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK"
 export OPENBLAS_NUM_THREADS="$SLURM_CPUS_PER_TASK"
 git rev-parse HEAD
 date -u
-srun .venv/bin/python "$@"
+srun --ntasks=1 .venv/bin/python "$@"

@@ -20,6 +20,60 @@ from openmm import app, unit
 from execution_provenance import revisions
 
 
+def use_builtin_obc2(system, positions, platform, threads):
+    """Use OpenMM's optimized OBC2 kernel after checking solvent-energy equivalence.
+
+The XML constructs a generic CustomGBForce. Its offset radius is r-0.009 nm
+and its third parameter is scale*(r-0.009). The built-in kernel takes r and
+scale directly. Preserve charges, dielectrics, ACE surface energy, and no cutoff.
+"""
+    custom = [(i, f) for i, f in enumerate(system.getForces()) if isinstance(f, mm.CustomGBForce)]
+    if len(custom) != 1:
+        raise ValueError("Expected one OBC2 CustomGBForce.")
+    index, original = custom[0]
+    names = [original.getPerParticleParameterName(i) for i in range(original.getNumPerParticleParameters())]
+    if names != ["charge", "or", "sr"] or original.getNonbondedMethod() != mm.CustomGBForce.NoCutoff:
+        raise ValueError("Unexpected OBC2 parameterization.")
+    replacement = mm.GBSAOBCForce()
+    replacement.setSoluteDielectric(1.0)
+    replacement.setSolventDielectric(78.5)
+    replacement.setSurfaceAreaEnergy(2.25936 * unit.kilojoule_per_mole / unit.nanometer**2)
+    replacement.setNonbondedMethod(mm.GBSAOBCForce.NoCutoff)
+    for i in range(original.getNumParticles()):
+        charge, offset_radius, scaled_radius = original.getParticleParameters(i)
+        replacement.addParticle(charge, offset_radius + 0.009, scaled_radius / offset_radius)
+    original.setForceGroup(1)
+    replacement.setForceGroup(1)
+    frames = [np.array(positions.value_in_unit(unit.nanometer))]
+    for atom, axis, delta in [(0, 0, 0.002), (system.getNumParticles() // 2, 1, -0.003)]:
+        frame = frames[0].copy()
+        frame[atom, axis] += delta
+        frames.append(frame)
+
+    def energies():
+        integrator = mm.VerletIntegrator(0.001 * unit.picosecond)
+        context = mm.Context(system, integrator, platform, {"Threads": str(threads)})
+        values = []
+        for frame in frames:
+            context.setPositions(frame * unit.nanometer)
+            values.append(context.getState(getEnergy=True, groups=2).getPotentialEnergy().value_in_unit(unit.kilojoule_per_mole))
+        del context, integrator
+        return values
+
+    before = energies()
+    system.removeForce(index)
+    system.addForce(replacement)
+    after = energies()
+    errors = [abs(a - b) for a, b in zip(before, after)]
+    if not np.isfinite(before + after).all() or any(
+            e > max(0.1, abs(a) * 1e-6) for e, a in zip(errors, before)):
+        raise ValueError(f"Optimized OBC2 failed solvent-energy equivalence: {before}, {after}")
+    return {"custom_solvent_energies_kJ_mol": before, "builtin_solvent_energies_kJ_mol": after,
+            "absolute_errors_kJ_mol": errors,
+            "tolerance": "max(0.1 kJ/mol, 1e-6 * abs(custom solvent energy)) per frame",
+            "frames": "Original and two local coordinate perturbations; no minimization before comparison."}
+
+
 def prepare_topology(pdb, disulfides):
     """Preserve intended disulfides and supply the missing terminal OXT if needed."""
     residues = list(pdb.topology.residues())
@@ -106,6 +160,8 @@ def main():
         logging.info("%s: hydrogens ready at %.1f s; creating restrained system", item["id"], time.monotonic() - start)
         system = forcefield.createSystem(modeller.topology, nonbondedMethod=app.NoCutoff,
                                          constraints=app.HBonds)
+        equivalence = use_builtin_obc2(system, modeller.positions, platform, threads)
+        logging.info("%s: optimized OBC2 equivalence errors %s kJ/mol", item["id"], equivalence["absolute_errors_kJ_mol"])
         restraint = mm.CustomExternalForce("0.5*k*((x-x0)^2+(y-y0)^2+(z-z0)^2)")
         restraint.addGlobalParameter("k", 1000.0)
         for name in ("x0", "y0", "z0"):
@@ -148,6 +204,8 @@ def main():
             "method": "restrained geometry minimization; no MD steps", "openmm": mm.__version__,
             "platform": "CPU", "threads": threads,
             "forcefield": ["amber14/protein.ff14SB.xml", "implicit/obc2.xml"],
+            "solvent_implementation": "GBSAOBCForce optimized CPU kernel, mapped from XML CustomGBForce",
+            "solvent_energy_equivalence": equivalence,
             "standard_protonation_pH": 7.0, "restraint_CA_k_kJ_mol_nm2": 1000,
             "max_iterations": args.iterations, "force_tolerance_kJ_mol_nm": 10,
             "energy_before_kJ_mol": before, "energy_after_kJ_mol": after,

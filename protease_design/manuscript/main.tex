@@ -151,9 +151,10 @@ All constructs share a common biochemical hypothesis and should not be treated
 as 24 independent solutions to the catalytic problem.
 
 \subsection{Reciprocal selectivity}
-Let $a_L(p)$ and $a_D(p)$ denote initial rates per mole of active domain at pH
-$p$ on a matched enantiomeric substrate pair, at fixed concentrations and
-terminal chemistry. Initially assume negligible intrinsic cross-cleavage and
+Let $a_L(p)$ and $a_D(p)$ denote initial rates per nominal mole of intact,
+processed domain at pH $p$ on a matched enantiomeric substrate pair, at fixed
+concentrations and terminal chemistry. These effective rates include the
+state-dependent catalytically available fraction. Initially assume negligible intrinsic cross-cleavage and
 independent domains. With domain ratio $r=[L]/[D]$, the two selectivities are
 \begin{equation}
 S_{\mathrm{low}}=\frac{r a_L(\mathrm{low})}{a_D(\mathrm{low})},\qquad
@@ -280,10 +281,11 @@ not newly designed fusions.
 
 \begin{figure}[t]
 \centering
-\includegraphics[width=\linewidth]{native_states.pdf}
-\caption{Reanalysis of experimental CatD conformations. (a,b) Projected C-alpha
-traces after a fixed-framework alignment excluding native residues 1--16.
-Colored segments show the gate; dots mark catalytic Asp C-alpha positions.
+\includegraphics[width=\linewidth]{native_states_ribbon.pdf}
+\caption{Reanalysis of experimental CatD conformations. (a,b) PyMOL ribbon
+renderings with a shared camera after fixed-framework alignment excluding
+native residues 1--16. Colored segments show the gate; dark sticks mark
+catalytic Asp side chains.
 (c) Displacements of matched gate positions. This compares deposited crystal
 structures and does not predict a pH response of a fusion.}
 \label{fig:native}
@@ -364,8 +366,10 @@ Quantify intact substrate and hydrolysis products by LC--MS/HPLC with standards,
 using initial rates for both enantiomers at both selected pH values. The two
 enantiomers have identical masses; analyze them separately or use validated
 chiral separation. Subsequently test mixed substrates to detect competition.
-Include no-enzyme, isolated-parent, unfused-mixture, and catalytic-knockout
-controls. Quench only withdrawn analytical aliquots; quenching is not the
+Include no-enzyme, isolated-parent, unfused-mixture, and inhibited-module or
+properly processed catalytic-knockout controls. A CatD knockout cannot be
+assumed to undergo the active enzyme's autocatalytic maturation. Quench only
+withdrawn analytical aliquots; quenching is not the
 switching input. Report time courses, switching lag, detection limits, and
 rate-ratio uncertainty across independent preparations.
 

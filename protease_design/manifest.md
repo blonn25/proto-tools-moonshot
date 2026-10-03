@@ -19,7 +19,7 @@
 ## Current status
 
 Phase: literature review and the complete first structure screen finished;
-independent predictions and restrained geometry checks are running.
+second-round and independent predictions are queued, and geometry checks are running.
 
 Generated 24 initial fusion sequences and five isolated-domain controls from
 the prospective specification. All 29 have now been predicted with ESMFold.
@@ -146,10 +146,15 @@ ESMFold runner with input/model/commit provenance and per-sequence checkpoints.
 | 2110800 | `0eebbd1a` | 4 CPUs, 16 GB | Parent prediction versus crystal comparison | COMPLETED, exit 0; 2 s |
 | 2110847 | `1824ce2f` | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 0 | COMPLETED, exit 0; 14 min 1 s |
 | 2110848 | `16406443` executed | 1 GPU, 4 CPUs, 64 GB | ESMFold fusion shard 1 | COMPLETED, exit 0; 6 min 47 s |
-| 2111023 | `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz-2 two parents and WT GS3 | RUNNING at last check |
+| 2111023 | `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz-2 persistent-worker pilot | CANCELLED after stall; 17 min 57 s |
 | 2111024 | `16406443` | 4 CPUs, 16 GB | Restrained WT srCatD geometry repair | RUNNING at last check |
 | 2111025 | `16406443` | 4 CPUs, 16 GB | Restrained WT GS3 geometry repair | RUNNING at last check |
 | 2111026 | `16406443` | 4 CPUs, 16 GB | Partial enhanced structure analysis | COMPLETED, exit 0; 8 s |
+| 2111226 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Complete first-screen analysis | COMPLETED, exit 0; 12 s |
+| 2111227 | script `44b8c4f9`, runtime `16406443` | 4 CPUs, 16 GB | Experimental-state ray tracing | COMPLETED, exit 0; 14 s |
+| 2111325 | script `951fe6d0`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Boltz upstream-CLI pilot | PENDING at last check; wall time resized to 30 min |
+| 2111366 | script `20f3f669`, runtime `16406443` | 1 GPU, 4 CPUs, 64 GB | Eight second-round ESMFold fusions | PENDING at last check |
+| 2111431 | script `79300408`, runtime `16406443` | 4 CPUs, 16 GB | Shared-camera structural renderings | Submitted |
 
 ### 2026-10-02 Initial structural analysis
 

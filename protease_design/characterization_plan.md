@@ -71,6 +71,14 @@ ester hydrolysis must be resolved from peptide-bond cleavage and cannot itself
 count as peptide degradation.
 Use substrate-only, isolated-parent, unfused-mixture, and catalytic-knockout
 controls. Match enzyme concentration, reaction time, handling, and vehicle.
+For the D module, Ser79Ala in expressed-domain numbering is a proposed inactive
+control whose folding still needs checking. Do not assume a catalytic-dead
+CatD precursor can undergo the same autocatalytic maturation as active CatD.
+An initial alternative is to inhibit the already processed CatD module with
+pepstatin, verifying separately that the chosen inhibitor/vehicle condition
+does not suppress ADP or interfere with the analytical readout. A CatD knockout
+is interpretable only after its mature boundary and fold have been established
+by an appropriate independent processing route.
 Quench only withdrawn aliquots after the defined reaction time; quenching is
 not the switching input. Verify that sample processing does not cause apparent
 chemical cleavage or changes in analytical response.
